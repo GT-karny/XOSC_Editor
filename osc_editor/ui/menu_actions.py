@@ -8,6 +8,7 @@ from osc_editor.core.model import ScenarioDefinition, FileHeader, RoadNetwork, E
 from osc_editor.core.parse_xml import parse_xml
 from osc_editor.core.write_xml import write_xml
 from osc_editor.core.validate import validate_and_get_errors
+from osc_editor.core.settings import Settings
 from osc_editor.esmini.runner import EsminiRunner
 
 
@@ -24,6 +25,7 @@ class MenuActions(QObject):
         self._current_file_path: Optional[str] = None
         self._is_modified = False
         self._esmini_runner: Optional[EsminiRunner] = None
+        self._settings = Settings()
     
     @property
     def current_scenario(self) -> Optional[ScenarioDefinition]:
@@ -194,8 +196,19 @@ class MenuActions(QObject):
             return
         
         try:
+            # 設定からesminiパスを取得
+            esmini_path = self._settings.get_esmini_path()
+            
+            # EsminiRunnerを初期化（設定がある場合はそれを使用、無い場合は既存の検索ロジック）
             if self._esmini_runner is None:
-                self._esmini_runner = EsminiRunner()
+                if esmini_path:
+                    self._esmini_runner = EsminiRunner(esmini_path=esmini_path)
+                else:
+                    self._esmini_runner = EsminiRunner()
+            else:
+                # 既存のrunnerがある場合でも、設定が変更されている可能性があるため再初期化
+                if esmini_path:
+                    self._esmini_runner = EsminiRunner(esmini_path=esmini_path)
             
             road_file = None
             if self._current_scenario.road_network and self._current_scenario.road_network.logic_file:

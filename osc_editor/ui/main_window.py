@@ -13,6 +13,7 @@ from PySide6.QtCore import Qt
 from osc_editor.ui.scenario_tree import ScenarioTreeWidget
 from osc_editor.ui.properties_panel import PropertiesPanel
 from osc_editor.ui.menu_actions import MenuActions
+from osc_editor.ui.settings_dialog import SettingsDialog
 from osc_editor.core.model import ScenarioDefinition
 
 
@@ -72,6 +73,10 @@ class MainWindow(QMainWindow):
         # 実行メニュー
         run_menu = menubar.addMenu("実行(&R)")
         run_menu.addAction("esminiで再生(&P)", self._run_esmini, "F5")
+        
+        # 設定メニュー
+        settings_menu = menubar.addMenu("設定(&S)")
+        settings_menu.addAction("設定(&S)...", self._open_settings)
         
         # ヘルプメニュー
         help_menu = menubar.addMenu("ヘルプ(&H)")
@@ -145,6 +150,11 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("esminiを実行中...", 0)
         self.menu_actions.run_esmini()
         self.statusBar().showMessage("準備完了", 0)
+
+    def _open_settings(self):
+        """設定ダイアログを開く"""
+        dialog = SettingsDialog(self)
+        dialog.exec()
 
     def _about(self):
         """バージョン情報"""
