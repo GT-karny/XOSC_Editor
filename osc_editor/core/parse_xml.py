@@ -318,18 +318,32 @@ def parse_speed_action(element: ET.Element) -> Optional[SpeedAction]:
     relative_elem = speed_target_elem.find(f"./{ns}RelativeTargetSpeed")
     
     speed_target = None
+    speed_target_str = None
     relative_target_speed = None
     
     if absolute_elem is not None:
-        speed_target = _get_attr_float(absolute_elem, "value", 0.0)
+        value_str = _get_attr(absolute_elem, "value", "")
+        # パラメータ式かどうかを判定（${で始まる、または$を含む）
+        if value_str.startswith("${") or "$" in value_str:
+            speed_target_str = value_str
+            speed_target = None
+        else:
+            try:
+                speed_target = _get_attr_float(absolute_elem, "value", 0.0)
+                speed_target_str = None
+            except (ValueError, TypeError):
+                # 変換に失敗した場合は文字列として扱う
+                speed_target_str = value_str
+                speed_target = None
     elif relative_elem is not None:
         relative_target_speed = parse_relative_target_speed(relative_elem)
     
-    if speed_target is None and relative_target_speed is None:
+    if speed_target is None and speed_target_str is None and relative_target_speed is None:
         return None
     
     return SpeedAction(
         speed_target=speed_target,
+        speed_target_str=speed_target_str,
         relative_target_speed=relative_target_speed,
         dynamics=dynamics
     )

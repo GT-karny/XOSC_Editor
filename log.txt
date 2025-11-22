@@ -3,12 +3,12 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_turux7uk\scenario.xosc
-[2025-11-23 00:10:57]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_turux7uk\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_14m1mo1e\scenario.xosc
+[2025-11-23 00:20:19]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_14m1mo1e\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 3556808653
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_turux7uk/scenario.xosc (v1.1)
+[] [info] Generated seed 909319604
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_14m1mo1e/scenario.xosc (v1.1)
 [] [info] 0 variables
 [] [error] Unsupported geo reference attr: +no_defs
 [] [error] Unsupported object type: rail-pole - interpret as NONE
@@ -17,6 +17,7 @@ esmini BUILD VERSION: 5791
 [] [error] Unsupported object type: guide-post - interpret as NONE
 [] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/e6mini.xodr
 [] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
+[] [info] Expr ${$EgoSpeed / 3.6} = 108 / 3.6 = 30.0000000000
 [] [warn] Info: "override" priority was introduced in v1.2. Use "overwrite" for earlier versions. Accepting it anyway.
 [] [error] Attribute "delay" missing
 [] [warn] Info: "override" priority was introduced in v1.2. Use "overwrite" for earlier versions. Accepting it anyway.
@@ -89,4 +90,4 @@ esmini BUILD VERSION: 5791
 [0.001] [info] OverTakerStartSpeedAction runningState -> endTransition -> completeState
 [0.001] [info] OverTakerStartSpeedEvent complete after 1 execution
 [0.001] [info] OverTakerStartSpeedEvent runningState -> endTransition -> completeState
-[61.314] [info] Closing
+[34.523] [info] Closing

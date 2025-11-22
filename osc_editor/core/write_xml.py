@@ -192,6 +192,10 @@ def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
         abs_target_elem = _create_element("AbsoluteTargetSpeed", target_elem)
         # XSDではvalueは属性として定義されている
         abs_target_elem.set("value", str(speed_action.speed_target))
+    elif speed_action.speed_target_str is not None:
+        abs_target_elem = _create_element("AbsoluteTargetSpeed", target_elem)
+        # パラメータ式の場合はそのまま文字列として書き込み
+        abs_target_elem.set("value", speed_action.speed_target_str)
     elif speed_action.relative_target_speed is not None:
         write_relative_target_speed(target_elem, speed_action.relative_target_speed)
     

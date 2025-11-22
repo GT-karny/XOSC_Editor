@@ -93,7 +93,8 @@ class RelativeTargetSpeed:
 @dataclass
 class SpeedAction:
     """SpeedAction（速度制御）"""
-    speed_target: Optional[float] = None  # AbsoluteTargetSpeed用
+    speed_target: Optional[float] = None  # AbsoluteTargetSpeed用（数値）
+    speed_target_str: Optional[str] = None  # AbsoluteTargetSpeed用（パラメータ式）
     relative_target_speed: Optional[RelativeTargetSpeed] = None  # RelativeTargetSpeed用
     dynamics: Optional[Dynamics] = None
 
