@@ -112,39 +112,42 @@ def write_catalog_locations(parent: ET.Element, catalog_locs: CatalogLocations):
 
 
 def write_world_position(parent: ET.Element, position: WorldPosition):
-    """WorldPositionをXMLに書き込み"""
+    """WorldPositionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("WorldPosition", parent)
-    _set_float(elem, "X", position.x)
-    _set_float(elem, "Y", position.y)
+    # XSDでは属性として定義されている
+    elem.set("x", str(position.x))
+    elem.set("y", str(position.y))
     if position.z != 0.0:
-        _set_float(elem, "Z", position.z)
+        elem.set("z", str(position.z))
     if position.h != 0.0:
-        _set_float(elem, "H", position.h)
+        elem.set("h", str(position.h))
     if position.p != 0.0:
-        _set_float(elem, "P", position.p)
+        elem.set("p", str(position.p))
     if position.r != 0.0:
-        _set_float(elem, "R", position.r)
+        elem.set("r", str(position.r))
 
 
 def write_lane_position(parent: ET.Element, lane_position: LanePosition):
-    """LanePositionをXMLに書き込み"""
+    """LanePositionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("LanePosition", parent)
-    _set_text(elem, "RoadId", lane_position.road_id)
-    _set_int(elem, "LaneId", lane_position.lane_id)
+    # XSDでは属性として定義されている
+    elem.set("roadId", lane_position.road_id)
+    elem.set("laneId", str(lane_position.lane_id))  # lane_idは文字列型
     if lane_position.s != 0.0:
-        _set_float(elem, "S", lane_position.s)
+        elem.set("s", str(lane_position.s))
     if lane_position.offset != 0.0:
-        _set_float(elem, "Offset", lane_position.offset)
+        elem.set("offset", str(lane_position.offset))
 
 
 def write_dynamics(parent: ET.Element, dynamics: Dynamics, tag_name: str = "Dynamics"):
-    """DynamicsをXMLに書き込み"""
+    """DynamicsをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element(tag_name, parent)
     elem.set("dynamicsDimension", dynamics.dynamics_dimension.value)
     elem.set("dynamicsShape", dynamics.dynamics_shape.value)
     
+    # XSDではvalueは必須属性
     if dynamics.value is not None:
-        _set_float(elem, "Value", dynamics.value)
+        elem.set("value", str(dynamics.value))
 
 
 def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
@@ -159,13 +162,14 @@ def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
 
 
 def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
-    """SpeedActionをXMLに書き込み"""
+    """SpeedActionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("SpeedAction", parent)
     
     # SpeedActionTarget
     target_elem = _create_element("SpeedActionTarget", elem)
     abs_target_elem = _create_element("AbsoluteTargetSpeed", target_elem)
-    _set_float(abs_target_elem, "Value", speed_action.speed_target)
+    # XSDではvalueは属性として定義されている
+    abs_target_elem.set("value", str(speed_action.speed_target))
     
     # SpeedActionDynamics
     if speed_action.dynamics is not None:
@@ -173,13 +177,18 @@ def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
 
 
 def write_lane_change_action(parent: ET.Element, lane_change_action: LaneChangeAction):
-    """LaneChangeActionをXMLに書き込み"""
+    """LaneChangeActionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("LaneChangeAction", parent)
+    
+    # targetLaneOffset属性（オプション）
+    if lane_change_action.target_lane_offset is not None:
+        elem.set("targetLaneOffset", str(lane_change_action.target_lane_offset))
     
     # LaneChangeTarget
     target_elem = _create_element("LaneChangeTarget", elem)
     rel_target_elem = _create_element("RelativeTargetLane", target_elem)
-    _set_int(rel_target_elem, "Value", lane_change_action.target_lane)
+    # XSDではvalueは属性として定義されている（Int型）
+    rel_target_elem.set("value", str(lane_change_action.target_lane))
     
     # LaneChangeActionDynamics
     if lane_change_action.dynamics is not None:
@@ -203,10 +212,11 @@ def write_private_action(parent: ET.Element, private_action: PrivateAction):
 
 
 def write_simulation_time_condition(parent: ET.Element, condition: SimulationTimeCondition):
-    """SimulationTimeConditionをXMLに書き込み"""
+    """SimulationTimeConditionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("SimulationTimeCondition", parent)
     elem.set("rule", condition.rule)
-    _set_float(elem, "Value", condition.value)
+    # XSDではvalueは属性として定義されている
+    elem.set("value", str(condition.value))
 
 
 def write_condition(parent: ET.Element, condition: Condition):
@@ -268,8 +278,8 @@ def write_maneuver_group(parent: ET.Element, maneuver_group: ManeuverGroup):
     elem = _create_element("ManeuverGroup", parent)
     elem.set("name", maneuver_group.name)
     
-    if maneuver_group.maximum_execution_count != 1:
-        _set_int(elem, "maximumExecutionCount", maneuver_group.maximum_execution_count)
+    # XSDではmaximumExecutionCountは必須属性として定義されている
+    elem.set("maximumExecutionCount", str(maneuver_group.maximum_execution_count))
     
     if maneuver_group.actors:
         actors_elem = _create_element("Actors", elem)

@@ -50,7 +50,7 @@ class WorldPosition:
 class LanePosition:
     """LanePosition（レーン座標）"""
     road_id: str
-    lane_id: int
+    lane_id: str  # XSDではString型
     s: float = 0.0
     offset: float = 0.0
 

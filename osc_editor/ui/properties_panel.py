@@ -145,11 +145,10 @@ class PropertiesPanel(QWidget):
             road_edit.textChanged.connect(lambda text: setattr(lane_pos, "road_id", text) or self.property_changed.emit())
             form.addRow("Road ID:", road_edit)
             
-            lane_spin = QSpinBox()
-            lane_spin.setRange(-10, 10)
-            lane_spin.setValue(lane_pos.lane_id)
-            lane_spin.valueChanged.connect(lambda v: setattr(lane_pos, "lane_id", v) or self.property_changed.emit())
-            form.addRow("Lane ID:", lane_spin)
+            # lane_idは文字列型（XSDではString型）
+            lane_edit = QLineEdit(str(lane_pos.lane_id))
+            lane_edit.textChanged.connect(lambda text: setattr(lane_pos, "lane_id", text) or self.property_changed.emit())
+            form.addRow("Lane ID:", lane_edit)
             
             s_spin = QDoubleSpinBox()
             s_spin.setRange(0, 100000)

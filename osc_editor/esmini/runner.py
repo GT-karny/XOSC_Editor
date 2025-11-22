@@ -98,10 +98,16 @@ class EsminiRunner:
                 universal_newlines=True,
             )
             
-            # 標準出力をリアルタイムで処理
+            # 標準出力を必ず読み込む（デッドロック防止）
+            # output_callbackがNoneの場合でも、stdoutを消費しないと
+            # バッファが満杯になってプロセスがブロックする
             if output_callback:
                 for line in process.stdout:
                     output_callback(line.rstrip())
+            else:
+                # コールバックがない場合でも、stdoutを読み込んでバッファを消費
+                for _ in process.stdout:
+                    pass
             
             process.wait()
             

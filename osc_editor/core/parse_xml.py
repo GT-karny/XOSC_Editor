@@ -41,8 +41,65 @@ OSC_NS = "{http://www.asam.net/xml}"
 OSC_NS_MAP = {"osc": "http://www.asam.net/xml"}
 
 
+# ============================================================================
+# 属性取得用ヘルパー関数（XSD準拠）
+# ============================================================================
+
+def _get_attr(element: ET.Element, attr_name: str, default: str = "") -> str:
+    """要素の属性から文字列を取得"""
+    if element is None:
+        return default
+    return element.get(attr_name, default)
+
+
+def _get_attr_float(element: ET.Element, attr_name: str, default: float = 0.0) -> float:
+    """要素の属性から浮動小数点数を取得"""
+    if element is None:
+        return default
+    attr_value = element.get(attr_name)
+    if attr_value is None:
+        return default
+    try:
+        return float(attr_value)
+    except (ValueError, TypeError):
+        return default
+
+
+def _get_attr_int(element: ET.Element, attr_name: str, default: int = 0) -> int:
+    """要素の属性から整数を取得"""
+    if element is None:
+        return default
+    attr_value = element.get(attr_name)
+    if attr_value is None:
+        return default
+    try:
+        return int(attr_value)
+    except (ValueError, TypeError):
+        return default
+
+
+def _get_attr_bool(element: ET.Element, attr_name: str, default: bool = False) -> bool:
+    """要素の属性から真偽値を取得"""
+    if element is None:
+        return default
+    attr_value = element.get(attr_name)
+    if attr_value is None:
+        return default
+    if isinstance(attr_value, bool):
+        return attr_value
+    if isinstance(attr_value, str):
+        return attr_value.lower() in ("true", "1", "yes")
+    return default
+
+
+# ============================================================================
+# 子要素取得用ヘルパー関数（後方互換性のため残す）
+# ============================================================================
+
 def _get_text(element: ET.Element, tag: str, default: str = "") -> str:
     """要素からテキストを取得（名前空間付き）"""
+    if element is None:
+        return default
     child = element.find(f"./{OSC_NS}{tag}")
     if child is not None and child.text:
         return child.text
@@ -72,13 +129,15 @@ def _get_int(element: ET.Element, tag: str, default: int = 0) -> int:
 
 
 def parse_file_header(element: ET.Element) -> FileHeader:
-    """FileHeaderをパース"""
+    """FileHeaderをパース（XSD準拠：属性から取得）"""
+    if element is None:
+        return FileHeader()
     return FileHeader(
-        rev_major=_get_int(element, "revMajor", 1),
-        rev_minor=_get_int(element, "revMinor", 2),
-        date=_get_text(element, "date"),
-        description=_get_text(element, "description"),
-        author=_get_text(element, "author"),
+        rev_major=_get_attr_int(element, "revMajor", 1),
+        rev_minor=_get_attr_int(element, "revMinor", 2),
+        date=_get_attr(element, "date", ""),
+        description=_get_attr(element, "description", ""),
+        author=_get_attr(element, "author", ""),
     )
 
 
@@ -113,34 +172,48 @@ def parse_catalog_locations(element: ET.Element) -> CatalogLocations:
 
 
 def parse_world_position(element: ET.Element) -> WorldPosition:
-    """WorldPositionをパース"""
+    """WorldPositionをパース（XSD準拠：属性から取得）"""
+    if element is None:
+        return WorldPosition(x=0.0, y=0.0)
     return WorldPosition(
-        x=_get_float(element, "X"),
-        y=_get_float(element, "Y"),
-        z=_get_float(element, "Z", 0.0),
-        h=_get_float(element, "H", 0.0),
-        p=_get_float(element, "P", 0.0),
-        r=_get_float(element, "R", 0.0),
+        x=_get_attr_float(element, "x", 0.0),
+        y=_get_attr_float(element, "y", 0.0),
+        z=_get_attr_float(element, "z", 0.0),
+        h=_get_attr_float(element, "h", 0.0),
+        p=_get_attr_float(element, "p", 0.0),
+        r=_get_attr_float(element, "r", 0.0),
     )
 
 
 def parse_lane_position(element: ET.Element) -> LanePosition:
-    """LanePositionをパース"""
+    """LanePositionをパース（XSD準拠：属性から取得、laneIdはString型）"""
+    if element is None:
+        return LanePosition(road_id="", lane_id="")
     return LanePosition(
-        road_id=_get_text(element, "RoadId"),
-        lane_id=_get_int(element, "LaneId"),
-        s=_get_float(element, "S", 0.0),
-        offset=_get_float(element, "Offset", 0.0),
+        road_id=_get_attr(element, "roadId", ""),
+        lane_id=_get_attr(element, "laneId", ""),  # XSDではString型
+        s=_get_attr_float(element, "s", 0.0),
+        offset=_get_attr_float(element, "offset", 0.0),
     )
 
 
-def parse_dynamics(element: ET.Element) -> Optional[Dynamics]:
-    """Dynamicsをパース"""
+def parse_transition_dynamics(element: ET.Element) -> Optional[Dynamics]:
+    """TransitionDynamicsをパース（XSD準拠：属性から取得）"""
     if element is None:
         return None
     
-    dim_str = element.get("dynamicsDimension", "time")
-    shape_str = element.get("dynamicsShape", "linear")
+    dim_str = _get_attr(element, "dynamicsDimension", "time")
+    shape_str = _get_attr(element, "dynamicsShape", "linear")
+    
+    # value属性の取得（必須属性だが、存在しない場合はNoneとする）
+    value_attr = element.get("value")
+    if value_attr is None:
+        value = None
+    else:
+        try:
+            value = float(value_attr)
+        except (ValueError, TypeError):
+            value = None
     
     try:
         dim = DynamicsDimension(dim_str)
@@ -151,9 +224,6 @@ def parse_dynamics(element: ET.Element) -> Optional[Dynamics]:
         shape = DynamicsShape(shape_str)
     except ValueError:
         shape = DynamicsShape.LINEAR
-    
-    value_elem = element.find(f"./{OSC_NS}Value")
-    value = _get_float(value_elem, "") if value_elem is not None else None
     
     return Dynamics(
         dynamics_dimension=dim,
@@ -182,31 +252,54 @@ def parse_teleport_action(element: ET.Element) -> Optional[TeleportAction]:
 
 
 def parse_speed_action(element: ET.Element) -> Optional[SpeedAction]:
-    """SpeedActionをパース"""
+    """SpeedActionをパース（XSD準拠）"""
+    if element is None:
+        return None
+    
+    # SpeedActionDynamicsはTransitionDynamics型（属性から取得）
+    dynamics_elem = element.find(f"./{OSC_NS}SpeedActionDynamics")
+    dynamics = parse_transition_dynamics(dynamics_elem) if dynamics_elem is not None else None
+    
+    # SpeedActionTargetからAbsoluteTargetSpeedのvalue属性を取得
     speed_target_elem = element.find(f"./{OSC_NS}SpeedActionTarget/{OSC_NS}AbsoluteTargetSpeed")
     if speed_target_elem is None:
         return None
     
-    speed = _get_float(speed_target_elem, "Value")
-    dynamics_elem = element.find(f"./{OSC_NS}SpeedActionDynamics")
-    dynamics = parse_dynamics(dynamics_elem) if dynamics_elem is not None else None
+    speed = _get_attr_float(speed_target_elem, "value", 0.0)
     
     return SpeedAction(speed_target=speed, dynamics=dynamics)
 
 
 def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
-    """LaneChangeActionをパース"""
+    """LaneChangeActionをパース（XSD準拠）"""
+    if element is None:
+        return None
+    
+    # LaneChangeActionDynamicsはTransitionDynamics型（属性から取得）
+    dynamics_elem = element.find(f"./{OSC_NS}LaneChangeActionDynamics")
+    dynamics = parse_transition_dynamics(dynamics_elem) if dynamics_elem is not None else None
+    
+    # LaneChangeTargetからRelativeTargetLaneのvalue属性を取得（Int型）
     target_lane_elem = element.find(f"./{OSC_NS}LaneChangeTarget/{OSC_NS}RelativeTargetLane")
     if target_lane_elem is None:
         return None
     
-    target_lane = _get_int(target_lane_elem, "Value")
-    dynamics_elem = element.find(f"./{OSC_NS}LaneChangeActionDynamics")
-    dynamics = parse_dynamics(dynamics_elem) if dynamics_elem is not None else None
+    target_lane = _get_attr_int(target_lane_elem, "value", 0)
+    
+    # targetLaneOffset属性（オプション）
+    target_lane_offset_attr = element.get("targetLaneOffset")
+    if target_lane_offset_attr is None:
+        target_lane_offset = None
+    else:
+        try:
+            target_lane_offset = float(target_lane_offset_attr)
+        except (ValueError, TypeError):
+            target_lane_offset = None
     
     return LaneChangeAction(
         target_lane=target_lane,
         dynamics=dynamics,
+        target_lane_offset=target_lane_offset,
     )
 
 
@@ -231,17 +324,21 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
 
 
 def parse_simulation_time_condition(element: ET.Element) -> Optional[SimulationTimeCondition]:
-    """SimulationTimeConditionをパース"""
-    value = _get_float(element, "Value")
-    rule = element.get("rule", "greaterThan")
+    """SimulationTimeConditionをパース（XSD準拠：属性から取得）"""
+    if element is None:
+        return None
+    value = _get_attr_float(element, "value", 0.0)
+    rule = _get_attr(element, "rule", "greaterThan")
     return SimulationTimeCondition(value=value, rule=rule)
 
 
 def parse_condition(element: ET.Element) -> Condition:
-    """Conditionをパース"""
-    name = element.get("name", "")
-    delay = _get_float(element, "delay", 0.0)
-    condition_edge = element.get("conditionEdge", "rising")
+    """Conditionをパース（XSD準拠：属性から取得）"""
+    if element is None:
+        return Condition()
+    name = _get_attr(element, "name", "")
+    delay = _get_attr_float(element, "delay", 0.0)
+    condition_edge = _get_attr(element, "conditionEdge", "rising")
     
     sim_time_elem = element.find(f"./{OSC_NS}ByValueCondition/{OSC_NS}SimulationTimeCondition")
     sim_time_condition = parse_simulation_time_condition(sim_time_elem) if sim_time_elem is not None else None
@@ -314,9 +411,11 @@ def parse_maneuver(element: ET.Element) -> Maneuver:
 
 
 def parse_maneuver_group(element: ET.Element) -> ManeuverGroup:
-    """ManeuverGroupをパース"""
-    name = element.get("name", "")
-    max_exec = _get_int(element, "maximumExecutionCount", 1)
+    """ManeuverGroupをパース（XSD準拠：属性から取得）"""
+    if element is None:
+        return ManeuverGroup(name="")
+    name = _get_attr(element, "name", "")
+    max_exec = _get_attr_int(element, "maximumExecutionCount", 1)
     
     actors = []
     actors_elem = element.find(f"./{OSC_NS}Actors")
