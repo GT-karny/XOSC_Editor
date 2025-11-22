@@ -94,15 +94,36 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                     )
                                 )
     
-    # Entity参照の検証
+    # Entity参照の検証（パラメータ参照を考慮）
     if scenario.entities and scenario.storyboard:
         entity_names = {obj.name for obj in scenario.entities.scenario_objects}
         
+        # グローバルパラメータの名前を取得
+        global_param_names = set()
+        if scenario.parameter_declarations:
+            global_param_names = {param.name for param in scenario.parameter_declarations.parameters}
+        
         for story in scenario.storyboard.stories:
+            # Storyレベルのパラメータ名を取得
+            story_param_names = set()
+            if story.parameter_declarations:
+                story_param_names = {param.name for param in story.parameter_declarations.parameters}
+            
             for act in story.acts:
                 for mg in act.maneuver_groups:
                     for actor in mg.actors:
-                        if actor not in entity_names:
+                        # パラメータ参照（$で始まる）の場合は、パラメータが定義されているか確認
+                        if actor.startswith('$'):
+                            param_name = actor[1:]  # $を除去
+                            if param_name not in story_param_names and param_name not in global_param_names:
+                                errors.append(
+                                    ValidationError(
+                                        f"Parameter '{param_name}' referenced in ManeuverGroup '{mg.name}' is not declared",
+                                        f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Actors"
+                                    )
+                                )
+                        # 通常のエンティティ参照の場合は、エンティティが存在するか確認
+                        elif actor not in entity_names:
                             errors.append(
                                 ValidationError(
                                     f"Entity '{actor}' referenced in ManeuverGroup '{mg.name}' does not exist",

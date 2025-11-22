@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Union
 from enum import Enum
 
 
@@ -29,6 +29,7 @@ class DynamicsShape(Enum):
 class Rule(Enum):
     """優先度ルール"""
     OVERRIDE = "override"
+    OVERWRITE = "overwrite"  # OpenSCENARIO 1.0/1.1の旧形式に対応
     PARALLEL = "parallel"
     SKIP = "skip"
 
@@ -40,12 +41,12 @@ class Rule(Enum):
 @dataclass
 class WorldPosition:
     """WorldPosition（ワールド座標）"""
-    x: float
-    y: float
-    z: float = 0.0
-    h: float = 0.0  # heading
-    p: float = 0.0  # pitch
-    r: float = 0.0  # roll
+    x: Union[str, float]  # パラメータ参照を含む可能性があるため
+    y: Union[str, float]
+    z: Union[str, float] = 0.0
+    h: Union[str, float] = 0.0  # heading
+    p: Union[str, float] = 0.0  # pitch
+    r: Union[str, float] = 0.0  # roll
 
 
 @dataclass
@@ -53,8 +54,8 @@ class LanePosition:
     """LanePosition（レーン座標）"""
     road_id: str
     lane_id: str  # XSDではString型
-    s: float = 0.0
-    offset: float = 0.0
+    s: Union[str, float] = 0.0  # パラメータ参照を含む可能性があるため
+    offset: Union[str, float] = 0.0
 
 
 # ============================================================================
@@ -131,7 +132,7 @@ class Action:
 @dataclass
 class SimulationTimeCondition:
     """SimulationTimeCondition（シミュレーション時間条件）"""
-    value: float
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため
     rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
 
 
@@ -166,7 +167,7 @@ class ByEntityCondition:
 class Condition:
     """Condition（条件）"""
     name: str = ""
-    delay: float = 0.0
+    delay: Union[str, float] = 0.0  # パラメータ参照を含む可能性があるため
     condition_edge: str = "rising"  # rising, falling, none
     simulation_time_condition: Optional[SimulationTimeCondition] = None
     by_entity_condition: Optional[ByEntityCondition] = None

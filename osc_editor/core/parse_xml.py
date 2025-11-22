@@ -1,7 +1,7 @@
 """XML → モデルへの変換"""
 
 import xml.etree.ElementTree as ET
-from typing import Optional
+from typing import Optional, Union
 from osc_editor.core.model import (
     ScenarioDefinition,
     FileHeader,
@@ -68,13 +68,16 @@ def _get_attr(element: ET.Element, attr_name: str, default: str = "") -> str:
     return element.get(attr_name, default)
 
 
-def _get_attr_float(element: ET.Element, attr_name: str, default: float = 0.0) -> float:
-    """要素の属性から浮動小数点数を取得"""
+def _get_attr_float(element: ET.Element, attr_name: str, default: float = 0.0) -> Union[str, float]:
+    """要素の属性から浮動小数点数を取得（パラメータ参照の場合は文字列を返す）"""
     if element is None:
         return default
     attr_value = element.get(attr_name)
     if attr_value is None:
         return default
+    # パラメータ参照（$で始まる）または式（${...}を含む）の場合は文字列として返す
+    if attr_value.startswith('$') or '${' in attr_value:
+        return attr_value
     try:
         return float(attr_value)
     except (ValueError, TypeError):
@@ -592,10 +595,12 @@ def parse_event(element: ET.Element) -> Event:
     if element is None:
         return Event(name="", priority=Rule.OVERRIDE, actions=[], start_trigger=None)
     name = element.get("name", "")
-    priority_str = element.get("priority", "override")
+    priority_str = element.get("priority", "override").lower()
+    # "overwrite"も保持（OpenSCENARIO 1.0/1.1の旧形式だが、元の値を保持する）
     try:
         priority = Rule(priority_str)
     except ValueError:
+        # デフォルトはoverride
         priority = Rule.OVERRIDE
     
     ns = _detect_namespace(element)

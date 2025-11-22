@@ -128,14 +128,19 @@ def write_world_position(parent: ET.Element, position: WorldPosition):
     # XSDでは属性として定義されている
     elem.set("x", str(position.x))
     elem.set("y", str(position.y))
-    if position.z != 0.0:
-        elem.set("z", str(position.z))
-    if position.h != 0.0:
-        elem.set("h", str(position.h))
-    if position.p != 0.0:
-        elem.set("p", str(position.p))
-    if position.r != 0.0:
-        elem.set("r", str(position.r))
+    # パラメータ参照の可能性があるため、常に書き出す
+    z_val = position.z
+    if isinstance(z_val, str) or z_val != 0.0:
+        elem.set("z", str(z_val))
+    h_val = position.h
+    if isinstance(h_val, str) or h_val != 0.0:
+        elem.set("h", str(h_val))
+    p_val = position.p
+    if isinstance(p_val, str) or p_val != 0.0:
+        elem.set("p", str(p_val))
+    r_val = position.r
+    if isinstance(r_val, str) or r_val != 0.0:
+        elem.set("r", str(r_val))
 
 
 def write_lane_position(parent: ET.Element, lane_position: LanePosition):
@@ -146,8 +151,8 @@ def write_lane_position(parent: ET.Element, lane_position: LanePosition):
     elem.set("laneId", str(lane_position.lane_id))  # lane_idは文字列型
     # s属性は常に書き出す（パラメータ式の場合も考慮）
     elem.set("s", str(lane_position.s))
-    if lane_position.offset != 0.0:
-        elem.set("offset", str(lane_position.offset))
+    # offset属性も常に書き出す（元のXMLではデフォルト値でも明示的に書かれている場合がある）
+    elem.set("offset", str(lane_position.offset))
 
 
 def write_dynamics(parent: ET.Element, dynamics: Dynamics, tag_name: str = "Dynamics"):
@@ -178,8 +183,8 @@ def write_relative_target_speed(parent: ET.Element, relative_target_speed: Relat
     elem.set("entityRef", relative_target_speed.entity_ref)
     elem.set("value", relative_target_speed.value)
     elem.set("speedTargetValueType", relative_target_speed.speed_target_value_type)
-    if not relative_target_speed.continuous:
-        elem.set("continuous", "false")
+    # continuousは常に書き出す（デフォルト値でも）
+    elem.set("continuous", "true" if relative_target_speed.continuous else "false")
 
 
 def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
@@ -266,7 +271,7 @@ def write_simulation_time_condition(parent: ET.Element, condition: SimulationTim
     """SimulationTimeConditionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("SimulationTimeCondition", parent)
     elem.set("rule", condition.rule)
-    # XSDではvalueは属性として定義されている
+    # XSDではvalueは属性として定義されている（パラメータ参照の可能性があるためstr()を使用）
     elem.set("value", str(condition.value))
 
 
@@ -275,8 +280,8 @@ def write_time_headway_condition(parent: ET.Element, condition: TimeHeadwayCondi
     elem = _create_element("TimeHeadwayCondition", parent)
     elem.set("entityRef", condition.entity_ref)
     elem.set("value", condition.value)
-    if condition.freespace:
-        elem.set("freespace", "true")
+    # freespaceは常に書き出す（デフォルト値でも）
+    elem.set("freespace", "true" if condition.freespace else "false")
     elem.set("coordinateSystem", condition.coordinate_system)
     elem.set("relativeDistanceType", condition.relative_distance_type)
     elem.set("rule", condition.rule)
@@ -311,8 +316,8 @@ def write_condition(parent: ET.Element, condition: Condition):
     elem = _create_element("Condition", parent)
     if condition.name:
         elem.set("name", condition.name)
-    if condition.delay != 0.0:
-        elem.set("delay", str(condition.delay))
+    # delayは常に書き出す（元のXMLではデフォルト値でも明示的に書かれている場合がある）
+    elem.set("delay", str(condition.delay))
     elem.set("conditionEdge", condition.condition_edge)
     
     if condition.simulation_time_condition is not None:
@@ -334,12 +339,12 @@ def write_condition_group(parent: ET.Element, condition_group: ConditionGroup):
         write_condition(elem, condition)
 
 
-def write_start_trigger(parent: ET.Element, start_trigger: StartTrigger):
-    """StartTriggerをXMLに書き込み"""
+def write_start_trigger(parent: ET.Element, start_trigger: StartTrigger, tag_name: str = "StartTrigger"):
+    """StartTriggerまたはStopTriggerをXMLに書き込み"""
     if not start_trigger.condition_groups:
         return
     
-    elem = _create_element("StartTrigger", parent)
+    elem = _create_element(tag_name, parent)
     for cg in start_trigger.condition_groups:
         write_condition_group(elem, cg)
 
@@ -398,7 +403,7 @@ def write_act(parent: ET.Element, act: Act):
         write_start_trigger(elem, act.start_trigger)
     
     if act.stop_trigger is not None:
-        write_start_trigger(elem, act.stop_trigger)  # StopTriggerもStartTriggerと同じ構造
+        write_start_trigger(elem, act.stop_trigger, tag_name="StopTrigger")
 
 
 def write_story(parent: ET.Element, story: Story):
@@ -434,7 +439,7 @@ def write_storyboard(parent: ET.Element, storyboard: Storyboard):
         write_story(elem, story)
     
     if storyboard.stop_trigger is not None:
-        write_start_trigger(elem, storyboard.stop_trigger)
+        write_start_trigger(elem, storyboard.stop_trigger, tag_name="StopTrigger")
 
 
 def write_vehicle(parent: ET.Element, vehicle: Vehicle):
@@ -505,7 +510,11 @@ def write_xml(scenario: ScenarioDefinition, file_path: str, pretty_print: bool =
     
     if pretty_print:
         # インデントを追加（Python 3.9+）
-        ET.indent(tree, space="  ")
+        try:
+            ET.indent(tree, space="  ")
+        except AttributeError:
+            # Python < 3.9 の場合、インデントはスキップ
+            pass
     
     tree.write(file_path, encoding="utf-8", xml_declaration=True)
 
