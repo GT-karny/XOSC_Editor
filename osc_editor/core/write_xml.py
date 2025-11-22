@@ -1,0 +1,385 @@
+"""モデル → XMLへの変換"""
+
+import xml.etree.ElementTree as ET
+from typing import Optional
+from osc_editor.core.model import (
+    ScenarioDefinition,
+    FileHeader,
+    ParameterDeclarations,
+    ParameterDeclaration,
+    RoadNetwork,
+    CatalogLocations,
+    Entities,
+    ScenarioObject,
+    Vehicle,
+    Storyboard,
+    Init,
+    Story,
+    Act,
+    ManeuverGroup,
+    Maneuver,
+    Event,
+    PrivateAction,
+    TeleportAction,
+    SpeedAction,
+    LaneChangeAction,
+    WorldPosition,
+    LanePosition,
+    Dynamics,
+    StartTrigger,
+    ConditionGroup,
+    Condition,
+    SimulationTimeCondition,
+    Rule,
+)
+
+
+# OpenSCENARIO名前空間
+OSC_NS = "http://www.asam.net/xml"
+OSC_NS_MAP = {"osc": OSC_NS}
+
+
+def _create_element(tag: str, parent: Optional[ET.Element] = None) -> ET.Element:
+    """名前空間付き要素を作成"""
+    if parent is None:
+        elem = ET.Element(f"{{{OSC_NS}}}{tag}")
+    else:
+        elem = ET.SubElement(parent, f"{{{OSC_NS}}}{tag}")
+    return elem
+
+
+def _set_text(elem: ET.Element, tag: str, value: str):
+    """子要素にテキストを設定"""
+    child = _create_element(tag, elem)
+    child.text = str(value)
+
+
+def _set_float(elem: ET.Element, tag: str, value: float):
+    """子要素に浮動小数点数を設定"""
+    _set_text(elem, tag, value)
+
+
+def _set_int(elem: ET.Element, tag: str, value: int):
+    """子要素に整数を設定"""
+    _set_text(elem, tag, value)
+
+
+def write_file_header(parent: ET.Element, file_header: FileHeader):
+    """FileHeaderをXMLに書き込み"""
+    elem = _create_element("FileHeader", parent)
+    _set_int(elem, "revMajor", file_header.rev_major)
+    _set_int(elem, "revMinor", file_header.rev_minor)
+    if file_header.date:
+        _set_text(elem, "date", file_header.date)
+    if file_header.description:
+        _set_text(elem, "description", file_header.description)
+    if file_header.author:
+        _set_text(elem, "author", file_header.author)
+
+
+def write_parameter_declarations(parent: ET.Element, param_decls: ParameterDeclarations):
+    """ParameterDeclarationsをXMLに書き込み"""
+    if not param_decls.parameters:
+        return
+    
+    elem = _create_element("ParameterDeclarations", parent)
+    for param in param_decls.parameters:
+        param_elem = _create_element("ParameterDeclaration", elem)
+        param_elem.set("name", param.name)
+        param_elem.set("parameterType", param.parameter_type)
+        if param.value:
+            param_elem.set("value", param.value)
+
+
+def write_road_network(parent: ET.Element, road_network: RoadNetwork):
+    """RoadNetworkをXMLに書き込み"""
+    elem = _create_element("RoadNetwork", parent)
+    
+    if road_network.logic_file:
+        logic_elem = _create_element("LogicFile", elem)
+        logic_elem.set("filepath", road_network.logic_file)
+    
+    if road_network.scene_graph_file:
+        scene_elem = _create_element("SceneGraphFile", elem)
+        scene_elem.set("filepath", road_network.scene_graph_file)
+
+
+def write_catalog_locations(parent: ET.Element, catalog_locs: CatalogLocations):
+    """CatalogLocationsをXMLに書き込み（MVPでは空）"""
+    _create_element("CatalogLocations", parent)
+
+
+def write_world_position(parent: ET.Element, position: WorldPosition):
+    """WorldPositionをXMLに書き込み"""
+    elem = _create_element("WorldPosition", parent)
+    _set_float(elem, "X", position.x)
+    _set_float(elem, "Y", position.y)
+    if position.z != 0.0:
+        _set_float(elem, "Z", position.z)
+    if position.h != 0.0:
+        _set_float(elem, "H", position.h)
+    if position.p != 0.0:
+        _set_float(elem, "P", position.p)
+    if position.r != 0.0:
+        _set_float(elem, "R", position.r)
+
+
+def write_lane_position(parent: ET.Element, lane_position: LanePosition):
+    """LanePositionをXMLに書き込み"""
+    elem = _create_element("LanePosition", parent)
+    _set_text(elem, "RoadId", lane_position.road_id)
+    _set_int(elem, "LaneId", lane_position.lane_id)
+    if lane_position.s != 0.0:
+        _set_float(elem, "S", lane_position.s)
+    if lane_position.offset != 0.0:
+        _set_float(elem, "Offset", lane_position.offset)
+
+
+def write_dynamics(parent: ET.Element, dynamics: Dynamics, tag_name: str = "Dynamics"):
+    """DynamicsをXMLに書き込み"""
+    elem = _create_element(tag_name, parent)
+    elem.set("dynamicsDimension", dynamics.dynamics_dimension.value)
+    elem.set("dynamicsShape", dynamics.dynamics_shape.value)
+    
+    if dynamics.value is not None:
+        _set_float(elem, "Value", dynamics.value)
+
+
+def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
+    """TeleportActionをXMLに書き込み"""
+    elem = _create_element("TeleportAction", parent)
+    position_elem = _create_element("Position", elem)
+    
+    if teleport_action.position is not None:
+        write_world_position(position_elem, teleport_action.position)
+    elif teleport_action.lane_position is not None:
+        write_lane_position(position_elem, teleport_action.lane_position)
+
+
+def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
+    """SpeedActionをXMLに書き込み"""
+    elem = _create_element("SpeedAction", parent)
+    
+    # SpeedActionTarget
+    target_elem = _create_element("SpeedActionTarget", elem)
+    abs_target_elem = _create_element("AbsoluteTargetSpeed", target_elem)
+    _set_float(abs_target_elem, "Value", speed_action.speed_target)
+    
+    # SpeedActionDynamics
+    if speed_action.dynamics is not None:
+        write_dynamics(elem, speed_action.dynamics, "SpeedActionDynamics")
+
+
+def write_lane_change_action(parent: ET.Element, lane_change_action: LaneChangeAction):
+    """LaneChangeActionをXMLに書き込み"""
+    elem = _create_element("LaneChangeAction", parent)
+    
+    # LaneChangeTarget
+    target_elem = _create_element("LaneChangeTarget", elem)
+    rel_target_elem = _create_element("RelativeTargetLane", target_elem)
+    _set_int(rel_target_elem, "Value", lane_change_action.target_lane)
+    
+    # LaneChangeActionDynamics
+    if lane_change_action.dynamics is not None:
+        write_dynamics(elem, lane_change_action.dynamics, "LaneChangeActionDynamics")
+
+
+def write_private_action(parent: ET.Element, private_action: PrivateAction):
+    """PrivateActionをXMLに書き込み"""
+    elem = _create_element("PrivateAction", parent)
+    
+    if private_action.teleport_action is not None:
+        write_teleport_action(elem, private_action.teleport_action)
+    
+    if private_action.speed_action is not None:
+        long_elem = _create_element("LongitudinalAction", elem)
+        write_speed_action(long_elem, private_action.speed_action)
+    
+    if private_action.lane_change_action is not None:
+        lat_elem = _create_element("LateralAction", elem)
+        write_lane_change_action(lat_elem, private_action.lane_change_action)
+
+
+def write_simulation_time_condition(parent: ET.Element, condition: SimulationTimeCondition):
+    """SimulationTimeConditionをXMLに書き込み"""
+    elem = _create_element("SimulationTimeCondition", parent)
+    elem.set("rule", condition.rule)
+    _set_float(elem, "Value", condition.value)
+
+
+def write_condition(parent: ET.Element, condition: Condition):
+    """ConditionをXMLに書き込み"""
+    elem = _create_element("Condition", parent)
+    if condition.name:
+        elem.set("name", condition.name)
+    if condition.delay != 0.0:
+        elem.set("delay", str(condition.delay))
+    elem.set("conditionEdge", condition.condition_edge)
+    
+    if condition.simulation_time_condition is not None:
+        by_value_elem = _create_element("ByValueCondition", elem)
+        write_simulation_time_condition(by_value_elem, condition.simulation_time_condition)
+
+
+def write_condition_group(parent: ET.Element, condition_group: ConditionGroup):
+    """ConditionGroupをXMLに書き込み"""
+    elem = _create_element("ConditionGroup", parent)
+    for condition in condition_group.conditions:
+        write_condition(elem, condition)
+
+
+def write_start_trigger(parent: ET.Element, start_trigger: StartTrigger):
+    """StartTriggerをXMLに書き込み"""
+    if not start_trigger.condition_groups:
+        return
+    
+    elem = _create_element("StartTrigger", parent)
+    for cg in start_trigger.condition_groups:
+        write_condition_group(elem, cg)
+
+
+def write_event(parent: ET.Element, event: Event):
+    """EventをXMLに書き込み"""
+    elem = _create_element("Event", parent)
+    elem.set("name", event.name)
+    elem.set("priority", event.priority.value)
+    
+    for action in event.actions:
+        action_elem = _create_element("Action", elem)
+        write_private_action(action_elem, action)
+    
+    if event.start_trigger is not None:
+        write_start_trigger(elem, event.start_trigger)
+
+
+def write_maneuver(parent: ET.Element, maneuver: Maneuver):
+    """ManeuverをXMLに書き込み"""
+    elem = _create_element("Maneuver", parent)
+    elem.set("name", maneuver.name)
+    
+    for event in maneuver.events:
+        write_event(elem, event)
+
+
+def write_maneuver_group(parent: ET.Element, maneuver_group: ManeuverGroup):
+    """ManeuverGroupをXMLに書き込み"""
+    elem = _create_element("ManeuverGroup", parent)
+    elem.set("name", maneuver_group.name)
+    
+    if maneuver_group.maximum_execution_count != 1:
+        _set_int(elem, "maximumExecutionCount", maneuver_group.maximum_execution_count)
+    
+    if maneuver_group.actors:
+        actors_elem = _create_element("Actors", elem)
+        for actor in maneuver_group.actors:
+            entity_ref_elem = _create_element("EntityRef", actors_elem)
+            entity_ref_elem.set("entityRef", actor)
+    
+    for maneuver in maneuver_group.maneuvers:
+        write_maneuver(elem, maneuver)
+
+
+def write_act(parent: ET.Element, act: Act):
+    """ActをXMLに書き込み"""
+    elem = _create_element("Act", parent)
+    elem.set("name", act.name)
+    
+    for mg in act.maneuver_groups:
+        write_maneuver_group(elem, mg)
+    
+    if act.start_trigger is not None:
+        write_start_trigger(elem, act.start_trigger)
+    
+    if act.stop_trigger is not None:
+        write_start_trigger(elem, act.stop_trigger)  # StopTriggerもStartTriggerと同じ構造
+
+
+def write_story(parent: ET.Element, story: Story):
+    """StoryをXMLに書き込み"""
+    elem = _create_element("Story", parent)
+    elem.set("name", story.name)
+    
+    for act in story.acts:
+        write_act(elem, act)
+
+
+def write_init(parent: ET.Element, init: Init):
+    """InitをXMLに書き込み"""
+    elem = _create_element("Init", parent)
+    
+    if init.actions:
+        actions_elem = _create_element("Actions", elem)
+        for action in init.actions:
+            write_private_action(actions_elem, action)
+
+
+def write_storyboard(parent: ET.Element, storyboard: Storyboard):
+    """StoryboardをXMLに書き込み"""
+    elem = _create_element("Storyboard", parent)
+    
+    if storyboard.init is not None:
+        write_init(elem, storyboard.init)
+    
+    for story in storyboard.stories:
+        write_story(elem, story)
+    
+    if storyboard.stop_trigger is not None:
+        write_start_trigger(elem, storyboard.stop_trigger)
+
+
+def write_vehicle(parent: ET.Element, vehicle: Vehicle):
+    """VehicleをXMLに書き込み"""
+    elem = _create_element("Vehicle", parent)
+    elem.set("name", vehicle.name)
+    elem.set("vehicleCategory", vehicle.vehicle_category)
+
+
+def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
+    """ScenarioObjectをXMLに書き込み"""
+    elem = _create_element("ScenarioObject", parent)
+    elem.set("name", scenario_object.name)
+    
+    if scenario_object.vehicle is not None:
+        write_vehicle(elem, scenario_object.vehicle)
+
+
+def write_entities(parent: ET.Element, entities: Entities):
+    """EntitiesをXMLに書き込み"""
+    elem = _create_element("Entities", parent)
+    
+    for obj in entities.scenario_objects:
+        write_scenario_object(elem, obj)
+
+
+def write_xml(scenario: ScenarioDefinition, file_path: str, pretty_print: bool = True):
+    """ScenarioDefinitionをXMLファイルに書き込み"""
+    root = ET.Element(f"{{{OSC_NS}}}OpenSCENARIO")
+    root.set("xmlns", OSC_NS)
+    
+    if scenario.file_header is not None:
+        write_file_header(root, scenario.file_header)
+    
+    if scenario.parameter_declarations is not None:
+        write_parameter_declarations(root, scenario.parameter_declarations)
+    
+    if scenario.catalog_locations is not None:
+        write_catalog_locations(root, scenario.catalog_locations)
+    
+    if scenario.road_network is not None:
+        write_road_network(root, scenario.road_network)
+    
+    if scenario.entities is not None:
+        write_entities(root, scenario.entities)
+    
+    if scenario.storyboard is not None:
+        write_storyboard(root, scenario.storyboard)
+    
+    tree = ET.ElementTree(root)
+    
+    if pretty_print:
+        # インデントを追加（Python 3.9+）
+        ET.indent(tree, space="  ")
+    
+    tree.write(file_path, encoding="utf-8", xml_declaration=True)
+
+
