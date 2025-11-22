@@ -12,6 +12,7 @@ from osc_editor.core.model import (
     Entities,
     ScenarioObject,
     Vehicle,
+    CatalogReference,
     Storyboard,
     Init,
     Story,
@@ -24,6 +25,7 @@ from osc_editor.core.model import (
     PrivateAction,
     TeleportAction,
     SpeedAction,
+    RelativeTargetSpeed,
     LaneChangeAction,
     WorldPosition,
     LanePosition,
@@ -32,6 +34,9 @@ from osc_editor.core.model import (
     ConditionGroup,
     Condition,
     SimulationTimeCondition,
+    ByEntityCondition,
+    TimeHeadwayCondition,
+    StoryboardElementStateCondition,
     Rule,
 )
 
@@ -109,8 +114,12 @@ def write_road_network(parent: ET.Element, road_network: RoadNetwork):
 
 
 def write_catalog_locations(parent: ET.Element, catalog_locs: CatalogLocations):
-    """CatalogLocationsをXMLに書き込み（MVPでは空）"""
-    _create_element("CatalogLocations", parent)
+    """CatalogLocationsをXMLに書き込み"""
+    elem = _create_element("CatalogLocations", parent)
+    if catalog_locs.vehicle_catalog:
+        vehicle_catalog_elem = _create_element("VehicleCatalog", elem)
+        directory_elem = _create_element("Directory", vehicle_catalog_elem)
+        directory_elem.set("path", catalog_locs.vehicle_catalog)
 
 
 def write_world_position(parent: ET.Element, position: WorldPosition):
@@ -135,8 +144,8 @@ def write_lane_position(parent: ET.Element, lane_position: LanePosition):
     # XSDでは属性として定義されている
     elem.set("roadId", lane_position.road_id)
     elem.set("laneId", str(lane_position.lane_id))  # lane_idは文字列型
-    if lane_position.s != 0.0:
-        elem.set("s", str(lane_position.s))
+    # s属性は常に書き出す（パラメータ式の場合も考慮）
+    elem.set("s", str(lane_position.s))
     if lane_position.offset != 0.0:
         elem.set("offset", str(lane_position.offset))
 
@@ -163,15 +172,28 @@ def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
         write_lane_position(position_elem, teleport_action.lane_position)
 
 
+def write_relative_target_speed(parent: ET.Element, relative_target_speed: RelativeTargetSpeed):
+    """RelativeTargetSpeedをXMLに書き込み"""
+    elem = _create_element("RelativeTargetSpeed", parent)
+    elem.set("entityRef", relative_target_speed.entity_ref)
+    elem.set("value", relative_target_speed.value)
+    elem.set("speedTargetValueType", relative_target_speed.speed_target_value_type)
+    if not relative_target_speed.continuous:
+        elem.set("continuous", "false")
+
+
 def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
     """SpeedActionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("SpeedAction", parent)
     
     # SpeedActionTarget
     target_elem = _create_element("SpeedActionTarget", elem)
-    abs_target_elem = _create_element("AbsoluteTargetSpeed", target_elem)
-    # XSDではvalueは属性として定義されている
-    abs_target_elem.set("value", str(speed_action.speed_target))
+    if speed_action.speed_target is not None:
+        abs_target_elem = _create_element("AbsoluteTargetSpeed", target_elem)
+        # XSDではvalueは属性として定義されている
+        abs_target_elem.set("value", str(speed_action.speed_target))
+    elif speed_action.relative_target_speed is not None:
+        write_relative_target_speed(target_elem, speed_action.relative_target_speed)
     
     # SpeedActionDynamics
     if speed_action.dynamics is not None:
@@ -191,6 +213,9 @@ def write_lane_change_action(parent: ET.Element, lane_change_action: LaneChangeA
     rel_target_elem = _create_element("RelativeTargetLane", target_elem)
     # XSDではvalueは属性として定義されている（Int型）
     rel_target_elem.set("value", str(lane_change_action.target_lane))
+    # entityRef属性（オプション）
+    if lane_change_action.target_entity_ref:
+        rel_target_elem.set("entityRef", lane_change_action.target_entity_ref)
     
     # LaneChangeActionDynamics
     if lane_change_action.dynamics is not None:
@@ -241,6 +266,42 @@ def write_simulation_time_condition(parent: ET.Element, condition: SimulationTim
     elem.set("value", str(condition.value))
 
 
+def write_time_headway_condition(parent: ET.Element, condition: TimeHeadwayCondition):
+    """TimeHeadwayConditionをXMLに書き込み"""
+    elem = _create_element("TimeHeadwayCondition", parent)
+    elem.set("entityRef", condition.entity_ref)
+    elem.set("value", condition.value)
+    if condition.freespace:
+        elem.set("freespace", "true")
+    elem.set("coordinateSystem", condition.coordinate_system)
+    elem.set("relativeDistanceType", condition.relative_distance_type)
+    elem.set("rule", condition.rule)
+
+
+def write_storyboard_element_state_condition(parent: ET.Element, condition: StoryboardElementStateCondition):
+    """StoryboardElementStateConditionをXMLに書き込み"""
+    elem = _create_element("StoryboardElementStateCondition", parent)
+    elem.set("storyboardElementType", condition.storyboard_element_type)
+    elem.set("storyboardElementRef", condition.storyboard_element_ref)
+    elem.set("state", condition.state)
+
+
+def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
+    """ByEntityConditionをXMLに書き込み"""
+    elem = _create_element("ByEntityCondition", parent)
+    
+    if condition.triggering_entities:
+        triggering_elem = _create_element("TriggeringEntities", elem)
+        triggering_elem.set("triggeringEntitiesRule", condition.triggering_entities_rule)
+        for entity_ref in condition.triggering_entities:
+            entity_ref_elem = _create_element("EntityRef", triggering_elem)
+            entity_ref_elem.set("entityRef", entity_ref)
+    
+    if condition.entity_condition is not None:
+        entity_condition_elem = _create_element("EntityCondition", elem)
+        write_time_headway_condition(entity_condition_elem, condition.entity_condition)
+
+
 def write_condition(parent: ET.Element, condition: Condition):
     """ConditionをXMLに書き込み"""
     elem = _create_element("Condition", parent)
@@ -253,6 +314,13 @@ def write_condition(parent: ET.Element, condition: Condition):
     if condition.simulation_time_condition is not None:
         by_value_elem = _create_element("ByValueCondition", elem)
         write_simulation_time_condition(by_value_elem, condition.simulation_time_condition)
+    
+    if condition.by_entity_condition is not None:
+        write_by_entity_condition(elem, condition.by_entity_condition)
+    
+    if condition.storyboard_element_state_condition is not None:
+        by_value_elem = _create_element("ByValueCondition", elem)
+        write_storyboard_element_state_condition(by_value_elem, condition.storyboard_element_state_condition)
 
 
 def write_condition_group(parent: ET.Element, condition_group: ConditionGroup):
@@ -304,6 +372,8 @@ def write_maneuver_group(parent: ET.Element, maneuver_group: ManeuverGroup):
     
     if maneuver_group.actors:
         actors_elem = _create_element("Actors", elem)
+        if maneuver_group.select_triggering_entities is not None:
+            actors_elem.set("selectTriggeringEntities", "true" if maneuver_group.select_triggering_entities else "false")
         for actor in maneuver_group.actors:
             entity_ref_elem = _create_element("EntityRef", actors_elem)
             entity_ref_elem.set("entityRef", actor)
@@ -331,6 +401,9 @@ def write_story(parent: ET.Element, story: Story):
     """StoryをXMLに書き込み"""
     elem = _create_element("Story", parent)
     elem.set("name", story.name)
+    
+    if story.parameter_declarations is not None:
+        write_parameter_declarations(elem, story.parameter_declarations)
     
     for act in story.acts:
         write_act(elem, act)
@@ -367,12 +440,21 @@ def write_vehicle(parent: ET.Element, vehicle: Vehicle):
     elem.set("vehicleCategory", vehicle.vehicle_category)
 
 
+def write_catalog_reference(parent: ET.Element, catalog_ref: CatalogReference):
+    """CatalogReferenceをXMLに書き込み"""
+    elem = _create_element("CatalogReference", parent)
+    elem.set("catalogName", catalog_ref.catalog_name)
+    elem.set("entryName", catalog_ref.entry_name)
+
+
 def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
     """ScenarioObjectをXMLに書き込み"""
     elem = _create_element("ScenarioObject", parent)
     elem.set("name", scenario_object.name)
     
-    if scenario_object.vehicle is not None:
+    if scenario_object.catalog_reference is not None:
+        write_catalog_reference(elem, scenario_object.catalog_reference)
+    elif scenario_object.vehicle is not None:
         write_vehicle(elem, scenario_object.vehicle)
 
 

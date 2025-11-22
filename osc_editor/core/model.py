@@ -1,5 +1,7 @@
 """OpenSCENARIO 1.2 データモデル（dataclass）"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Optional, List
 from enum import Enum
@@ -80,9 +82,19 @@ class TeleportAction:
 
 
 @dataclass
+class RelativeTargetSpeed:
+    """RelativeTargetSpeed（相対速度ターゲット）"""
+    entity_ref: str
+    value: str  # パラメータ式を含む可能性があるため文字列
+    speed_target_value_type: str = "delta"  # delta, factor
+    continuous: bool = True
+
+
+@dataclass
 class SpeedAction:
     """SpeedAction（速度制御）"""
-    speed_target: float
+    speed_target: Optional[float] = None  # AbsoluteTargetSpeed用
+    relative_target_speed: Optional[RelativeTargetSpeed] = None  # RelativeTargetSpeed用
     dynamics: Optional[Dynamics] = None
 
 
@@ -90,6 +102,7 @@ class SpeedAction:
 class LaneChangeAction:
     """LaneChangeAction（レーン変更）"""
     target_lane: int
+    target_entity_ref: Optional[str] = None  # RelativeTargetLaneのentityRef属性
     dynamics: Optional[Dynamics] = None
     target_lane_offset: Optional[float] = None
 
@@ -122,12 +135,41 @@ class SimulationTimeCondition:
 
 
 @dataclass
+class TimeHeadwayCondition:
+    """TimeHeadwayCondition（時間ヘッドウェイ条件）"""
+    entity_ref: str
+    value: str  # パラメータ式を含む可能性があるため文字列
+    freespace: bool = False
+    coordinate_system: str = "entity"  # entity, road
+    relative_distance_type: str = "longitudinal"  # longitudinal, lateral
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+
+
+@dataclass
+class StoryboardElementStateCondition:
+    """StoryboardElementStateCondition（ストーリーボード要素状態条件）"""
+    storyboard_element_type: str  # act, action, event, maneuver, maneuverGroup, story
+    storyboard_element_ref: str
+    state: str  # startTransition, endTransition, stopTransition, skipTransition, completeState
+
+
+@dataclass
+class ByEntityCondition:
+    """ByEntityCondition（エンティティによる条件）"""
+    triggering_entities: List[str] = field(default_factory=list)  # Entity名のリスト
+    triggering_entities_rule: str = "any"  # any, all
+    entity_condition: Optional[TimeHeadwayCondition] = None
+
+
+@dataclass
 class Condition:
     """Condition（条件）"""
     name: str = ""
     delay: float = 0.0
     condition_edge: str = "rising"  # rising, falling, none
     simulation_time_condition: Optional[SimulationTimeCondition] = None
+    by_entity_condition: Optional[ByEntityCondition] = None
+    storyboard_element_state_condition: Optional[StoryboardElementStateCondition] = None
 
 
 @dataclass
@@ -168,6 +210,7 @@ class ManeuverGroup:
     name: str
     maximum_execution_count: int = 1
     actors: List[str] = field(default_factory=list)  # Entity名のリスト
+    select_triggering_entities: Optional[bool] = None  # ActorsのselectTriggeringEntities属性
     maneuvers: List[Maneuver] = field(default_factory=list)
 
 
@@ -184,6 +227,7 @@ class Act:
 class Story:
     """Story（ストーリー）"""
     name: str
+    parameter_declarations: Optional[ParameterDeclarations] = None
     acts: List[Act] = field(default_factory=list)
 
 
@@ -221,10 +265,18 @@ class Vehicle:
 
 
 @dataclass
+class CatalogReference:
+    """CatalogReference（カタログ参照）"""
+    catalog_name: str
+    entry_name: str
+
+
+@dataclass
 class ScenarioObject:
     """ScenarioObject（シナリオオブジェクト）"""
     name: str
     vehicle: Optional[Vehicle] = None
+    catalog_reference: Optional[CatalogReference] = None
     # 将来の拡張: pedestrian, misc_object
 
 
@@ -272,8 +324,7 @@ class RoadNetwork:
 @dataclass
 class CatalogLocations:
     """CatalogLocations（カタログ位置）"""
-    # MVPでは省略、将来の拡張用
-    pass
+    vehicle_catalog: Optional[str] = None  # VehicleCatalogのDirectoryパス
 
 
 # ============================================================================

@@ -66,7 +66,8 @@ class EsminiRunner:
         
         Args:
             scenario: 実行するシナリオ
-            road_file: OpenDRIVEファイルのパス（オプション）
+            road_file: OpenDRIVEファイルのパス（オプション、後方互換性のため残していますが使用されません。
+                       OpenSCENARIOファイル内のOpenDRIVE参照はesminiが自動的に解決します）
             output_callback: 標準出力の各行を呼び出すコールバック
         
         Returns:
@@ -83,9 +84,6 @@ class EsminiRunner:
         
         # コマンドライン引数を構築
         cmd = [self.esmini_path, "--osc", scenario_file]
-        
-        if road_file:
-            cmd.extend(["--road", road_file])
         
         # esminiを実行
         try:
