@@ -40,11 +40,11 @@ OSC_NS_MAP = {"osc": OSC_NS}
 
 
 def _create_element(tag: str, parent: Optional[ET.Element] = None) -> ET.Element:
-    """名前空間付き要素を作成"""
+    """要素を作成（名前空間なし）"""
     if parent is None:
-        elem = ET.Element(f"{{{OSC_NS}}}{tag}")
+        elem = ET.Element(tag)
     else:
-        elem = ET.SubElement(parent, f"{{{OSC_NS}}}{tag}")
+        elem = ET.SubElement(parent, tag)
     return elem
 
 
@@ -67,14 +67,16 @@ def _set_int(elem: ET.Element, tag: str, value: int):
 def write_file_header(parent: ET.Element, file_header: FileHeader):
     """FileHeaderをXMLに書き込み"""
     elem = _create_element("FileHeader", parent)
-    _set_int(elem, "revMajor", file_header.rev_major)
-    _set_int(elem, "revMinor", file_header.rev_minor)
-    if file_header.date:
-        _set_text(elem, "date", file_header.date)
-    if file_header.description:
-        _set_text(elem, "description", file_header.description)
+    # revMajorとrevMinorは属性として設定（必須）
+    elem.set("revMajor", str(file_header.rev_major))
+    elem.set("revMinor", str(file_header.rev_minor))
+    # author、date、descriptionも属性として設定
     if file_header.author:
-        _set_text(elem, "author", file_header.author)
+        elem.set("author", file_header.author)
+    if file_header.date:
+        elem.set("date", file_header.date)
+    if file_header.description:
+        elem.set("description", file_header.description)
 
 
 def write_parameter_declarations(parent: ET.Element, param_decls: ParameterDeclarations):
@@ -353,11 +355,19 @@ def write_entities(parent: ET.Element, entities: Entities):
 
 def write_xml(scenario: ScenarioDefinition, file_path: str, pretty_print: bool = True):
     """ScenarioDefinitionをXMLファイルに書き込み"""
-    root = ET.Element(f"{{{OSC_NS}}}OpenSCENARIO")
-    root.set("xmlns", OSC_NS)
+    # ルート要素を名前空間なしで作成（例ファイルと同じ形式）
+    root = ET.Element("OpenSCENARIO")
     
+    # XMLスキーマインスタンス名前空間を設定（オプション）
+    root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+    root.set("xsi:noNamespaceSchemaLocation", "../Schema/OpenSCENARIO.xsd")
+    
+    # FileHeaderがNoneの場合はデフォルト値で作成（OpenSCENARIO 1.2）
     if scenario.file_header is not None:
         write_file_header(root, scenario.file_header)
+    else:
+        default_header = FileHeader(rev_major=1, rev_minor=2)
+        write_file_header(root, default_header)
     
     if scenario.parameter_declarations is not None:
         write_parameter_declarations(root, scenario.parameter_declarations)

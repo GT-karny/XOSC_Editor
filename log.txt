@@ -3,5 +3,17 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_dxtmp4_4\scenario.xosc
-[] [error] Exception: Couldn't find OpenSCENARIO or OpenScenario element in - check XML!
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_dcoj1jd2\scenario.xosc
+[2025-11-22 22:52:23]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_dcoj1jd2\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] No fixed timestep specified - running in realtime speed
+[] [info] Generated seed 838484633
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_dcoj1jd2/scenario.xosc (v1.2)
+[] [info] 0 variables
+[] [warn] No OpenDRIVE file specified, continue without
+[] [warn] Giving up after 0 attempts to reorder 0 init actions, possible circular dependency
+[] [info] 0 parameters
+[0.000] [info] Window created at 60,60 with size 800,400
+[0.000] [warn] SetVehicleInFocus: Invalid vehicle index 0 - no change in focus
+[0.000] [info] storyBoard initState -> startTransition -> runningState
+[8.477] [info] Closing
