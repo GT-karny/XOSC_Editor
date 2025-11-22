@@ -1,0 +1,7 @@
+esmini GIT REV: v2.55.0-0-4d6f6e0
+esmini GIT TAG: v2.55.0
+esmini GIT BRANCH: tags/v2.55.0^0
+esmini BUILD VERSION: 5791
+[] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_dxtmp4_4\scenario.xosc
+[] [error] Exception: Couldn't find OpenSCENARIO or OpenScenario element in - check XML!
