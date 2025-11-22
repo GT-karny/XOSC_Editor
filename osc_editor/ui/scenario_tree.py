@@ -11,6 +11,8 @@ from osc_editor.core.model import (
     ManeuverGroup,
     Maneuver,
     Event,
+    Action,
+    Private,
     PrivateAction,
     Entities,
     ScenarioObject,
@@ -55,9 +57,12 @@ class ScenarioTreeWidget(QTreeWidget):
             if scenario.storyboard.init:
                 init_item = QTreeWidgetItem(storyboard_item, ["Init"])
                 init_item.setData(0, Qt.ItemDataRole.UserRole, scenario.storyboard.init)
-                for i, action in enumerate(scenario.storyboard.init.actions):
-                    action_item = QTreeWidgetItem(init_item, [f"Action {i+1}"])
-                    action_item.setData(0, Qt.ItemDataRole.UserRole, action)
+                for private in scenario.storyboard.init.actions:
+                    private_item = QTreeWidgetItem(init_item, [f"Private: {private.entity_ref}"])
+                    private_item.setData(0, Qt.ItemDataRole.UserRole, private)
+                    for i, action in enumerate(private.actions):
+                        action_item = QTreeWidgetItem(private_item, [f"Action {i+1}"])
+                        action_item.setData(0, Qt.ItemDataRole.UserRole, action)
             
             # Stories
             for story in scenario.storyboard.stories:
@@ -85,9 +90,12 @@ class ScenarioTreeWidget(QTreeWidget):
                                 event_item.setData(0, Qt.ItemDataRole.UserRole, event)
                                 
                                 # Actions
-                                for i, action in enumerate(event.actions):
-                                    action_item = QTreeWidgetItem(event_item, [f"Action {i+1}"])
+                                for action in event.actions:
+                                    action_item = QTreeWidgetItem(event_item, [f"Action: {action.name}"])
                                     action_item.setData(0, Qt.ItemDataRole.UserRole, action)
+                                    if action.private_action is not None:
+                                        private_action_item = QTreeWidgetItem(action_item, ["PrivateAction"])
+                                        private_action_item.setData(0, Qt.ItemDataRole.UserRole, action.private_action)
             
             storyboard_item.setExpanded(True)
     

@@ -199,16 +199,24 @@ class MenuActions(QObject):
             # 設定からesminiパスを取得
             esmini_path = self._settings.get_esmini_path()
             
-            # EsminiRunnerを初期化（設定がある場合はそれを使用、無い場合は既存の検索ロジック）
+            # EsminiRunnerを初期化（すべてのケースを処理）
+            # ケース1: ランナーなし + パスなし -> 新規作成（デフォルト検索）
+            # ケース2: ランナーなし + パスあり -> 新規作成（指定パス）
+            # ケース3: ランナーあり + パスなし -> 再初期化（デフォルト検索）
+            # ケース4: ランナーあり + パスあり -> 再初期化（指定パス）
             if self._esmini_runner is None:
+                # ランナーがない場合：新規作成
                 if esmini_path:
                     self._esmini_runner = EsminiRunner(esmini_path=esmini_path)
                 else:
                     self._esmini_runner = EsminiRunner()
             else:
-                # 既存のrunnerがある場合でも、設定が変更されている可能性があるため再初期化
+                # ランナーがある場合：設定が変更されている可能性があるため常に再初期化
                 if esmini_path:
                     self._esmini_runner = EsminiRunner(esmini_path=esmini_path)
+                else:
+                    # パスがクリアされた場合も再初期化（デフォルト検索）
+                    self._esmini_runner = EsminiRunner()
             
             road_file = None
             if self._current_scenario.road_network and self._current_scenario.road_network.logic_file:

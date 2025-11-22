@@ -3,17 +3,19 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_ya7hnm_t\scenario.xosc
-[2025-11-22 23:10:13]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_ya7hnm_t\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_a8zwpmkk\scenario.xosc
+[2025-11-22 23:47:52]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_a8zwpmkk\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 403876229
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_ya7hnm_t/scenario.xosc (v1.2)
+[] [info] Generated seed 694166760
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_a8zwpmkk/scenario.xosc (v1.1)
 [] [info] 0 variables
-[] [warn] No OpenDRIVE file specified, continue without
-[] [warn] Giving up after 0 attempts to reorder 0 init actions, possible circular dependency
-[] [info] 0 parameters
-[0.000] [info] Window created at 60,60 with size 800,400
-[0.000] [warn] SetVehicleInFocus: Invalid vehicle index 0 - no change in focus
-[0.000] [info] storyBoard initState -> startTransition -> runningState
-[1.523] [info] Closing
+[] [error] Unsupported geo reference attr: +no_defs
+[] [error] Unsupported object type: rail-pole - interpret as NONE
+[] [error] Unsupported object type: rail-pole - interpret as NONE
+[] [error] Unsupported object type: guide-post - interpret as NONE
+[] [error] Unsupported object type: guide-post - interpret as NONE
+[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/e6mini.xodr
+[] [error] Missing EntityObject
+[] [error] Failed to find object Ego
+[] [error] Exception: Failed to find object: Ego

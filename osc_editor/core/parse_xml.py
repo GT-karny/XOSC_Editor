@@ -19,6 +19,8 @@ from osc_editor.core.model import (
     ManeuverGroup,
     Maneuver,
     Event,
+    Action,
+    Private,
     PrivateAction,
     TeleportAction,
     SpeedAction,
@@ -39,6 +41,15 @@ from osc_editor.core.model import (
 # OpenSCENARIO名前空間
 OSC_NS = "{http://www.asam.net/xml}"
 OSC_NS_MAP = {"osc": "http://www.asam.net/xml"}
+
+
+def _detect_namespace(element: ET.Element) -> str:
+    """要素から名前空間を検出（グローバル変数を変更しない）"""
+    if element is None:
+        return ""
+    if element.tag.startswith("{"):
+        return element.tag[:element.tag.index("}") + 1]
+    return ""
 
 
 # ============================================================================
@@ -143,8 +154,11 @@ def parse_file_header(element: ET.Element) -> FileHeader:
 
 def parse_parameter_declarations(element: ET.Element) -> ParameterDeclarations:
     """ParameterDeclarationsをパース"""
+    if element is None:
+        return ParameterDeclarations(parameters=[])
+    ns = _detect_namespace(element)
     params = []
-    for param_elem in element.findall(f"./{OSC_NS}ParameterDeclaration"):
+    for param_elem in element.findall(f"./{ns}ParameterDeclaration"):
         params.append(
             ParameterDeclaration(
                 name=param_elem.get("name", ""),
@@ -157,8 +171,11 @@ def parse_parameter_declarations(element: ET.Element) -> ParameterDeclarations:
 
 def parse_road_network(element: ET.Element) -> RoadNetwork:
     """RoadNetworkをパース"""
-    logic_file_elem = element.find(f"./{OSC_NS}LogicFile")
-    scene_graph_elem = element.find(f"./{OSC_NS}SceneGraphFile")
+    if element is None:
+        return RoadNetwork()
+    ns = _detect_namespace(element)
+    logic_file_elem = element.find(f"./{ns}LogicFile")
+    scene_graph_elem = element.find(f"./{ns}SceneGraphFile")
     
     return RoadNetwork(
         logic_file=logic_file_elem.get("filepath") if logic_file_elem is not None else None,
@@ -234,8 +251,11 @@ def parse_transition_dynamics(element: ET.Element) -> Optional[Dynamics]:
 
 def parse_teleport_action(element: ET.Element) -> Optional[TeleportAction]:
     """TeleportActionをパース"""
-    position_elem = element.find(f"./{OSC_NS}Position/{OSC_NS}WorldPosition")
-    lane_position_elem = element.find(f"./{OSC_NS}Position/{OSC_NS}LanePosition")
+    if element is None:
+        return None
+    ns = _detect_namespace(element)
+    position_elem = element.find(f"./{ns}Position/{ns}WorldPosition")
+    lane_position_elem = element.find(f"./{ns}Position/{ns}LanePosition")
     
     position = None
     lane_position = None
@@ -256,12 +276,13 @@ def parse_speed_action(element: ET.Element) -> Optional[SpeedAction]:
     if element is None:
         return None
     
+    ns = _detect_namespace(element)
     # SpeedActionDynamicsはTransitionDynamics型（属性から取得）
-    dynamics_elem = element.find(f"./{OSC_NS}SpeedActionDynamics")
+    dynamics_elem = element.find(f"./{ns}SpeedActionDynamics")
     dynamics = parse_transition_dynamics(dynamics_elem) if dynamics_elem is not None else None
     
     # SpeedActionTargetからAbsoluteTargetSpeedのvalue属性を取得
-    speed_target_elem = element.find(f"./{OSC_NS}SpeedActionTarget/{OSC_NS}AbsoluteTargetSpeed")
+    speed_target_elem = element.find(f"./{ns}SpeedActionTarget/{ns}AbsoluteTargetSpeed")
     if speed_target_elem is None:
         return None
     
@@ -275,12 +296,13 @@ def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
     if element is None:
         return None
     
+    ns = _detect_namespace(element)
     # LaneChangeActionDynamicsはTransitionDynamics型（属性から取得）
-    dynamics_elem = element.find(f"./{OSC_NS}LaneChangeActionDynamics")
+    dynamics_elem = element.find(f"./{ns}LaneChangeActionDynamics")
     dynamics = parse_transition_dynamics(dynamics_elem) if dynamics_elem is not None else None
     
     # LaneChangeTargetからRelativeTargetLaneのvalue属性を取得（Int型）
-    target_lane_elem = element.find(f"./{OSC_NS}LaneChangeTarget/{OSC_NS}RelativeTargetLane")
+    target_lane_elem = element.find(f"./{ns}LaneChangeTarget/{ns}RelativeTargetLane")
     if target_lane_elem is None:
         return None
     
@@ -305,9 +327,12 @@ def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
 
 def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
     """PrivateActionをパース"""
-    teleport_elem = element.find(f"./{OSC_NS}TeleportAction")
-    speed_elem = element.find(f"./{OSC_NS}LongitudinalAction/{OSC_NS}SpeedAction")
-    lane_change_elem = element.find(f"./{OSC_NS}LateralAction/{OSC_NS}LaneChangeAction")
+    if element is None:
+        return None
+    ns = _detect_namespace(element)
+    teleport_elem = element.find(f"./{ns}TeleportAction")
+    speed_elem = element.find(f"./{ns}LongitudinalAction/{ns}SpeedAction")
+    lane_change_elem = element.find(f"./{ns}LateralAction/{ns}LaneChangeAction")
     
     teleport_action = parse_teleport_action(teleport_elem) if teleport_elem is not None else None
     speed_action = parse_speed_action(speed_elem) if speed_elem is not None else None
@@ -320,6 +345,50 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
         teleport_action=teleport_action,
         speed_action=speed_action,
         lane_change_action=lane_change_action,
+    )
+
+
+def parse_action(element: ET.Element) -> Optional[Action]:
+    """Actionをパース（XSD準拠：name属性が必須）"""
+    if element is None:
+        return None
+    
+    name = _get_attr(element, "name", "")
+    if not name:
+        return None
+    
+    ns = _detect_namespace(element)
+    # PrivateActionを取得
+    private_action_elem = element.find(f"./{ns}PrivateAction")
+    private_action = parse_private_action(private_action_elem) if private_action_elem is not None else None
+    
+    # 将来の拡張: GlobalAction, UserDefinedAction
+    
+    return Action(
+        name=name,
+        private_action=private_action,
+    )
+
+
+def parse_private(element: ET.Element) -> Optional[Private]:
+    """Privateをパース（XSD準拠：entityRef属性が必須）"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    if not entity_ref:
+        return None
+    
+    ns = _detect_namespace(element)
+    actions = []
+    for action_elem in element.findall(f"./{ns}PrivateAction"):
+        action = parse_private_action(action_elem)
+        if action is not None:
+            actions.append(action)
+    
+    return Private(
+        entity_ref=entity_ref,
+        actions=actions,
     )
 
 
@@ -340,7 +409,8 @@ def parse_condition(element: ET.Element) -> Condition:
     delay = _get_attr_float(element, "delay", 0.0)
     condition_edge = _get_attr(element, "conditionEdge", "rising")
     
-    sim_time_elem = element.find(f"./{OSC_NS}ByValueCondition/{OSC_NS}SimulationTimeCondition")
+    ns = _detect_namespace(element)
+    sim_time_elem = element.find(f"./{ns}ByValueCondition/{ns}SimulationTimeCondition")
     sim_time_condition = parse_simulation_time_condition(sim_time_elem) if sim_time_elem is not None else None
     
     return Condition(
@@ -353,8 +423,11 @@ def parse_condition(element: ET.Element) -> Condition:
 
 def parse_condition_group(element: ET.Element) -> ConditionGroup:
     """ConditionGroupをパース"""
+    if element is None:
+        return ConditionGroup(conditions=[])
+    ns = _detect_namespace(element)
     conditions = []
-    for cond_elem in element.findall(f"./{OSC_NS}Condition"):
+    for cond_elem in element.findall(f"./{ns}Condition"):
         conditions.append(parse_condition(cond_elem))
     return ConditionGroup(conditions=conditions)
 
@@ -364,8 +437,9 @@ def parse_start_trigger(element: ET.Element) -> Optional[StartTrigger]:
     if element is None:
         return None
     
+    ns = _detect_namespace(element)
     condition_groups = []
-    for cg_elem in element.findall(f"./{OSC_NS}ConditionGroup"):
+    for cg_elem in element.findall(f"./{ns}ConditionGroup"):
         condition_groups.append(parse_condition_group(cg_elem))
     
     if not condition_groups:
@@ -375,7 +449,9 @@ def parse_start_trigger(element: ET.Element) -> Optional[StartTrigger]:
 
 
 def parse_event(element: ET.Element) -> Event:
-    """Eventをパース"""
+    """Eventをパース（XSD準拠：Action要素を正しくパース）"""
+    if element is None:
+        return Event(name="", priority=Rule.OVERRIDE, actions=[], start_trigger=None)
     name = element.get("name", "")
     priority_str = element.get("priority", "override")
     try:
@@ -383,13 +459,14 @@ def parse_event(element: ET.Element) -> Event:
     except ValueError:
         priority = Rule.OVERRIDE
     
+    ns = _detect_namespace(element)
     actions = []
-    for action_elem in element.findall(f"./{OSC_NS}Action/{OSC_NS}PrivateAction"):
-        action = parse_private_action(action_elem)
+    for action_elem in element.findall(f"./{ns}Action"):
+        action = parse_action(action_elem)
         if action is not None:
             actions.append(action)
     
-    start_trigger_elem = element.find(f"./{OSC_NS}StartTrigger")
+    start_trigger_elem = element.find(f"./{ns}StartTrigger")
     start_trigger = parse_start_trigger(start_trigger_elem)
     
     return Event(
@@ -402,9 +479,12 @@ def parse_event(element: ET.Element) -> Event:
 
 def parse_maneuver(element: ET.Element) -> Maneuver:
     """Maneuverをパース"""
+    if element is None:
+        return Maneuver(name="", events=[])
     name = element.get("name", "")
+    ns = _detect_namespace(element)
     events = []
-    for event_elem in element.findall(f"./{OSC_NS}Event"):
+    for event_elem in element.findall(f"./{ns}Event"):
         events.append(parse_event(event_elem))
     
     return Maneuver(name=name, events=events)
@@ -417,16 +497,17 @@ def parse_maneuver_group(element: ET.Element) -> ManeuverGroup:
     name = _get_attr(element, "name", "")
     max_exec = _get_attr_int(element, "maximumExecutionCount", 1)
     
+    ns = _detect_namespace(element)
     actors = []
-    actors_elem = element.find(f"./{OSC_NS}Actors")
+    actors_elem = element.find(f"./{ns}Actors")
     if actors_elem is not None:
-        for entity_elem in actors_elem.findall(f"./{OSC_NS}EntityRef"):
+        for entity_elem in actors_elem.findall(f"./{ns}EntityRef"):
             entity_ref = entity_elem.get("entityRef", "")
             if entity_ref:
                 actors.append(entity_ref)
     
     maneuvers = []
-    for maneuver_elem in element.findall(f"./{OSC_NS}Maneuver"):
+    for maneuver_elem in element.findall(f"./{ns}Maneuver"):
         maneuvers.append(parse_maneuver(maneuver_elem))
     
     return ManeuverGroup(
@@ -439,16 +520,19 @@ def parse_maneuver_group(element: ET.Element) -> ManeuverGroup:
 
 def parse_act(element: ET.Element) -> Act:
     """Actをパース"""
+    if element is None:
+        return Act(name="", maneuver_groups=[], start_trigger=None, stop_trigger=None)
     name = element.get("name", "")
     
+    ns = _detect_namespace(element)
     maneuver_groups = []
-    for mg_elem in element.findall(f"./{OSC_NS}ManeuverGroup"):
+    for mg_elem in element.findall(f"./{ns}ManeuverGroup"):
         maneuver_groups.append(parse_maneuver_group(mg_elem))
     
-    start_trigger_elem = element.find(f"./{OSC_NS}StartTrigger")
+    start_trigger_elem = element.find(f"./{ns}StartTrigger")
     start_trigger = parse_start_trigger(start_trigger_elem)
     
-    stop_trigger_elem = element.find(f"./{OSC_NS}StopTrigger")
+    stop_trigger_elem = element.find(f"./{ns}StopTrigger")
     stop_trigger = parse_start_trigger(stop_trigger_elem)  # StopTriggerもStartTriggerと同じ構造
     
     return Act(
@@ -461,35 +545,44 @@ def parse_act(element: ET.Element) -> Act:
 
 def parse_story(element: ET.Element) -> Story:
     """Storyをパース"""
+    if element is None:
+        return Story(name="", acts=[])
     name = element.get("name", "")
+    ns = _detect_namespace(element)
     acts = []
-    for act_elem in element.findall(f"./{OSC_NS}Act"):
+    for act_elem in element.findall(f"./{ns}Act"):
         acts.append(parse_act(act_elem))
     
     return Story(name=name, acts=acts)
 
 
 def parse_init(element: ET.Element) -> Init:
-    """Initをパース"""
-    actions = []
-    for action_elem in element.findall(f"./{OSC_NS}Actions/{OSC_NS}PrivateAction"):
-        action = parse_private_action(action_elem)
-        if action is not None:
-            actions.append(action)
+    """Initをパース（XSD準拠：Private要素を正しくパース）"""
+    if element is None:
+        return Init(actions=[])
+    ns = _detect_namespace(element)
+    privates = []
+    for private_elem in element.findall(f"./{ns}Actions/{ns}Private"):
+        private = parse_private(private_elem)
+        if private is not None:
+            privates.append(private)
     
-    return Init(actions=actions)
+    return Init(actions=privates)
 
 
 def parse_storyboard(element: ET.Element) -> Storyboard:
     """Storyboardをパース"""
-    init_elem = element.find(f"./{OSC_NS}Init")
+    if element is None:
+        return Storyboard()
+    ns = _detect_namespace(element)
+    init_elem = element.find(f"./{ns}Init")
     init = parse_init(init_elem) if init_elem is not None else None
     
     stories = []
-    for story_elem in element.findall(f"./{OSC_NS}Story"):
+    for story_elem in element.findall(f"./{ns}Story"):
         stories.append(parse_story(story_elem))
     
-    stop_trigger_elem = element.find(f"./{OSC_NS}StopTrigger")
+    stop_trigger_elem = element.find(f"./{ns}StopTrigger")
     stop_trigger = parse_start_trigger(stop_trigger_elem)
     
     return Storyboard(
@@ -508,8 +601,11 @@ def parse_vehicle(element: ET.Element) -> Vehicle:
 
 def parse_scenario_object(element: ET.Element) -> ScenarioObject:
     """ScenarioObjectをパース"""
+    if element is None:
+        return ScenarioObject(name="")
     name = element.get("name", "")
-    vehicle_elem = element.find(f"./{OSC_NS}Vehicle")
+    ns = _detect_namespace(element)
+    vehicle_elem = element.find(f"./{ns}Vehicle")
     vehicle = parse_vehicle(vehicle_elem) if vehicle_elem is not None else None
     
     return ScenarioObject(name=name, vehicle=vehicle)
@@ -517,40 +613,41 @@ def parse_scenario_object(element: ET.Element) -> ScenarioObject:
 
 def parse_entities(element: ET.Element) -> Entities:
     """Entitiesをパース"""
+    if element is None:
+        return Entities(scenario_objects=[])
+    ns = _detect_namespace(element)
     scenario_objects = []
-    for obj_elem in element.findall(f"./{OSC_NS}ScenarioObject"):
+    for obj_elem in element.findall(f"./{ns}ScenarioObject"):
         scenario_objects.append(parse_scenario_object(obj_elem))
     
     return Entities(scenario_objects=scenario_objects)
 
 
 def parse_xml(file_path: str) -> ScenarioDefinition:
-    """XMLファイルをパースしてScenarioDefinitionを返す"""
+    """XMLファイルをパースしてScenarioDefinitionを返す（グローバル変数を変更しない）"""
     tree = ET.parse(file_path)
     root = tree.getroot()
     
-    # 名前空間の処理
-    if root.tag.startswith("{"):
-        # 名前空間が含まれている場合、それをOSC_NSとして使用
-        global OSC_NS
-        OSC_NS = root.tag[:root.tag.index("}") + 1]
+    # 名前空間の処理（ローカル変数として保持、グローバル変数は変更しない）
+    local_osc_ns = _detect_namespace(root)
     
-    file_header_elem = root.find(f"./{OSC_NS}FileHeader")
+    # 名前空間を使用して要素を検索（ローカル変数を使用）
+    file_header_elem = root.find(f"./{local_osc_ns}FileHeader")
     file_header = parse_file_header(file_header_elem) if file_header_elem is not None else None
     
-    param_decls_elem = root.find(f"./{OSC_NS}ParameterDeclarations")
+    param_decls_elem = root.find(f"./{local_osc_ns}ParameterDeclarations")
     param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
     
-    catalog_locs_elem = root.find(f"./{OSC_NS}CatalogLocations")
+    catalog_locs_elem = root.find(f"./{local_osc_ns}CatalogLocations")
     catalog_locs = parse_catalog_locations(catalog_locs_elem) if catalog_locs_elem is not None else None
     
-    road_network_elem = root.find(f"./{OSC_NS}RoadNetwork")
+    road_network_elem = root.find(f"./{local_osc_ns}RoadNetwork")
     road_network = parse_road_network(road_network_elem) if road_network_elem is not None else None
     
-    entities_elem = root.find(f"./{OSC_NS}Entities")
+    entities_elem = root.find(f"./{local_osc_ns}Entities")
     entities = parse_entities(entities_elem) if entities_elem is not None else None
     
-    storyboard_elem = root.find(f"./{OSC_NS}Storyboard")
+    storyboard_elem = root.find(f"./{local_osc_ns}Storyboard")
     storyboard = parse_storyboard(storyboard_elem) if storyboard_elem is not None else None
     
     return ScenarioDefinition(

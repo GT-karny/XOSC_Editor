@@ -102,6 +102,14 @@ class PrivateAction:
     lane_change_action: Optional[LaneChangeAction] = None
 
 
+@dataclass
+class Action:
+    """Action（アクション、XSDではname属性が必須）"""
+    name: str
+    private_action: Optional[PrivateAction] = None
+    # 将来の拡張: global_action, user_defined_action
+
+
 # ============================================================================
 # Trigger / Condition関連
 # ============================================================================
@@ -143,7 +151,7 @@ class Event:
     """Event（イベント）"""
     name: str
     priority: Rule = Rule.OVERRIDE
-    actions: List[PrivateAction] = field(default_factory=list)
+    actions: List[Action] = field(default_factory=list)
     start_trigger: Optional[StartTrigger] = None
 
 
@@ -180,9 +188,16 @@ class Story:
 
 
 @dataclass
+class Private:
+    """Private（プライベートアクション、XSDではentityRef属性が必須）"""
+    entity_ref: str
+    actions: List[PrivateAction] = field(default_factory=list)
+
+
+@dataclass
 class Init:
     """Init（初期化）"""
-    actions: List[PrivateAction] = field(default_factory=list)
+    actions: List[Private] = field(default_factory=list)
 
 
 @dataclass

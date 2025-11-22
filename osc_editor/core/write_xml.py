@@ -19,6 +19,8 @@ from osc_editor.core.model import (
     ManeuverGroup,
     Maneuver,
     Event,
+    Action,
+    Private,
     PrivateAction,
     TeleportAction,
     SpeedAction,
@@ -211,6 +213,26 @@ def write_private_action(parent: ET.Element, private_action: PrivateAction):
         write_lane_change_action(lat_elem, private_action.lane_change_action)
 
 
+def write_action(parent: ET.Element, action: Action):
+    """ActionをXMLに書き込み（XSD準拠：name属性が必須）"""
+    elem = _create_element("Action", parent)
+    elem.set("name", action.name)
+    
+    if action.private_action is not None:
+        write_private_action(elem, action.private_action)
+    
+    # 将来の拡張: GlobalAction, UserDefinedAction
+
+
+def write_private(parent: ET.Element, private: Private):
+    """PrivateをXMLに書き込み（XSD準拠：entityRef属性が必須）"""
+    elem = _create_element("Private", parent)
+    elem.set("entityRef", private.entity_ref)
+    
+    for action in private.actions:
+        write_private_action(elem, action)
+
+
 def write_simulation_time_condition(parent: ET.Element, condition: SimulationTimeCondition):
     """SimulationTimeConditionをXMLに書き込み（XSD準拠：属性として書き込み）"""
     elem = _create_element("SimulationTimeCondition", parent)
@@ -251,14 +273,13 @@ def write_start_trigger(parent: ET.Element, start_trigger: StartTrigger):
 
 
 def write_event(parent: ET.Element, event: Event):
-    """EventをXMLに書き込み"""
+    """EventをXMLに書き込み（XSD準拠：Action要素を正しく書き込み）"""
     elem = _create_element("Event", parent)
     elem.set("name", event.name)
     elem.set("priority", event.priority.value)
     
     for action in event.actions:
-        action_elem = _create_element("Action", elem)
-        write_private_action(action_elem, action)
+        write_action(elem, action)
     
     if event.start_trigger is not None:
         write_start_trigger(elem, event.start_trigger)
@@ -316,13 +337,13 @@ def write_story(parent: ET.Element, story: Story):
 
 
 def write_init(parent: ET.Element, init: Init):
-    """InitをXMLに書き込み"""
+    """InitをXMLに書き込み（XSD準拠：Private要素を正しく書き込み）"""
     elem = _create_element("Init", parent)
     
     if init.actions:
         actions_elem = _create_element("Actions", elem)
-        for action in init.actions:
-            write_private_action(actions_elem, action)
+        for private in init.actions:
+            write_private(actions_elem, private)
 
 
 def write_storyboard(parent: ET.Element, storyboard: Storyboard):
