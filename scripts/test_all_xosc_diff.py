@@ -7,6 +7,10 @@ from typing import List, Dict, Any
 import difflib
 import xml.etree.ElementTree as ET
 
+# プロジェクトルートをパスに追加
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 # XML正規化用の関数
 def normalize_xml(xml_string: str) -> str:
     """XMLを正規化して比較しやすくする"""

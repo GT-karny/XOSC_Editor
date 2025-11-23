@@ -14,7 +14,7 @@
 |---------|---------|---------|--------|------|--------|
 | 基本構造要素 | 14 | 1 | 2 | 17 | 88% |
 | Position関連 | 11 | 0 | 2 | 13 | 85% |
-| Action関連 | 18 | 4 | 12 | 34 | 65% |
+| Action関連 | 20 | 2 | 12 | 34 | 71% |
 | Condition関連 | 21 | 1 | 0 | 22 | 95% |
 | Entity関連 | 11 | 1 | 4 | 16 | 75% |
 | Trajectory関連 | 8 | 0 | 1 | 9 | 89% |
@@ -22,8 +22,8 @@
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | ParameterValueDistribution関連 | 10 | 0 | 0 | 10 | 100% |
 | Variable関連 | 9 | 0 | 0 | 9 | 100% |
-| その他 | 1 | 1 | 16 | 18 | 11% |
-| **合計** | **108** | **8** | **39** | **155** | **75%** |
+| その他 | 4 | 1 | 13 | 18 | 28% |
+| **合計** | **112** | **4** | **39** | **155** | **75%** |
 
 ## 1. 基本構造要素
 
@@ -88,7 +88,7 @@
 | TeleportAction | ✅ | 全Positionタイプに対応 |
 | SpeedAction | ✅ | SpeedActionDynamics, AbsoluteTargetSpeed, RelativeTargetSpeedに対応 |
 | LaneChangeAction | ✅ | LaneChangeActionDynamics, RelativeTargetLane, AbsoluteTargetLane, targetLaneOffsetに対応 |
-| LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffset, continuous属性に対応 |
+| LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffset, RelativeTargetLaneOffset, continuous属性に対応 |
 | AssignRouteAction | ✅ | CatalogReferenceとRoute要素に対応 |
 | FollowTrajectoryAction | ✅ | Trajectory（deprecated）, TrajectoryRef, TimeReference, TrajectoryFollowingMode, initialDistanceOffsetに対応 |
 | AcquirePositionAction | ✅ | Position要素（全Positionタイプ）に対応 |
@@ -133,17 +133,17 @@
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
 | SpeedActionTarget | ✅ | AbsoluteTargetSpeed, RelativeTargetSpeedに対応 |
-| AbsoluteTargetSpeed | ⚠️ | value属性のみ対応。SteadyStateは未対応 |
+| AbsoluteTargetSpeed | ✅ | value属性に対応（SteadyStateは含まれない） |
 | RelativeTargetSpeed | ✅ | entityRef, value, speedTargetValueType, continuous属性に対応 |
 | LaneChangeTarget | ✅ | RelativeTargetLane, AbsoluteTargetLaneに対応 |
 | RelativeTargetLane | ✅ | value, entityRef属性に対応 |
 | AbsoluteTargetLane | ✅ | value属性に対応（String型） |
-| LaneOffsetTarget | ✅ | AbsoluteTargetLaneOffsetに対応 |
+| LaneOffsetTarget | ✅ | AbsoluteTargetLaneOffset, RelativeTargetLaneOffsetに対応 |
 | AbsoluteTargetLaneOffset | ✅ | value属性に対応 |
-| RelativeTargetLaneOffset | ❌ | 未対応 |
-| FinalSpeed | ⚠️ | SynchronizeAction内でAbsoluteSpeed, RelativeSpeedToMasterに対応 |
-| AbsoluteSpeed | ✅ | SynchronizeAction内でvalue属性に対応 |
-| RelativeSpeedToMaster | ✅ | SynchronizeAction内でspeedTargetValueType, value属性に対応 |
+| RelativeTargetLaneOffset | ✅ | entityRef, value属性に対応 |
+| FinalSpeed | ✅ | SynchronizeAction内でAbsoluteSpeed, RelativeSpeedToMasterに対応（SteadyState含む） |
+| AbsoluteSpeed | ✅ | SynchronizeAction内でvalue属性とSteadyStateに対応 |
+| RelativeSpeedToMaster | ✅ | SynchronizeAction内でspeedTargetValueType, value属性とSteadyStateに対応 |
 
 ## 5. Condition関連
 
@@ -331,4 +331,9 @@
 | AnimationAction詳細 | ❌ | AnimationType, AnimationStateの詳細実装が必要 |
 | RoadNetwork詳細 | ❌ | TrafficSignals, UsedAreaに対応する必要あり |
 | FileHeader詳細 | ❌ | License, Properties要素に対応する必要あり |
+
+## 更新履歴
+
+- 2025-11-23 14:24: Action関連補助要素の実装完了（AbsoluteTargetLaneのString型対応、RelativeTargetLaneOffset、FinalSpeed内のSteadyState対応：TargetDistanceSteadyState/TargetTimeSteadyState）
+- 2025-11-23 14:00: Variable関連の実装完了（VariableDeclarations, VariableDeclaration, VariableAction, VariableSetAction, VariableModifyAction, VariableModifyRule, VariableAddValueRule, VariableMultiplyByValueRule, VariableCondition）
 

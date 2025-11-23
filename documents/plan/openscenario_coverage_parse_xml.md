@@ -14,15 +14,15 @@
 |---------|---------|---------|--------|------|--------|
 | 基本構造要素 | 15 | 1 | 1 | 17 | 94% |
 | Position関連 | 11 | 0 | 2 | 13 | 85% |
-| Action関連 | 17 | 3 | 14 | 34 | 59% |
+| Action関連 | 19 | 2 | 13 | 34 | 68% |
 | Condition関連 | 21 | 1 | 0 | 22 | 95% |
 | Entity関連 | 12 | 1 | 3 | 16 | 81% |
 | Trajectory関連 | 8 | 0 | 1 | 9 | 89% |
 | Dynamics関連 | 3 | 0 | 0 | 3 | 100% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | ParameterValueDistribution関連 | 10 | 0 | 0 | 10 | 100% |
-| その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **100** | **4** | **40** | **144** | **72%** |
+| その他 | 5 | 1 | 12 | 18 | 33% |
+| **合計** | **102** | **3** | **39** | **144** | **73%** |
 
 ## 1. 基本構造要素
 
@@ -78,7 +78,7 @@
 | TeleportAction | ✅ | WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition, RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPositionに対応 |
 | SpeedAction | ✅ | SpeedActionDynamics, AbsoluteTargetSpeed, RelativeTargetSpeedに対応 |
 | LaneChangeAction | ✅ | LaneChangeActionDynamics, RelativeTargetLane, AbsoluteTargetLaneに対応 |
-| LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffsetに対応 |
+| LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffset, RelativeTargetLaneOffsetに対応 |
 | AssignRouteAction | ✅ | CatalogReferenceとRoute要素に対応 |
 | FollowTrajectoryAction | ✅ | Trajectory（deprecated）, TrajectoryRef, TimeReference, TrajectoryFollowingMode, initialDistanceOffsetに対応 |
 | RoutingAction | ✅ | AssignRouteAction, FollowTrajectoryAction, AcquirePositionActionに対応 |
@@ -100,13 +100,13 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| GlobalAction | ⚠️ | ParameterActionのみ対応 |
+| GlobalAction | ⚠️ | ParameterAction, VariableActionのみ対応。EnvironmentAction, EntityAction, InfrastructureAction, TrafficActionは未対応 |
 | ParameterAction | ✅ | SetActionに対応。ModifyActionは未対応（deprecated） |
+| VariableAction | ✅ | VariableSetAction, VariableModifyActionに対応 |
 | EnvironmentAction | ❌ | 未対応 |
 | EntityAction | ❌ | AddEntityAction, DeleteEntityActionは未対応 |
 | InfrastructureAction | ❌ | TrafficSignalActionは未対応 |
 | TrafficAction | ❌ | TrafficSourceAction, TrafficSinkAction, TrafficSwarmAction, TrafficStopActionは未対応 |
-| VariableAction | ❌ | 未対応 |
 
 ### 3.3 UserDefinedAction
 
@@ -120,17 +120,17 @@
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
 | SpeedActionTarget | ✅ | AbsoluteTargetSpeed, RelativeTargetSpeedに対応 |
-| AbsoluteTargetSpeed | ⚠️ | value属性のみ対応。SteadyStateは未対応 |
+| AbsoluteTargetSpeed | ✅ | value属性に対応（SteadyStateは含まれない） |
 | RelativeTargetSpeed | ✅ | entityRef, value, speedTargetValueType, continuousに対応 |
 | LaneChangeTarget | ✅ | RelativeTargetLane, AbsoluteTargetLaneに対応 |
-| RelativeTargetLane | ⚠️ | value, entityRefのみ対応 |
-| AbsoluteTargetLane | ⚠️ | valueのみ対応（String型として扱う必要あり） |
-| LaneOffsetTarget | ⚠️ | AbsoluteTargetLaneOffsetのみ対応 |
+| RelativeTargetLane | ✅ | value, entityRefに対応 |
+| AbsoluteTargetLane | ✅ | value（String型）に対応 |
+| LaneOffsetTarget | ✅ | AbsoluteTargetLaneOffset, RelativeTargetLaneOffsetに対応 |
 | AbsoluteTargetLaneOffset | ✅ | value属性に対応 |
-| RelativeTargetLaneOffset | ❌ | 未対応 |
-| FinalSpeed | ⚠️ | SynchronizeAction内でAbsoluteSpeed, RelativeSpeedToMasterに対応 |
-| AbsoluteSpeed | ✅ | SynchronizeAction内でvalue属性に対応 |
-| RelativeSpeedToMaster | ✅ | SynchronizeAction内でspeedTargetValueType, value属性に対応 |
+| RelativeTargetLaneOffset | ✅ | entityRef, valueに対応 |
+| FinalSpeed | ✅ | SynchronizeAction内でAbsoluteSpeed, RelativeSpeedToMasterに対応（SteadyState含む） |
+| AbsoluteSpeed | ✅ | SynchronizeAction内でvalue属性とSteadyStateに対応 |
+| RelativeSpeedToMaster | ✅ | SynchronizeAction内でspeedTargetValueType, value属性とSteadyStateに対応 |
 
 ## 4. Condition関連
 
@@ -353,9 +353,9 @@
 |--------|---------|------|
 | Actors | ⚠️ | EntityRefのみ対応。selectTriggeringEntitiesは部分的に対応 |
 | UsedArea | ❌ | RoadNetwork内のUsedArea未対応 |
-| SteadyState | ❌ | AbsoluteSpeed, RelativeSpeedToMaster内のSteadyState未対応 |
-| TargetDistanceSteadyState | ❌ | 未対応 |
-| TargetTimeSteadyState | ❌ | 未対応 |
+| SteadyState | ✅ | FinalSpeed内のAbsoluteSpeed, RelativeSpeedToMaster内のSteadyStateに対応 |
+| TargetDistanceSteadyState | ✅ | FinalSpeed内のAbsoluteSpeed, RelativeSpeedToMaster内で対応 |
+| TargetTimeSteadyState | ✅ | FinalSpeed内のAbsoluteSpeed, RelativeSpeedToMaster内で対応 |
 | Color | ❌ | AppearanceAction関連で使用されるColor未対応 |
 | ColorRgb | ❌ | 未対応 |
 | ColorCmyk | ❌ | 未対応 |
@@ -410,6 +410,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 14:24: Action関連補助要素の実装完了（AbsoluteTargetLaneのString型対応、RelativeTargetLaneOffset、FinalSpeed内のSteadyState対応：TargetDistanceSteadyState/TargetTimeSteadyState）
 - 2025-11-23 14:00: PrivateAction関連の実装完了（AcquirePositionAction, SpeedProfileAction, LongitudinalDistanceAction, LateralDistanceAction, ControllerAction, DynamicConstraints）
 - 2025-11-23 13:45: SpeedActionDynamicsのvalue属性パラメータ式対応修正（パラメータ式を文字列として保存できるように変更）
 - 2025-11-23 13:00: ParameterValueDistribution関連の実装完了（ScenarioFile, Deterministic, DeterministicMultiParameterDistribution, ValueSetDistribution, ParameterValueSet, DeterministicSingleParameterDistribution, DistributionSet, DistributionRange, Range, Element）

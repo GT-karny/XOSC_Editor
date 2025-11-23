@@ -238,9 +238,9 @@ class LongitudinalDistanceAction:
 @dataclass
 class LaneChangeAction:
     """LaneChangeAction（レーン変更）"""
-    target_lane: Optional[int] = None  # RelativeTargetLaneまたはAbsoluteTargetLaneのvalue
+    target_lane: Optional[int] = None  # RelativeTargetLaneのvalue
     target_entity_ref: Optional[str] = None  # RelativeTargetLaneのentityRef属性
-    target_lane_absolute: Optional[int] = None  # AbsoluteTargetLaneのvalue（entityRefなしの場合）
+    target_lane_absolute: Optional[str] = None  # AbsoluteTargetLaneのvalue（String型、パラメータ参照も可）
     dynamics: Optional[Dynamics] = None
     target_lane_offset: Optional[float] = None
 
@@ -255,7 +255,9 @@ class LaneOffsetActionDynamics:
 @dataclass
 class LaneOffsetAction:
     """LaneOffsetAction（レーンオフセット）"""
-    target_offset: Union[str, float]  # AbsoluteTargetLaneOffsetのvalue
+    target_offset: Optional[Union[str, float]] = None  # AbsoluteTargetLaneOffsetのvalue
+    target_offset_relative: Optional[Union[str, float]] = None  # RelativeTargetLaneOffsetのvalue
+    target_offset_entity_ref: Optional[str] = None  # RelativeTargetLaneOffsetのentityRef属性
     dynamics: Optional[LaneOffsetActionDynamics] = None
     continuous: bool = True  # continuous属性
 
@@ -406,6 +408,18 @@ class VisibilityAction:
 
 
 @dataclass
+class TargetDistanceSteadyState:
+    """TargetDistanceSteadyState（目標距離定常状態）"""
+    distance: Union[str, float]  # required
+
+
+@dataclass
+class TargetTimeSteadyState:
+    """TargetTimeSteadyState（目標時間定常状態）"""
+    time: Union[str, float]  # required
+
+
+@dataclass
 class SynchronizeAction:
     """SynchronizeAction（同期アクション）"""
     master_entity_ref: str  # required
@@ -415,7 +429,7 @@ class SynchronizeAction:
                            RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
     target_tolerance_master: Optional[Union[str, float]] = None  # optional
     target_tolerance: Optional[Union[str, float]] = None  # optional
-    final_speed: Optional[dict] = None  # FinalSpeed要素（AbsoluteSpeedまたはRelativeSpeedToMaster）
+    final_speed: Optional[dict] = None  # FinalSpeed要素（AbsoluteSpeedまたはRelativeSpeedToMaster）。SteadyState情報を含む
 
 
 @dataclass

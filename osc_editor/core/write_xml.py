@@ -770,8 +770,16 @@ def write_lane_offset_action(parent: ET.Element, lane_offset_action: LaneOffsetA
         write_lane_offset_action_dynamics(elem, lane_offset_action.dynamics)
     
     target_elem = _create_element("LaneOffsetTarget", elem)
-    abs_target_elem = _create_element("AbsoluteTargetLaneOffset", target_elem)
-    abs_target_elem.set("value", str(lane_offset_action.target_offset))
+    
+    # AbsoluteTargetLaneOffsetまたはRelativeTargetLaneOffsetを選択
+    if lane_offset_action.target_offset is not None:
+        abs_target_elem = _create_element("AbsoluteTargetLaneOffset", target_elem)
+        abs_target_elem.set("value", str(lane_offset_action.target_offset))
+    elif lane_offset_action.target_offset_relative is not None:
+        rel_target_elem = _create_element("RelativeTargetLaneOffset", target_elem)
+        if lane_offset_action.target_offset_entity_ref:
+            rel_target_elem.set("entityRef", lane_offset_action.target_offset_entity_ref)
+        rel_target_elem.set("value", str(lane_offset_action.target_offset_relative))
 
 
 def write_vertex(parent: ET.Element, vertex: Vertex):
@@ -1138,10 +1146,31 @@ def write_synchronize_action(parent: ET.Element, synchronize_action: Synchronize
         if synchronize_action.final_speed.get("type") == "AbsoluteSpeed":
             abs_speed_elem = _create_element("AbsoluteSpeed", final_speed_elem)
             abs_speed_elem.set("value", str(synchronize_action.final_speed.get("value", "")))
+            # SteadyState要素を書き込み
+            steady_state = synchronize_action.final_speed.get("steadyState")
+            if steady_state is not None:
+                if steady_state.get("type") == "TargetDistanceSteadyState":
+                    target_distance_elem = _create_element("TargetDistanceSteadyState", abs_speed_elem)
+                    target_distance_elem.set("distance", str(steady_state.get("distance", "")))
+                elif steady_state.get("type") == "TargetTimeSteadyState":
+                    target_time_elem = _create_element("TargetTimeSteadyState", abs_speed_elem)
+                    target_time_elem.set("time", str(steady_state.get("time", "")))
+        elif synchronize_action.final_speed.get("type") == "RelativeSpeedToMaster":
+            abs_speed_elem = _create_element("AbsoluteSpeed", final_speed_elem)
+            abs_speed_elem.set("value", str(synchronize_action.final_speed.get("value", "")))
         elif synchronize_action.final_speed.get("type") == "RelativeSpeedToMaster":
             rel_speed_elem = _create_element("RelativeSpeedToMaster", final_speed_elem)
             rel_speed_elem.set("speedTargetValueType", synchronize_action.final_speed.get("speedTargetValueType", "delta"))
             rel_speed_elem.set("value", str(synchronize_action.final_speed.get("value", "")))
+            # SteadyState要素を書き込み
+            steady_state = synchronize_action.final_speed.get("steadyState")
+            if steady_state is not None:
+                if steady_state.get("type") == "TargetDistanceSteadyState":
+                    target_distance_elem = _create_element("TargetDistanceSteadyState", rel_speed_elem)
+                    target_distance_elem.set("distance", str(steady_state.get("distance", "")))
+                elif steady_state.get("type") == "TargetTimeSteadyState":
+                    target_time_elem = _create_element("TargetTimeSteadyState", rel_speed_elem)
+                    target_time_elem.set("time", str(steady_state.get("time", "")))
 
 
 def write_appearance_action(parent: ET.Element, appearance_action: AppearanceAction):

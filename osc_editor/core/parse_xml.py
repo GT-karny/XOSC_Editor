@@ -58,6 +58,8 @@ from osc_editor.core.model import (
     LaneOffsetActionDynamics,
     VisibilityAction,
     SynchronizeAction,
+    TargetDistanceSteadyState,
+    TargetTimeSteadyState,
     AppearanceAction,
     WorldPosition,
     LanePosition,
@@ -897,7 +899,7 @@ def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
         # AbsoluteTargetLaneをチェック
         absolute_target_elem = target_elem.find(f"./{ns}AbsoluteTargetLane")
         if absolute_target_elem is not None:
-            target_lane_absolute = _get_attr_int(absolute_target_elem, "value", 0)
+            target_lane_absolute = _get_attr(absolute_target_elem, "value", "")
     
     if target_lane is None and target_lane_absolute is None:
         return None
@@ -981,15 +983,33 @@ def parse_lane_offset_action(element: ET.Element) -> Optional[LaneOffsetAction]:
     dynamics_elem = element.find(f"./{ns}LaneOffsetActionDynamics")
     dynamics = parse_lane_offset_action_dynamics(dynamics_elem) if dynamics_elem is not None else None
     
-    # LaneOffsetTargetからAbsoluteTargetLaneOffsetのvalue属性を取得
-    target_elem = element.find(f"./{ns}LaneOffsetTarget/{ns}AbsoluteTargetLaneOffset")
+    # LaneOffsetTargetからAbsoluteTargetLaneOffsetまたはRelativeTargetLaneOffsetを取得
+    target_elem = element.find(f"./{ns}LaneOffsetTarget")
     if target_elem is None:
         return None
     
-    target_offset = _get_attr_float(target_elem, "value", 0.0)
+    target_offset = None
+    target_offset_relative = None
+    target_offset_entity_ref = None
+    
+    # AbsoluteTargetLaneOffsetをチェック
+    absolute_target_elem = target_elem.find(f"./{ns}AbsoluteTargetLaneOffset")
+    if absolute_target_elem is not None:
+        target_offset = _get_attr_float(absolute_target_elem, "value", 0.0)
+    else:
+        # RelativeTargetLaneOffsetをチェック
+        relative_target_elem = target_elem.find(f"./{ns}RelativeTargetLaneOffset")
+        if relative_target_elem is not None:
+            target_offset_entity_ref = _get_attr(relative_target_elem, "entityRef", "")
+            target_offset_relative = _get_attr_float(relative_target_elem, "value", 0.0)
+    
+    if target_offset is None and target_offset_relative is None:
+        return None
     
     return LaneOffsetAction(
         target_offset=target_offset,
+        target_offset_relative=target_offset_relative,
+        target_offset_entity_ref=target_offset_entity_ref,
         dynamics=dynamics,
         continuous=continuous,
     )
@@ -1554,17 +1574,47 @@ def parse_synchronize_action(element: ET.Element) -> Optional[SynchronizeAction]
         abs_speed_elem = final_speed_elem.find(f"./{ns}AbsoluteSpeed")
         if abs_speed_elem is not None:
             abs_speed_value = _get_attr_float(abs_speed_elem, "value", None)
+            steady_state = None
+            # SteadyState要素をチェック（TargetDistanceSteadyStateまたはTargetTimeSteadyState）
+            target_distance_elem = abs_speed_elem.find(f"./{ns}TargetDistanceSteadyState")
+            if target_distance_elem is not None:
+                distance = _get_attr_float(target_distance_elem, "distance", None)
+                if distance is not None:
+                    steady_state = {"type": "TargetDistanceSteadyState", "distance": distance}
+            else:
+                target_time_elem = abs_speed_elem.find(f"./{ns}TargetTimeSteadyState")
+                if target_time_elem is not None:
+                    time = _get_attr_float(target_time_elem, "time", None)
+                    if time is not None:
+                        steady_state = {"type": "TargetTimeSteadyState", "time": time}
             final_speed = {"type": "AbsoluteSpeed", "value": abs_speed_value}
+            if steady_state is not None:
+                final_speed["steadyState"] = steady_state
         else:
             rel_speed_elem = final_speed_elem.find(f"./{ns}RelativeSpeedToMaster")
             if rel_speed_elem is not None:
                 speed_target_value_type = _get_attr(rel_speed_elem, "speedTargetValueType", "delta")
                 value = _get_attr_float(rel_speed_elem, "value", None)
+                steady_state = None
+                # SteadyState要素をチェック（TargetDistanceSteadyStateまたはTargetTimeSteadyState）
+                target_distance_elem = rel_speed_elem.find(f"./{ns}TargetDistanceSteadyState")
+                if target_distance_elem is not None:
+                    distance = _get_attr_float(target_distance_elem, "distance", None)
+                    if distance is not None:
+                        steady_state = {"type": "TargetDistanceSteadyState", "distance": distance}
+                else:
+                    target_time_elem = rel_speed_elem.find(f"./{ns}TargetTimeSteadyState")
+                    if target_time_elem is not None:
+                        time = _get_attr_float(target_time_elem, "time", None)
+                        if time is not None:
+                            steady_state = {"type": "TargetTimeSteadyState", "time": time}
                 final_speed = {
                     "type": "RelativeSpeedToMaster",
                     "speedTargetValueType": speed_target_value_type,
                     "value": value,
                 }
+                if steady_state is not None:
+                    final_speed["steadyState"] = steady_state
     
     return SynchronizeAction(
         master_entity_ref=master_entity_ref,
