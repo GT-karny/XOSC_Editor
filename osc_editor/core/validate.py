@@ -141,10 +141,13 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                 # Conditionの検証：ByValueConditionまたはByEntityConditionが必須
                                 for cg in event.start_trigger.condition_groups:
                                     for cond in cg.conditions:
-                                        if (cond.simulation_time_condition is None and 
-                                            cond.by_entity_condition is None and 
-                                            cond.storyboard_element_state_condition is None and
-                                            cond.parameter_condition is None):
+                                        has_condition = (
+                                            cond.simulation_time_condition is not None or
+                                            cond.by_entity_condition is not None or
+                                            cond.storyboard_element_state_condition is not None or
+                                            cond.parameter_condition is not None
+                                        )
+                                        if not has_condition:
                                             errors.append(
                                                 ValidationError(
                                                     f"Condition '{cond.name}' in Event '{event.name}' must have either ByValueCondition or ByEntityCondition",

@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Any
 import difflib
+import io
 from osc_editor.core.parse_xml import parse_xml
 from osc_editor.core.write_xml import write_xml
 from osc_editor.core.validate import validate_scenario
@@ -13,9 +14,9 @@ from osc_editor.core.validate import validate_scenario
 def compare_xml_files(file1_path: str, file2_path: str) -> List[str]:
     """2つのXMLファイルを比較して差分を返す"""
     try:
-        with open(file1_path, 'r', encoding='utf-8') as f1:
+        with open(file1_path, 'r', encoding='utf-8', errors='replace') as f1:
             lines1 = f1.readlines()
-        with open(file2_path, 'r', encoding='utf-8') as f2:
+        with open(file2_path, 'r', encoding='utf-8', errors='replace') as f2:
             lines2 = f2.readlines()
         
         diff = list(difflib.unified_diff(
@@ -26,7 +27,12 @@ def compare_xml_files(file1_path: str, file2_path: str) -> List[str]:
         ))
         return diff
     except Exception as e:
-        print(f"  Error comparing files: {e}")
+        # エラーメッセージを安全に表示
+        try:
+            error_msg = str(e).encode('ascii', errors='replace').decode('ascii')
+            print(f"  Error comparing files: {error_msg}")
+        except:
+            print(f"  Error comparing files")
         return []
 
 
@@ -96,17 +102,29 @@ def test_xosc_file(input_path: str, output_dir: str = "out") -> Dict[str, Any]:
             results['differences'] = diff
             if diff:
                 diff_lines = [d for d in diff if not d.startswith('---') and not d.startswith('+++') and (d.startswith('-') or d.startswith('+'))]
-                print(f"⚠ Differences found: {len(diff_lines)} lines")
-                # 最初の10行だけ表示
-                for line in diff[:20]:
+                print(f"[WARNING] Differences found: {len(diff_lines)} lines")
+                # 最初の20行だけ表示（エンコーディング安全な方法で）
+                displayed = 0
+                for line in diff:
+                    if displayed >= 20:
+                        break
                     if line.startswith('+') or line.startswith('-'):
-                        print(f"  {line}")
+                        try:
+                            safe_line = line.encode('ascii', errors='replace').decode('ascii')
+                            print(f"  {safe_line}")
+                            displayed += 1
+                        except:
+                            pass
                 if len(diff) > 20:
-                    print(f"  ... and {len(diff) - 20} more lines")
+                    print(f"  ... and more lines")
             else:
                 print("[OK] No differences")
     except Exception as e:
-        print(f"[WARNING] Diff comparison failed: {e}")
+        try:
+            error_msg = str(e).encode('ascii', errors='replace').decode('ascii')
+            print(f"[WARNING] Diff comparison failed: {error_msg}")
+        except:
+            print(f"[WARNING] Diff comparison failed")
     
     return results
 

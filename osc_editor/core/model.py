@@ -56,6 +56,14 @@ class LanePosition:
     lane_id: str  # XSDではString型
     s: Union[str, float] = 0.0  # パラメータ参照を含む可能性があるため
     offset: Union[str, float] = 0.0
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
+
+
+@dataclass
+class RoutePosition:
+    """RoutePosition（ルート座標）"""
+    route_ref: Optional[CatalogReference] = None  # RouteRef内のCatalogReference
+    in_route_position: Optional[dict] = None  # InRoutePosition（FromLaneCoordinates等）
 
 
 # ============================================================================
@@ -76,10 +84,17 @@ class Dynamics:
 # ============================================================================
 
 @dataclass
+class AssignRouteAction:
+    """AssignRouteAction（ルート割り当て）"""
+    route_ref: CatalogReference  # CatalogReference
+
+
+@dataclass
 class TeleportAction:
     """TeleportAction（瞬間移動）"""
     position: Optional[WorldPosition] = None
     lane_position: Optional[LanePosition] = None
+    route_position: Optional[RoutePosition] = None
 
 
 @dataclass
@@ -126,12 +141,64 @@ class LaneOffsetAction:
 
 
 @dataclass
+class Vertex:
+    """Vertex（頂点）"""
+    position: Union[WorldPosition, LanePosition]  # Position内のWorldPositionまたはLanePosition
+    time: Optional[Union[str, float]] = None  # time属性（オプション）
+
+
+@dataclass
+class Polyline:
+    """Polyline（ポリライン）"""
+    vertices: List[Vertex] = field(default_factory=list)
+
+
+@dataclass
+class Trajectory:
+    """Trajectory（軌跡）"""
+    name: str
+    closed: bool = False
+    shape: Optional[Polyline] = None  # Shape内のPolyline
+    parameter_declarations: Optional[ParameterDeclarations] = None
+
+
+@dataclass
+class TimeReference:
+    """TimeReference（時間参照）"""
+    timing: Optional[dict] = None  # Timing要素（domainAbsoluteRelative, offset, scale）またはNone
+
+
+@dataclass
+class FollowTrajectoryAction:
+    """FollowTrajectoryAction（軌跡追従アクション）"""
+    trajectory: Trajectory
+    time_reference: Optional[TimeReference] = None
+    following_mode: str = "follow"  # TrajectoryFollowingModeのfollowingMode属性
+
+
+@dataclass
+class RoutingAction:
+    """RoutingAction（ルーティングアクション）"""
+    assign_route_action: Optional[AssignRouteAction] = None
+    follow_trajectory_action: Optional[FollowTrajectoryAction] = None
+
+
+@dataclass
+class ActivateControllerAction:
+    """ActivateControllerAction（コントローラー有効化アクション）"""
+    longitudinal: bool = True
+    lateral: bool = True
+
+
+@dataclass
 class PrivateAction:
     """PrivateAction（エンティティ固有のアクション）"""
     teleport_action: Optional[TeleportAction] = None
     speed_action: Optional[SpeedAction] = None
     lane_change_action: Optional[LaneChangeAction] = None
     lane_offset_action: Optional[LaneOffsetAction] = None
+    routing_action: Optional[RoutingAction] = None
+    activate_controller_action: Optional[ActivateControllerAction] = None
 
 
 @dataclass
@@ -185,6 +252,30 @@ class OffroadCondition:
 
 
 @dataclass
+class TraveledDistanceCondition:
+    """TraveledDistanceCondition（走行距離条件）"""
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため
+
+
+@dataclass
+class TimeToCollisionCondition:
+    """TimeToCollisionCondition（衝突までの時間条件）"""
+    value: Union[str, float]
+    freespace: bool = True
+    coordinate_system: str = "entity"
+    relative_distance_type: str = "longitudinal"
+    rule: str = "lessThan"
+    target_entity_ref: Optional[str] = None  # TimeToCollisionConditionTarget内のEntityRef
+
+
+@dataclass
+class ReachPositionCondition:
+    """ReachPositionCondition（位置到達条件）"""
+    tolerance: Union[str, float] = 0.0
+    position: Optional[Union[WorldPosition, LanePosition]] = None  # Position内のWorldPositionまたはLanePosition
+
+
+@dataclass
 class ParameterCondition:
     """ParameterCondition（パラメータ条件）"""
     parameter_ref: str
@@ -207,6 +298,9 @@ class ByEntityCondition:
     triggering_entities_rule: str = "any"  # any, all
     entity_condition: Optional[TimeHeadwayCondition] = None
     offroad_condition: Optional[OffroadCondition] = None
+    traveled_distance_condition: Optional[TraveledDistanceCondition] = None
+    time_to_collision_condition: Optional[TimeToCollisionCondition] = None
+    reach_position_condition: Optional[ReachPositionCondition] = None
 
 
 @dataclass
@@ -331,13 +425,41 @@ class Pedestrian:
 
 
 @dataclass
+class Property:
+    """Property（プロパティ）"""
+    name: str
+    value: str
+
+
+@dataclass
+class Properties:
+    """Properties（プロパティ集合）"""
+    properties: List[Property] = field(default_factory=list)
+
+
+@dataclass
+class Controller:
+    """Controller（コントローラー）"""
+    name: str
+    properties: Optional[Properties] = None
+
+
+@dataclass
+class ObjectController:
+    """ObjectController（オブジェクトコントローラー）"""
+    controller: Optional[Controller] = None
+    catalog_reference: Optional[CatalogReference] = None
+
+
+@dataclass
 class ScenarioObject:
     """ScenarioObject（シナリオオブジェクト）"""
     name: str
     vehicle: Optional[Vehicle] = None
     pedestrian: Optional[Pedestrian] = None
     catalog_reference: Optional[CatalogReference] = None
-    # 将来の拡張: misc_object, object_controller
+    object_controller: Optional[ObjectController] = None
+    # 将来の拡張: misc_object
 
 
 @dataclass

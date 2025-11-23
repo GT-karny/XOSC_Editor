@@ -25,6 +25,14 @@ from osc_editor.core.model import (
     Private,
     PrivateAction,
     TeleportAction,
+    AssignRouteAction,
+    RoutingAction,
+    FollowTrajectoryAction,
+    Trajectory,
+    Polyline,
+    Vertex,
+    TimeReference,
+    ActivateControllerAction,
     SpeedAction,
     RelativeTargetSpeed,
     LaneChangeAction,
@@ -32,6 +40,7 @@ from osc_editor.core.model import (
     LaneOffsetActionDynamics,
     WorldPosition,
     LanePosition,
+    RoutePosition,
     Dynamics,
     DynamicsShape,
     StartTrigger,
@@ -41,10 +50,17 @@ from osc_editor.core.model import (
     ByEntityCondition,
     TimeHeadwayCondition,
     OffroadCondition,
+    TraveledDistanceCondition,
+    TimeToCollisionCondition,
+    ReachPositionCondition,
     ParameterCondition,
     StoryboardElementStateCondition,
     GlobalAction,
     ParameterAction,
+    ObjectController,
+    Controller,
+    Properties,
+    Property,
     Rule,
 )
 
@@ -171,6 +187,41 @@ def write_lane_position(parent: ET.Element, lane_position: LanePosition):
     elem.set("s", str(lane_position.s))
     # offset属性も常に書き出す（元のXMLではデフォルト値でも明示的に書かれている場合がある）
     elem.set("offset", str(lane_position.offset))
+    
+    # Orientation要素
+    if lane_position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in lane_position.orientation:
+            orientation_elem.set("type", lane_position.orientation["type"])
+        if "h" in lane_position.orientation:
+            h_val = lane_position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in lane_position.orientation:
+            p_val = lane_position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in lane_position.orientation:
+            r_val = lane_position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+
+
+def write_route_position(parent: ET.Element, route_position: RoutePosition):
+    """RoutePositionをXMLに書き込み"""
+    elem = _create_element("RoutePosition", parent)
+    
+    if route_position.route_ref:
+        route_ref_elem = _create_element("RouteRef", elem)
+        write_catalog_reference(route_ref_elem, route_position.route_ref)
+    
+    if route_position.in_route_position:
+        in_route_elem = _create_element("InRoutePosition", elem)
+        from_lane_elem = _create_element("FromLaneCoordinates", in_route_elem)
+        if "pathS" in route_position.in_route_position:
+            from_lane_elem.set("pathS", str(route_position.in_route_position["pathS"]))
+        if "laneId" in route_position.in_route_position:
+            from_lane_elem.set("laneId", str(route_position.in_route_position["laneId"]))
 
 
 def write_dynamics(parent: ET.Element, dynamics: Dynamics, tag_name: str = "Dynamics"):
@@ -193,6 +244,8 @@ def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
         write_world_position(position_elem, teleport_action.position)
     elif teleport_action.lane_position is not None:
         write_lane_position(position_elem, teleport_action.lane_position)
+    elif teleport_action.route_position is not None:
+        write_route_position(position_elem, teleport_action.route_position)
 
 
 def write_relative_target_speed(parent: ET.Element, relative_target_speed: RelativeTargetSpeed):
@@ -274,6 +327,96 @@ def write_lane_offset_action(parent: ET.Element, lane_offset_action: LaneOffsetA
     abs_target_elem.set("value", str(lane_offset_action.target_offset))
 
 
+def write_vertex(parent: ET.Element, vertex: Vertex):
+    """VertexをXMLに書き込み"""
+    elem = _create_element("Vertex", parent)
+    if vertex.time is not None:
+        elem.set("time", str(vertex.time))
+    
+    position_elem = _create_element("Position", elem)
+    if isinstance(vertex.position, WorldPosition):
+        write_world_position(position_elem, vertex.position)
+    elif isinstance(vertex.position, LanePosition):
+        write_lane_position(position_elem, vertex.position)
+
+
+def write_polyline(parent: ET.Element, polyline: Polyline):
+    """PolylineをXMLに書き込み"""
+    elem = _create_element("Polyline", parent)
+    for vertex in polyline.vertices:
+        write_vertex(elem, vertex)
+
+
+def write_trajectory(parent: ET.Element, trajectory: Trajectory):
+    """TrajectoryをXMLに書き込み"""
+    elem = _create_element("Trajectory", parent)
+    elem.set("name", trajectory.name)
+    elem.set("closed", "true" if trajectory.closed else "false")
+    
+    if trajectory.parameter_declarations and trajectory.parameter_declarations.parameters:
+        write_parameter_declarations(elem, trajectory.parameter_declarations)
+    
+    if trajectory.shape and trajectory.shape.vertices:
+        shape_elem = _create_element("Shape", elem)
+        write_polyline(shape_elem, trajectory.shape)
+
+
+def write_time_reference(parent: ET.Element, time_reference: TimeReference):
+    """TimeReferenceをXMLに書き込み"""
+    elem = _create_element("TimeReference", parent)
+    
+    if time_reference.timing is None:
+        _create_element("None", elem)
+    else:
+        timing_elem = _create_element("Timing", elem)
+        timing = time_reference.timing
+        if "domainAbsoluteRelative" in timing:
+            timing_elem.set("domainAbsoluteRelative", timing["domainAbsoluteRelative"])
+        if "offset" in timing:
+            timing_elem.set("offset", str(timing["offset"]))
+        if "scale" in timing:
+            timing_elem.set("scale", str(timing["scale"]))
+
+
+def write_follow_trajectory_action(parent: ET.Element, follow_trajectory: FollowTrajectoryAction):
+    """FollowTrajectoryActionをXMLに書き込み"""
+    elem = _create_element("FollowTrajectoryAction", parent)
+    
+    write_trajectory(elem, follow_trajectory.trajectory)
+    
+    if follow_trajectory.time_reference:
+        write_time_reference(elem, follow_trajectory.time_reference)
+    else:
+        time_ref_elem = _create_element("TimeReference", elem)
+        _create_element("None", time_ref_elem)
+    
+    following_mode_elem = _create_element("TrajectoryFollowingMode", elem)
+    following_mode_elem.set("followingMode", follow_trajectory.following_mode)
+
+
+def write_assign_route_action(parent: ET.Element, assign_route: AssignRouteAction):
+    """AssignRouteActionをXMLに書き込み"""
+    elem = _create_element("AssignRouteAction", parent)
+    write_catalog_reference(elem, assign_route.route_ref)
+
+
+def write_routing_action(parent: ET.Element, routing_action: RoutingAction):
+    """RoutingActionをXMLに書き込み"""
+    elem = _create_element("RoutingAction", parent)
+    
+    if routing_action.assign_route_action is not None:
+        write_assign_route_action(elem, routing_action.assign_route_action)
+    elif routing_action.follow_trajectory_action is not None:
+        write_follow_trajectory_action(elem, routing_action.follow_trajectory_action)
+
+
+def write_activate_controller_action(parent: ET.Element, activate_controller: ActivateControllerAction):
+    """ActivateControllerActionをXMLに書き込み"""
+    elem = _create_element("ActivateControllerAction", parent)
+    elem.set("longitudinal", "true" if activate_controller.longitudinal else "false")
+    elem.set("lateral", "true" if activate_controller.lateral else "false")
+
+
 def write_private_action(parent: ET.Element, private_action: PrivateAction):
     """PrivateActionをXMLに書き込み"""
     elem = _create_element("PrivateAction", parent)
@@ -292,6 +435,12 @@ def write_private_action(parent: ET.Element, private_action: PrivateAction):
     if private_action.lane_offset_action is not None:
         lat_elem = _create_element("LateralAction", elem)
         write_lane_offset_action(lat_elem, private_action.lane_offset_action)
+    
+    if private_action.routing_action is not None:
+        write_routing_action(elem, private_action.routing_action)
+    
+    if private_action.activate_controller_action is not None:
+        write_activate_controller_action(elem, private_action.activate_controller_action)
 
 
 def write_parameter_action(parent: ET.Element, parameter_action: ParameterAction):
@@ -359,6 +508,40 @@ def write_offroad_condition(parent: ET.Element, condition: OffroadCondition):
     elem.set("duration", str(condition.duration))
 
 
+def write_traveled_distance_condition(parent: ET.Element, condition: TraveledDistanceCondition):
+    """TraveledDistanceConditionをXMLに書き込み"""
+    elem = _create_element("TraveledDistanceCondition", parent)
+    elem.set("value", str(condition.value))
+
+
+def write_time_to_collision_condition(parent: ET.Element, condition: TimeToCollisionCondition):
+    """TimeToCollisionConditionをXMLに書き込み"""
+    elem = _create_element("TimeToCollisionCondition", parent)
+    elem.set("value", str(condition.value))
+    elem.set("freespace", "true" if condition.freespace else "false")
+    elem.set("coordinateSystem", condition.coordinate_system)
+    elem.set("relativeDistanceType", condition.relative_distance_type)
+    elem.set("rule", condition.rule)
+    
+    if condition.target_entity_ref:
+        target_elem = _create_element("TimeToCollisionConditionTarget", elem)
+        entity_ref_elem = _create_element("EntityRef", target_elem)
+        entity_ref_elem.set("entityRef", condition.target_entity_ref)
+
+
+def write_reach_position_condition(parent: ET.Element, condition: ReachPositionCondition):
+    """ReachPositionConditionをXMLに書き込み"""
+    elem = _create_element("ReachPositionCondition", parent)
+    elem.set("tolerance", str(condition.tolerance))
+    
+    if condition.position:
+        position_elem = _create_element("Position", elem)
+        if isinstance(condition.position, WorldPosition):
+            write_world_position(position_elem, condition.position)
+        elif isinstance(condition.position, LanePosition):
+            write_lane_position(position_elem, condition.position)
+
+
 def write_parameter_condition(parent: ET.Element, condition: ParameterCondition):
     """ParameterConditionをXMLに書き込み"""
     elem = _create_element("ParameterCondition", parent)
@@ -386,12 +569,26 @@ def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
             entity_ref_elem = _create_element("EntityRef", triggering_elem)
             entity_ref_elem.set("entityRef", entity_ref)
     
-    if condition.entity_condition is not None or condition.offroad_condition is not None:
+    has_entity_condition = (
+        condition.entity_condition is not None or
+        condition.offroad_condition is not None or
+        condition.traveled_distance_condition is not None or
+        condition.time_to_collision_condition is not None or
+        condition.reach_position_condition is not None
+    )
+    
+    if has_entity_condition:
         entity_condition_elem = _create_element("EntityCondition", elem)
         if condition.entity_condition is not None:
             write_time_headway_condition(entity_condition_elem, condition.entity_condition)
         elif condition.offroad_condition is not None:
             write_offroad_condition(entity_condition_elem, condition.offroad_condition)
+        elif condition.traveled_distance_condition is not None:
+            write_traveled_distance_condition(entity_condition_elem, condition.traveled_distance_condition)
+        elif condition.time_to_collision_condition is not None:
+            write_time_to_collision_condition(entity_condition_elem, condition.time_to_collision_condition)
+        elif condition.reach_position_condition is not None:
+            write_reach_position_condition(entity_condition_elem, condition.reach_position_condition)
 
 
 def write_condition(parent: ET.Element, condition: Condition):
@@ -570,6 +767,34 @@ def write_catalog_reference(parent: ET.Element, catalog_ref: CatalogReference):
     elem.set("entryName", catalog_ref.entry_name)
 
 
+def write_properties(parent: ET.Element, properties: Properties):
+    """PropertiesをXMLに書き込み"""
+    elem = _create_element("Properties", parent)
+    for prop in properties.properties:
+        prop_elem = _create_element("Property", elem)
+        prop_elem.set("name", prop.name)
+        prop_elem.set("value", prop.value)
+
+
+def write_controller(parent: ET.Element, controller: Controller):
+    """ControllerをXMLに書き込み"""
+    elem = _create_element("Controller", parent)
+    elem.set("name", controller.name)
+    
+    if controller.properties and controller.properties.properties:
+        write_properties(elem, controller.properties)
+
+
+def write_object_controller(parent: ET.Element, object_controller: ObjectController):
+    """ObjectControllerをXMLに書き込み"""
+    elem = _create_element("ObjectController", parent)
+    
+    if object_controller.controller is not None:
+        write_controller(elem, object_controller.controller)
+    elif object_controller.catalog_reference is not None:
+        write_catalog_reference(elem, object_controller.catalog_reference)
+
+
 def write_pedestrian(parent: ET.Element, pedestrian: Pedestrian):
     """PedestrianをXMLに書き込み"""
     elem = _create_element("Pedestrian", parent)
@@ -594,6 +819,9 @@ def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
         write_vehicle(elem, scenario_object.vehicle)
     elif scenario_object.pedestrian is not None:
         write_pedestrian(elem, scenario_object.pedestrian)
+    
+    if scenario_object.object_controller is not None:
+        write_object_controller(elem, scenario_object.object_controller)
 
 
 def write_entities(parent: ET.Element, entities: Entities):
