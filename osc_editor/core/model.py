@@ -103,10 +103,26 @@ class SpeedAction:
 @dataclass
 class LaneChangeAction:
     """LaneChangeAction（レーン変更）"""
-    target_lane: int
+    target_lane: Optional[int] = None  # RelativeTargetLaneまたはAbsoluteTargetLaneのvalue
     target_entity_ref: Optional[str] = None  # RelativeTargetLaneのentityRef属性
+    target_lane_absolute: Optional[int] = None  # AbsoluteTargetLaneのvalue（entityRefなしの場合）
     dynamics: Optional[Dynamics] = None
     target_lane_offset: Optional[float] = None
+
+
+@dataclass
+class LaneOffsetActionDynamics:
+    """LaneOffsetActionDynamics（レーンオフセット動作の動的特性）"""
+    dynamics_shape: DynamicsShape = DynamicsShape.LINEAR
+    max_lateral_acc: Optional[float] = None  # maxLateralAcc属性
+
+
+@dataclass
+class LaneOffsetAction:
+    """LaneOffsetAction（レーンオフセット）"""
+    target_offset: Union[str, float]  # AbsoluteTargetLaneOffsetのvalue
+    dynamics: Optional[LaneOffsetActionDynamics] = None
+    continuous: bool = True  # continuous属性
 
 
 @dataclass
@@ -115,6 +131,20 @@ class PrivateAction:
     teleport_action: Optional[TeleportAction] = None
     speed_action: Optional[SpeedAction] = None
     lane_change_action: Optional[LaneChangeAction] = None
+    lane_offset_action: Optional[LaneOffsetAction] = None
+
+
+@dataclass
+class ParameterAction:
+    """ParameterAction（パラメータアクション）"""
+    parameter_ref: str
+    set_action_value: Union[str, float]  # SetActionのvalue
+
+
+@dataclass
+class GlobalAction:
+    """GlobalAction（グローバルアクション）"""
+    parameter_action: Optional[ParameterAction] = None
 
 
 @dataclass
@@ -122,7 +152,8 @@ class Action:
     """Action（アクション、XSDではname属性が必須）"""
     name: str
     private_action: Optional[PrivateAction] = None
-    # 将来の拡張: global_action, user_defined_action
+    global_action: Optional[GlobalAction] = None
+    # 将来の拡張: user_defined_action
 
 
 # ============================================================================
@@ -148,6 +179,20 @@ class TimeHeadwayCondition:
 
 
 @dataclass
+class OffroadCondition:
+    """OffroadCondition（オフロード条件）"""
+    duration: Union[str, float]  # パラメータ参照を含む可能性があるため
+
+
+@dataclass
+class ParameterCondition:
+    """ParameterCondition（パラメータ条件）"""
+    parameter_ref: str
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+
+
+@dataclass
 class StoryboardElementStateCondition:
     """StoryboardElementStateCondition（ストーリーボード要素状態条件）"""
     storyboard_element_type: str  # act, action, event, maneuver, maneuverGroup, story
@@ -161,6 +206,7 @@ class ByEntityCondition:
     triggering_entities: List[str] = field(default_factory=list)  # Entity名のリスト
     triggering_entities_rule: str = "any"  # any, all
     entity_condition: Optional[TimeHeadwayCondition] = None
+    offroad_condition: Optional[OffroadCondition] = None
 
 
 @dataclass
@@ -168,10 +214,11 @@ class Condition:
     """Condition（条件）"""
     name: str = ""
     delay: Union[str, float] = 0.0  # パラメータ参照を含む可能性があるため
-    condition_edge: str = "rising"  # rising, falling, none
+    condition_edge: str = "rising"  # rising, falling, none, risingOrFalling
     simulation_time_condition: Optional[SimulationTimeCondition] = None
     by_entity_condition: Optional[ByEntityCondition] = None
     storyboard_element_state_condition: Optional[StoryboardElementStateCondition] = None
+    parameter_condition: Optional[ParameterCondition] = None
 
 
 @dataclass
@@ -274,12 +321,23 @@ class CatalogReference:
 
 
 @dataclass
+class Pedestrian:
+    """Pedestrian（歩行者）"""
+    name: str
+    mass: Optional[float] = None
+    model: Optional[str] = None
+    pedestrian_category: str = "pedestrian"
+    model3d: Optional[str] = None
+
+
+@dataclass
 class ScenarioObject:
     """ScenarioObject（シナリオオブジェクト）"""
     name: str
     vehicle: Optional[Vehicle] = None
+    pedestrian: Optional[Pedestrian] = None
     catalog_reference: Optional[CatalogReference] = None
-    # 将来の拡張: pedestrian, misc_object
+    # 将来の拡張: misc_object, object_controller
 
 
 @dataclass
@@ -327,6 +385,8 @@ class RoadNetwork:
 class CatalogLocations:
     """CatalogLocations（カタログ位置）"""
     vehicle_catalog: Optional[str] = None  # VehicleCatalogのDirectoryパス
+    route_catalog: Optional[str] = None  # RouteCatalogのDirectoryパス
+    controller_catalog: Optional[str] = None  # ControllerCatalogのDirectoryパス
 
 
 # ============================================================================

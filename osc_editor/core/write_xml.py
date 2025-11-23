@@ -12,6 +12,7 @@ from osc_editor.core.model import (
     Entities,
     ScenarioObject,
     Vehicle,
+    Pedestrian,
     CatalogReference,
     Storyboard,
     Init,
@@ -27,16 +28,23 @@ from osc_editor.core.model import (
     SpeedAction,
     RelativeTargetSpeed,
     LaneChangeAction,
+    LaneOffsetAction,
+    LaneOffsetActionDynamics,
     WorldPosition,
     LanePosition,
     Dynamics,
+    DynamicsShape,
     StartTrigger,
     ConditionGroup,
     Condition,
     SimulationTimeCondition,
     ByEntityCondition,
     TimeHeadwayCondition,
+    OffroadCondition,
+    ParameterCondition,
     StoryboardElementStateCondition,
+    GlobalAction,
+    ParameterAction,
     Rule,
 )
 
@@ -120,6 +128,16 @@ def write_catalog_locations(parent: ET.Element, catalog_locs: CatalogLocations):
         vehicle_catalog_elem = _create_element("VehicleCatalog", elem)
         directory_elem = _create_element("Directory", vehicle_catalog_elem)
         directory_elem.set("path", catalog_locs.vehicle_catalog)
+    
+    if catalog_locs.route_catalog:
+        route_catalog_elem = _create_element("RouteCatalog", elem)
+        directory_elem = _create_element("Directory", route_catalog_elem)
+        directory_elem.set("path", catalog_locs.route_catalog)
+    
+    if catalog_locs.controller_catalog:
+        controller_catalog_elem = _create_element("ControllerCatalog", elem)
+        directory_elem = _create_element("Directory", controller_catalog_elem)
+        directory_elem.set("path", catalog_locs.controller_catalog)
 
 
 def write_world_position(parent: ET.Element, position: WorldPosition):
@@ -210,7 +228,7 @@ def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
 
 
 def write_lane_change_action(parent: ET.Element, lane_change_action: LaneChangeAction):
-    """LaneChangeActionをXMLに書き込み（XSD準拠：属性として書き込み）"""
+    """LaneChangeActionをXMLに書き込み（XSD準拠：RelativeTargetLaneまたはAbsoluteTargetLane）"""
     elem = _create_element("LaneChangeAction", parent)
     
     # targetLaneOffset属性（オプション）
@@ -219,16 +237,41 @@ def write_lane_change_action(parent: ET.Element, lane_change_action: LaneChangeA
     
     # LaneChangeTarget
     target_elem = _create_element("LaneChangeTarget", elem)
-    rel_target_elem = _create_element("RelativeTargetLane", target_elem)
-    # XSDではvalueは属性として定義されている（Int型）
-    rel_target_elem.set("value", str(lane_change_action.target_lane))
-    # entityRef属性（オプション）
-    if lane_change_action.target_entity_ref:
-        rel_target_elem.set("entityRef", lane_change_action.target_entity_ref)
+    
+    # RelativeTargetLaneまたはAbsoluteTargetLaneを選択
+    if lane_change_action.target_lane is not None:
+        rel_target_elem = _create_element("RelativeTargetLane", target_elem)
+        rel_target_elem.set("value", str(lane_change_action.target_lane))
+        if lane_change_action.target_entity_ref:
+            rel_target_elem.set("entityRef", lane_change_action.target_entity_ref)
+    elif lane_change_action.target_lane_absolute is not None:
+        abs_target_elem = _create_element("AbsoluteTargetLane", target_elem)
+        abs_target_elem.set("value", str(lane_change_action.target_lane_absolute))
     
     # LaneChangeActionDynamics
     if lane_change_action.dynamics is not None:
         write_dynamics(elem, lane_change_action.dynamics, "LaneChangeActionDynamics")
+
+
+def write_lane_offset_action_dynamics(parent: ET.Element, dynamics: LaneOffsetActionDynamics):
+    """LaneOffsetActionDynamicsをXMLに書き込み"""
+    elem = _create_element("LaneOffsetActionDynamics", parent)
+    elem.set("dynamicsShape", dynamics.dynamics_shape.value)
+    if dynamics.max_lateral_acc is not None:
+        elem.set("maxLateralAcc", str(dynamics.max_lateral_acc))
+
+
+def write_lane_offset_action(parent: ET.Element, lane_offset_action: LaneOffsetAction):
+    """LaneOffsetActionをXMLに書き込み"""
+    elem = _create_element("LaneOffsetAction", parent)
+    elem.set("continuous", "true" if lane_offset_action.continuous else "false")
+    
+    if lane_offset_action.dynamics is not None:
+        write_lane_offset_action_dynamics(elem, lane_offset_action.dynamics)
+    
+    target_elem = _create_element("LaneOffsetTarget", elem)
+    abs_target_elem = _create_element("AbsoluteTargetLaneOffset", target_elem)
+    abs_target_elem.set("value", str(lane_offset_action.target_offset))
 
 
 def write_private_action(parent: ET.Element, private_action: PrivateAction):
@@ -245,6 +288,26 @@ def write_private_action(parent: ET.Element, private_action: PrivateAction):
     if private_action.lane_change_action is not None:
         lat_elem = _create_element("LateralAction", elem)
         write_lane_change_action(lat_elem, private_action.lane_change_action)
+    
+    if private_action.lane_offset_action is not None:
+        lat_elem = _create_element("LateralAction", elem)
+        write_lane_offset_action(lat_elem, private_action.lane_offset_action)
+
+
+def write_parameter_action(parent: ET.Element, parameter_action: ParameterAction):
+    """ParameterActionをXMLに書き込み"""
+    elem = _create_element("ParameterAction", parent)
+    elem.set("parameterRef", parameter_action.parameter_ref)
+    set_action_elem = _create_element("SetAction", elem)
+    set_action_elem.set("value", str(parameter_action.set_action_value))
+
+
+def write_global_action(parent: ET.Element, global_action: GlobalAction):
+    """GlobalActionをXMLに書き込み"""
+    elem = _create_element("GlobalAction", parent)
+    
+    if global_action.parameter_action is not None:
+        write_parameter_action(elem, global_action.parameter_action)
 
 
 def write_action(parent: ET.Element, action: Action):
@@ -255,7 +318,10 @@ def write_action(parent: ET.Element, action: Action):
     if action.private_action is not None:
         write_private_action(elem, action.private_action)
     
-    # 将来の拡張: GlobalAction, UserDefinedAction
+    if action.global_action is not None:
+        write_global_action(elem, action.global_action)
+    
+    # 将来の拡張: UserDefinedAction
 
 
 def write_private(parent: ET.Element, private: Private):
@@ -287,6 +353,20 @@ def write_time_headway_condition(parent: ET.Element, condition: TimeHeadwayCondi
     elem.set("rule", condition.rule)
 
 
+def write_offroad_condition(parent: ET.Element, condition: OffroadCondition):
+    """OffroadConditionをXMLに書き込み"""
+    elem = _create_element("OffroadCondition", parent)
+    elem.set("duration", str(condition.duration))
+
+
+def write_parameter_condition(parent: ET.Element, condition: ParameterCondition):
+    """ParameterConditionをXMLに書き込み"""
+    elem = _create_element("ParameterCondition", parent)
+    elem.set("parameterRef", condition.parameter_ref)
+    elem.set("value", str(condition.value))
+    elem.set("rule", condition.rule)
+
+
 def write_storyboard_element_state_condition(parent: ET.Element, condition: StoryboardElementStateCondition):
     """StoryboardElementStateConditionをXMLに書き込み"""
     elem = _create_element("StoryboardElementStateCondition", parent)
@@ -306,13 +386,25 @@ def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
             entity_ref_elem = _create_element("EntityRef", triggering_elem)
             entity_ref_elem.set("entityRef", entity_ref)
     
-    if condition.entity_condition is not None:
+    if condition.entity_condition is not None or condition.offroad_condition is not None:
         entity_condition_elem = _create_element("EntityCondition", elem)
-        write_time_headway_condition(entity_condition_elem, condition.entity_condition)
+        if condition.entity_condition is not None:
+            write_time_headway_condition(entity_condition_elem, condition.entity_condition)
+        elif condition.offroad_condition is not None:
+            write_offroad_condition(entity_condition_elem, condition.offroad_condition)
 
 
 def write_condition(parent: ET.Element, condition: Condition):
     """ConditionをXMLに書き込み"""
+    # OpenSCENARIO仕様では、Conditionには必ずByValueConditionまたはByEntityConditionが必要
+    # すべての条件がNoneの場合は、Condition要素を書き出さない
+    if (condition.simulation_time_condition is None and 
+        condition.by_entity_condition is None and 
+        condition.storyboard_element_state_condition is None and
+        condition.parameter_condition is None):
+        # 空のConditionは無効なので、書き出さない
+        return
+    
     elem = _create_element("Condition", parent)
     if condition.name:
         elem.set("name", condition.name)
@@ -320,22 +412,41 @@ def write_condition(parent: ET.Element, condition: Condition):
     elem.set("delay", str(condition.delay))
     elem.set("conditionEdge", condition.condition_edge)
     
-    if condition.simulation_time_condition is not None:
+    # ByValueCondition内の条件を書き込み
+    by_value_needed = (condition.simulation_time_condition is not None or
+                       condition.storyboard_element_state_condition is not None or
+                       condition.parameter_condition is not None)
+    
+    if by_value_needed:
         by_value_elem = _create_element("ByValueCondition", elem)
-        write_simulation_time_condition(by_value_elem, condition.simulation_time_condition)
+        if condition.simulation_time_condition is not None:
+            write_simulation_time_condition(by_value_elem, condition.simulation_time_condition)
+        elif condition.storyboard_element_state_condition is not None:
+            write_storyboard_element_state_condition(by_value_elem, condition.storyboard_element_state_condition)
+        elif condition.parameter_condition is not None:
+            write_parameter_condition(by_value_elem, condition.parameter_condition)
     
     if condition.by_entity_condition is not None:
         write_by_entity_condition(elem, condition.by_entity_condition)
-    
-    if condition.storyboard_element_state_condition is not None:
-        by_value_elem = _create_element("ByValueCondition", elem)
-        write_storyboard_element_state_condition(by_value_elem, condition.storyboard_element_state_condition)
 
 
 def write_condition_group(parent: ET.Element, condition_group: ConditionGroup):
     """ConditionGroupをXMLに書き込み"""
-    elem = _create_element("ConditionGroup", parent)
+    # 有効なConditionが存在するか確認
+    valid_conditions = []
     for condition in condition_group.conditions:
+        if (condition.simulation_time_condition is not None or 
+            condition.by_entity_condition is not None or 
+            condition.storyboard_element_state_condition is not None or
+            condition.parameter_condition is not None):
+            valid_conditions.append(condition)
+    
+    # 有効なConditionがない場合は、ConditionGroupを書き出さない
+    if not valid_conditions:
+        return
+    
+    elem = _create_element("ConditionGroup", parent)
+    for condition in valid_conditions:
         write_condition(elem, condition)
 
 
@@ -347,6 +458,9 @@ def write_start_trigger(parent: ET.Element, start_trigger: StartTrigger, tag_nam
     elem = _create_element(tag_name, parent)
     for cg in start_trigger.condition_groups:
         write_condition_group(elem, cg)
+    
+    # 有効なConditionGroupが書き出されなかった場合でも、StartTrigger要素は残す
+    # （EventにはStartTriggerが必要なため）
 
 
 def write_event(parent: ET.Element, event: Event):
@@ -456,6 +570,19 @@ def write_catalog_reference(parent: ET.Element, catalog_ref: CatalogReference):
     elem.set("entryName", catalog_ref.entry_name)
 
 
+def write_pedestrian(parent: ET.Element, pedestrian: Pedestrian):
+    """PedestrianをXMLに書き込み"""
+    elem = _create_element("Pedestrian", parent)
+    elem.set("name", pedestrian.name)
+    if pedestrian.mass is not None:
+        elem.set("mass", str(pedestrian.mass))
+    if pedestrian.model:
+        elem.set("model", pedestrian.model)
+    elem.set("pedestrianCategory", pedestrian.pedestrian_category)
+    if pedestrian.model3d:
+        elem.set("model3d", pedestrian.model3d)
+
+
 def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
     """ScenarioObjectをXMLに書き込み"""
     elem = _create_element("ScenarioObject", parent)
@@ -465,6 +592,8 @@ def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
         write_catalog_reference(elem, scenario_object.catalog_reference)
     elif scenario_object.vehicle is not None:
         write_vehicle(elem, scenario_object.vehicle)
+    elif scenario_object.pedestrian is not None:
+        write_pedestrian(elem, scenario_object.pedestrian)
 
 
 def write_entities(parent: ET.Element, entities: Entities):

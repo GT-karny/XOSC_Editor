@@ -1,0 +1,51 @@
+
+============================================================
+Testing: thirdparty/esmini-demo_Windows/esmini-demo/resources/xosc/cut-in.xosc
+============================================================
+[OK] Parse successful
+[OK] Validation passed
+[OK] Write successful
+[WARNING] Diff comparison failed: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+
+============================================================
+Testing: thirdparty/esmini-demo_Windows/esmini-demo/resources/xosc/lane_change.xosc
+============================================================
+[OK] Parse successful
+[WARNING] Validation exception: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+[OK] Write successful
+[WARNING] Diff comparison failed: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+
+============================================================
+Testing: thirdparty/esmini-demo_Windows/esmini-demo/resources/xosc/pedestrian.xosc
+============================================================
+[OK] Parse successful
+[OK] Validation passed
+[OK] Write successful
+[WARNING] Diff comparison failed: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+
+============================================================
+Testing: thirdparty/esmini-demo_Windows/esmini-demo/resources/xosc/bicycle_fall_over.xosc
+============================================================
+[OK] Parse successful
+[WARNING] Validation exception: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+[OK] Write successful
+[WARNING] Diff comparison failed: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+
+============================================================
+Testing: thirdparty/esmini-demo_Windows/esmini-demo/resources/xosc/acc-test.xosc
+============================================================
+[OK] Parse successful
+[OK] Validation passed
+[OK] Write successful
+[WARNING] Diff comparison failed: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence
+
+============================================================
+SUMMARY
+============================================================
+Files tested: 5
+Parse successful: 5/5
+Write successful: 5/5
+Validation passed: 3/5
+No differences: 0/5
+
+Detailed summary saved to: xosc_diff_summary.txt

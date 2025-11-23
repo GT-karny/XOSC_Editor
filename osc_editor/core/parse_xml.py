@@ -12,6 +12,7 @@ from osc_editor.core.model import (
     Entities,
     ScenarioObject,
     Vehicle,
+    Pedestrian,
     CatalogReference,
     Storyboard,
     Init,
@@ -27,6 +28,8 @@ from osc_editor.core.model import (
     SpeedAction,
     RelativeTargetSpeed,
     LaneChangeAction,
+    LaneOffsetAction,
+    LaneOffsetActionDynamics,
     WorldPosition,
     LanePosition,
     Dynamics,
@@ -38,7 +41,11 @@ from osc_editor.core.model import (
     SimulationTimeCondition,
     ByEntityCondition,
     TimeHeadwayCondition,
+    OffroadCondition,
+    ParameterCondition,
     StoryboardElementStateCondition,
+    GlobalAction,
+    ParameterAction,
     Rule,
 )
 
@@ -198,7 +205,18 @@ def parse_catalog_locations(element: ET.Element) -> CatalogLocations:
     ns = _detect_namespace(element)
     vehicle_catalog_elem = element.find(f"./{ns}VehicleCatalog/{ns}Directory")
     vehicle_catalog = vehicle_catalog_elem.get("path") if vehicle_catalog_elem is not None else None
-    return CatalogLocations(vehicle_catalog=vehicle_catalog)
+    
+    route_catalog_elem = element.find(f"./{ns}RouteCatalog/{ns}Directory")
+    route_catalog = route_catalog_elem.get("path") if route_catalog_elem is not None else None
+    
+    controller_catalog_elem = element.find(f"./{ns}ControllerCatalog/{ns}Directory")
+    controller_catalog = controller_catalog_elem.get("path") if controller_catalog_elem is not None else None
+    
+    return CatalogLocations(
+        vehicle_catalog=vehicle_catalog,
+        route_catalog=route_catalog,
+        controller_catalog=controller_catalog
+    )
 
 
 def parse_world_position(element: ET.Element) -> WorldPosition:
@@ -353,7 +371,7 @@ def parse_speed_action(element: ET.Element) -> Optional[SpeedAction]:
 
 
 def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
-    """LaneChangeActionをパース（XSD準拠）"""
+    """LaneChangeActionをパース（XSD準拠：RelativeTargetLaneまたはAbsoluteTargetLane）"""
     if element is None:
         return None
     
@@ -362,15 +380,30 @@ def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
     dynamics_elem = element.find(f"./{ns}LaneChangeActionDynamics")
     dynamics = parse_transition_dynamics(dynamics_elem) if dynamics_elem is not None else None
     
-    # LaneChangeTargetからRelativeTargetLaneのvalue属性を取得（Int型）
-    target_lane_elem = element.find(f"./{ns}LaneChangeTarget/{ns}RelativeTargetLane")
-    if target_lane_elem is None:
+    # LaneChangeTargetからRelativeTargetLaneまたはAbsoluteTargetLaneを取得
+    target_elem = element.find(f"./{ns}LaneChangeTarget")
+    if target_elem is None:
         return None
     
-    target_lane = _get_attr_int(target_lane_elem, "value", 0)
-    target_entity_ref = _get_attr(target_lane_elem, "entityRef", "")
-    if not target_entity_ref:
-        target_entity_ref = None
+    target_lane = None
+    target_lane_absolute = None
+    target_entity_ref = None
+    
+    # RelativeTargetLaneをチェック
+    relative_target_elem = target_elem.find(f"./{ns}RelativeTargetLane")
+    if relative_target_elem is not None:
+        target_lane = _get_attr_int(relative_target_elem, "value", 0)
+        target_entity_ref = _get_attr(relative_target_elem, "entityRef", "")
+        if not target_entity_ref:
+            target_entity_ref = None
+    else:
+        # AbsoluteTargetLaneをチェック
+        absolute_target_elem = target_elem.find(f"./{ns}AbsoluteTargetLane")
+        if absolute_target_elem is not None:
+            target_lane_absolute = _get_attr_int(absolute_target_elem, "value", 0)
+    
+    if target_lane is None and target_lane_absolute is None:
+        return None
     
     # targetLaneOffset属性（オプション）
     target_lane_offset_attr = element.get("targetLaneOffset")
@@ -384,9 +417,57 @@ def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
     
     return LaneChangeAction(
         target_lane=target_lane,
+        target_lane_absolute=target_lane_absolute,
         target_entity_ref=target_entity_ref,
         dynamics=dynamics,
         target_lane_offset=target_lane_offset,
+    )
+
+
+def parse_lane_offset_action_dynamics(element: ET.Element) -> Optional[LaneOffsetActionDynamics]:
+    """LaneOffsetActionDynamicsをパース"""
+    if element is None:
+        return None
+    
+    shape_str = _get_attr(element, "dynamicsShape", "linear")
+    try:
+        shape = DynamicsShape(shape_str)
+    except ValueError:
+        shape = DynamicsShape.LINEAR
+    
+    max_lateral_acc = _get_attr_float(element, "maxLateralAcc", None)
+    if isinstance(max_lateral_acc, str):
+        max_lateral_acc = None
+    
+    return LaneOffsetActionDynamics(
+        dynamics_shape=shape,
+        max_lateral_acc=max_lateral_acc if isinstance(max_lateral_acc, float) else None,
+    )
+
+
+def parse_lane_offset_action(element: ET.Element) -> Optional[LaneOffsetAction]:
+    """LaneOffsetActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    continuous = _get_attr_bool(element, "continuous", True)
+    
+    # LaneOffsetActionDynamics
+    dynamics_elem = element.find(f"./{ns}LaneOffsetActionDynamics")
+    dynamics = parse_lane_offset_action_dynamics(dynamics_elem) if dynamics_elem is not None else None
+    
+    # LaneOffsetTargetからAbsoluteTargetLaneOffsetのvalue属性を取得
+    target_elem = element.find(f"./{ns}LaneOffsetTarget/{ns}AbsoluteTargetLaneOffset")
+    if target_elem is None:
+        return None
+    
+    target_offset = _get_attr_float(target_elem, "value", 0.0)
+    
+    return LaneOffsetAction(
+        target_offset=target_offset,
+        dynamics=dynamics,
+        continuous=continuous,
     )
 
 
@@ -398,19 +479,58 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
     teleport_elem = element.find(f"./{ns}TeleportAction")
     speed_elem = element.find(f"./{ns}LongitudinalAction/{ns}SpeedAction")
     lane_change_elem = element.find(f"./{ns}LateralAction/{ns}LaneChangeAction")
+    lane_offset_elem = element.find(f"./{ns}LateralAction/{ns}LaneOffsetAction")
     
     teleport_action = parse_teleport_action(teleport_elem) if teleport_elem is not None else None
     speed_action = parse_speed_action(speed_elem) if speed_elem is not None else None
     lane_change_action = parse_lane_change_action(lane_change_elem) if lane_change_elem is not None else None
+    lane_offset_action = parse_lane_offset_action(lane_offset_elem) if lane_offset_elem is not None else None
     
-    if teleport_action is None and speed_action is None and lane_change_action is None:
+    if teleport_action is None and speed_action is None and lane_change_action is None and lane_offset_action is None:
         return None
     
     return PrivateAction(
         teleport_action=teleport_action,
         speed_action=speed_action,
         lane_change_action=lane_change_action,
+        lane_offset_action=lane_offset_action,
     )
+
+
+def parse_parameter_action(element: ET.Element) -> Optional[ParameterAction]:
+    """ParameterActionをパース"""
+    if element is None:
+        return None
+    parameter_ref = _get_attr(element, "parameterRef", "")
+    if not parameter_ref:
+        return None
+    
+    ns = _detect_namespace(element)
+    set_action_elem = element.find(f"./{ns}SetAction")
+    if set_action_elem is None:
+        return None
+    
+    set_value = _get_attr_float(set_action_elem, "value", 0.0)
+    
+    return ParameterAction(
+        parameter_ref=parameter_ref,
+        set_action_value=set_value
+    )
+
+
+def parse_global_action(element: ET.Element) -> Optional[GlobalAction]:
+    """GlobalActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    parameter_action_elem = element.find(f"./{ns}ParameterAction")
+    parameter_action = parse_parameter_action(parameter_action_elem) if parameter_action_elem is not None else None
+    
+    if parameter_action is None:
+        return None
+    
+    return GlobalAction(parameter_action=parameter_action)
 
 
 def parse_action(element: ET.Element) -> Optional[Action]:
@@ -427,11 +547,16 @@ def parse_action(element: ET.Element) -> Optional[Action]:
     private_action_elem = element.find(f"./{ns}PrivateAction")
     private_action = parse_private_action(private_action_elem) if private_action_elem is not None else None
     
-    # 将来の拡張: GlobalAction, UserDefinedAction
+    # GlobalActionを取得
+    global_action_elem = element.find(f"./{ns}GlobalAction")
+    global_action = parse_global_action(global_action_elem) if global_action_elem is not None else None
+    
+    # 将来の拡張: UserDefinedAction
     
     return Action(
         name=name,
         private_action=private_action,
+        global_action=global_action,
     )
 
 
@@ -488,6 +613,30 @@ def parse_time_headway_condition(element: ET.Element) -> Optional[TimeHeadwayCon
     )
 
 
+def parse_offroad_condition(element: ET.Element) -> Optional[OffroadCondition]:
+    """OffroadConditionをパース"""
+    if element is None:
+        return None
+    duration = _get_attr_float(element, "duration", 0.0)
+    return OffroadCondition(duration=duration)
+
+
+def parse_parameter_condition(element: ET.Element) -> Optional[ParameterCondition]:
+    """ParameterConditionをパース"""
+    if element is None:
+        return None
+    parameter_ref = _get_attr(element, "parameterRef", "")
+    value = _get_attr_float(element, "value", 0.0)
+    rule = _get_attr(element, "rule", "greaterThan")
+    if not parameter_ref:
+        return None
+    return ParameterCondition(
+        parameter_ref=parameter_ref,
+        value=value,
+        rule=rule
+    )
+
+
 def parse_storyboard_element_state_condition(element: ET.Element) -> Optional[StoryboardElementStateCondition]:
     """StoryboardElementStateConditionをパース"""
     if element is None:
@@ -521,17 +670,25 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
                 triggering_entities.append(entity_ref)
     
     entity_condition = None
-    entity_condition_elem = element.find(f"./{ns}EntityCondition/{ns}TimeHeadwayCondition")
+    offroad_condition = None
+    entity_condition_elem = element.find(f"./{ns}EntityCondition")
     if entity_condition_elem is not None:
-        entity_condition = parse_time_headway_condition(entity_condition_elem)
+        time_headway_elem = entity_condition_elem.find(f"./{ns}TimeHeadwayCondition")
+        if time_headway_elem is not None:
+            entity_condition = parse_time_headway_condition(time_headway_elem)
+        else:
+            offroad_elem = entity_condition_elem.find(f"./{ns}OffroadCondition")
+            if offroad_elem is not None:
+                offroad_condition = parse_offroad_condition(offroad_elem)
     
-    if not triggering_entities and entity_condition is None:
+    if not triggering_entities and entity_condition is None and offroad_condition is None:
         return None
     
     return ByEntityCondition(
         triggering_entities=triggering_entities,
         triggering_entities_rule=triggering_entities_rule,
-        entity_condition=entity_condition
+        entity_condition=entity_condition,
+        offroad_condition=offroad_condition
     )
 
 
@@ -544,14 +701,24 @@ def parse_condition(element: ET.Element) -> Condition:
     condition_edge = _get_attr(element, "conditionEdge", "rising")
     
     ns = _detect_namespace(element)
-    sim_time_elem = element.find(f"./{ns}ByValueCondition/{ns}SimulationTimeCondition")
-    sim_time_condition = parse_simulation_time_condition(sim_time_elem) if sim_time_elem is not None else None
+    by_value_elem = element.find(f"./{ns}ByValueCondition")
+    
+    sim_time_condition = None
+    parameter_condition = None
+    storyboard_element_state_condition = None
+    
+    if by_value_elem is not None:
+        sim_time_elem = by_value_elem.find(f"./{ns}SimulationTimeCondition")
+        sim_time_condition = parse_simulation_time_condition(sim_time_elem) if sim_time_elem is not None else None
+        
+        param_cond_elem = by_value_elem.find(f"./{ns}ParameterCondition")
+        parameter_condition = parse_parameter_condition(param_cond_elem) if param_cond_elem is not None else None
+        
+        storyboard_elem = by_value_elem.find(f"./{ns}StoryboardElementStateCondition")
+        storyboard_element_state_condition = parse_storyboard_element_state_condition(storyboard_elem) if storyboard_elem is not None else None
     
     by_entity_elem = element.find(f"./{ns}ByEntityCondition")
     by_entity_condition = parse_by_entity_condition(by_entity_elem) if by_entity_elem is not None else None
-    
-    storyboard_elem = element.find(f"./{ns}ByValueCondition/{ns}StoryboardElementStateCondition")
-    storyboard_element_state_condition = parse_storyboard_element_state_condition(storyboard_elem) if storyboard_elem is not None else None
     
     return Condition(
         name=name,
@@ -560,6 +727,7 @@ def parse_condition(element: ET.Element) -> Condition:
         simulation_time_condition=sim_time_condition,
         by_entity_condition=by_entity_condition,
         storyboard_element_state_condition=storyboard_element_state_condition,
+        parameter_condition=parameter_condition,
     )
 
 
@@ -763,6 +931,30 @@ def parse_catalog_reference(element: ET.Element) -> Optional[CatalogReference]:
     return CatalogReference(catalog_name=catalog_name, entry_name=entry_name)
 
 
+def parse_pedestrian(element: ET.Element) -> Optional[Pedestrian]:
+    """Pedestrianをパース"""
+    if element is None:
+        return None
+    name = _get_attr(element, "name", "")
+    mass = _get_attr_float(element, "mass", None)
+    if isinstance(mass, str):
+        mass = None
+    model = _get_attr(element, "model", None)
+    pedestrian_category = _get_attr(element, "pedestrianCategory", "pedestrian")
+    model3d = _get_attr(element, "model3d", None)
+    
+    if not name:
+        return None
+    
+    return Pedestrian(
+        name=name,
+        mass=mass if isinstance(mass, float) else None,
+        model=model,
+        pedestrian_category=pedestrian_category,
+        model3d=model3d
+    )
+
+
 def parse_scenario_object(element: ET.Element) -> ScenarioObject:
     """ScenarioObjectをパース"""
     if element is None:
@@ -772,10 +964,13 @@ def parse_scenario_object(element: ET.Element) -> ScenarioObject:
     vehicle_elem = element.find(f"./{ns}Vehicle")
     vehicle = parse_vehicle(vehicle_elem) if vehicle_elem is not None else None
     
+    pedestrian_elem = element.find(f"./{ns}Pedestrian")
+    pedestrian = parse_pedestrian(pedestrian_elem) if pedestrian_elem is not None else None
+    
     catalog_ref_elem = element.find(f"./{ns}CatalogReference")
     catalog_reference = parse_catalog_reference(catalog_ref_elem) if catalog_ref_elem is not None else None
     
-    return ScenarioObject(name=name, vehicle=vehicle, catalog_reference=catalog_reference)
+    return ScenarioObject(name=name, vehicle=vehicle, pedestrian=pedestrian, catalog_reference=catalog_reference)
 
 
 def parse_entities(element: ET.Element) -> Entities:

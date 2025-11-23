@@ -33,6 +33,21 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
         if not scenario.storyboard.stories:
             errors.append(ValidationError("At least one Story is required", "OpenSCENARIO/Storyboard"))
         
+        # StoryboardのStopTriggerのConditionを検証
+        if scenario.storyboard.stop_trigger and scenario.storyboard.stop_trigger.condition_groups:
+            for cg in scenario.storyboard.stop_trigger.condition_groups:
+                        for cond in cg.conditions:
+                            if (cond.simulation_time_condition is None and 
+                                cond.by_entity_condition is None and 
+                                cond.storyboard_element_state_condition is None and
+                                cond.parameter_condition is None):
+                                errors.append(
+                                    ValidationError(
+                                        f"Condition '{cond.name}' in Storyboard StopTrigger must have either ByValueCondition or ByEntityCondition",
+                                        f"OpenSCENARIO/Storyboard/StopTrigger/ConditionGroup/Condition[@name='{cond.name}']"
+                                    )
+                                )
+        
         for story in scenario.storyboard.stories:
             if not story.acts:
                 errors.append(
@@ -50,6 +65,35 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                             f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']"
                         )
                     )
+                
+                # ActのStartTriggerとStopTriggerのConditionを検証
+                if act.start_trigger and act.start_trigger.condition_groups:
+                    for cg in act.start_trigger.condition_groups:
+                        for cond in cg.conditions:
+                            if (cond.simulation_time_condition is None and 
+                                cond.by_entity_condition is None and 
+                                cond.storyboard_element_state_condition is None and
+                                cond.parameter_condition is None):
+                                errors.append(
+                                    ValidationError(
+                                        f"Condition '{cond.name}' in Act '{act.name}' StartTrigger must have either ByValueCondition or ByEntityCondition",
+                                        f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/StartTrigger/ConditionGroup/Condition[@name='{cond.name}']"
+                                    )
+                                )
+                
+                if act.stop_trigger and act.stop_trigger.condition_groups:
+                    for cg in act.stop_trigger.condition_groups:
+                        for cond in cg.conditions:
+                            if (cond.simulation_time_condition is None and 
+                                cond.by_entity_condition is None and 
+                                cond.storyboard_element_state_condition is None and
+                                cond.parameter_condition is None):
+                                errors.append(
+                                    ValidationError(
+                                        f"Condition '{cond.name}' in Act '{act.name}' StopTrigger must have either ByValueCondition or ByEntityCondition",
+                                        f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/StopTrigger/ConditionGroup/Condition[@name='{cond.name}']"
+                                    )
+                                )
                 
                 for mg in act.maneuver_groups:
                     if not mg.actors:
@@ -93,6 +137,20 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                         f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']"
                                     )
                                 )
+                            else:
+                                # Conditionの検証：ByValueConditionまたはByEntityConditionが必須
+                                for cg in event.start_trigger.condition_groups:
+                                    for cond in cg.conditions:
+                                        if (cond.simulation_time_condition is None and 
+                                            cond.by_entity_condition is None and 
+                                            cond.storyboard_element_state_condition is None and
+                                            cond.parameter_condition is None):
+                                            errors.append(
+                                                ValidationError(
+                                                    f"Condition '{cond.name}' in Event '{event.name}' must have either ByValueCondition or ByEntityCondition",
+                                                    f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/StartTrigger/ConditionGroup/Condition[@name='{cond.name}']"
+                                                )
+                                            )
     
     # Entity参照の検証（パラメータ参照を考慮）
     if scenario.entities and scenario.storyboard:
