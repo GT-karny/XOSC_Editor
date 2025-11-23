@@ -26,6 +26,11 @@ from osc_editor.core.model import (
     LaneChangeAction,
     WorldPosition,
     LanePosition,
+    RoadPosition,
+    RelativeWorldPosition,
+    RelativeLanePosition,
+    RelativeRoadPosition,
+    RelativeObjectPosition,
     Dynamics,
     DynamicsDimension,
     DynamicsShape,
@@ -143,54 +148,459 @@ class PropertiesPanel(QWidget):
         group = QGroupBox("TeleportAction")
         form = QFormLayout()
         
+        # 現在のPositionタイプを判定
+        current_position_type = None
         if action.position:
+            current_position_type = "WorldPosition"
+        elif action.lane_position:
+            current_position_type = "LanePosition"
+        elif action.road_position:
+            current_position_type = "RoadPosition"
+        elif action.relative_world_position:
+            current_position_type = "RelativeWorldPosition"
+        elif action.relative_lane_position:
+            current_position_type = "RelativeLanePosition"
+        elif action.relative_road_position:
+            current_position_type = "RelativeRoadPosition"
+        elif action.relative_object_position:
+            current_position_type = "RelativeObjectPosition"
+        else:
+            current_position_type = "WorldPosition"  # デフォルト
+        
+        # Positionタイプ選択UI
+        position_type_combo = QComboBox()
+        position_type_combo.addItems([
+            "WorldPosition",
+            "LanePosition",
+            "RoadPosition",
+            "RelativeWorldPosition",
+            "RelativeLanePosition",
+            "RelativeRoadPosition",
+            "RelativeObjectPosition"
+        ])
+        position_type_combo.setCurrentText(current_position_type)
+        form.addRow("Position Type:", position_type_combo)
+        
+        # 各Positionタイプ用のウィジェット
+        world_pos_widget = QWidget()
+        world_pos_form = QFormLayout(world_pos_widget)
+        
+        lane_pos_widget = QWidget()
+        lane_pos_form = QFormLayout(lane_pos_widget)
+        
+        road_pos_widget = QWidget()
+        road_pos_form = QFormLayout(road_pos_widget)
+        
+        relative_world_pos_widget = QWidget()
+        relative_world_pos_form = QFormLayout(relative_world_pos_widget)
+        
+        relative_lane_pos_widget = QWidget()
+        relative_lane_pos_form = QFormLayout(relative_lane_pos_widget)
+        
+        relative_road_pos_widget = QWidget()
+        relative_road_pos_form = QFormLayout(relative_road_pos_widget)
+        
+        relative_object_pos_widget = QWidget()
+        relative_object_pos_form = QFormLayout(relative_object_pos_widget)
+        
+        # WorldPositionフォーム
+        def build_world_position_form():
+            if action.position is None:
+                action.position = WorldPosition(x=0.0, y=0.0)
             pos = action.position
+            
             x_spin = QDoubleSpinBox()
             x_spin.setRange(-10000, 10000)
-            x_spin.setValue(pos.x)
+            if isinstance(pos.x, (int, float)):
+                x_spin.setValue(pos.x)
             x_spin.valueChanged.connect(lambda v: setattr(pos, "x", v) or self.property_changed.emit())
-            form.addRow("X:", x_spin)
+            world_pos_form.addRow("X:", x_spin)
             
             y_spin = QDoubleSpinBox()
             y_spin.setRange(-10000, 10000)
-            y_spin.setValue(pos.y)
+            if isinstance(pos.y, (int, float)):
+                y_spin.setValue(pos.y)
             y_spin.valueChanged.connect(lambda v: setattr(pos, "y", v) or self.property_changed.emit())
-            form.addRow("Y:", y_spin)
+            world_pos_form.addRow("Y:", y_spin)
             
             z_spin = QDoubleSpinBox()
             z_spin.setRange(-100, 100)
-            z_spin.setValue(pos.z)
+            if isinstance(pos.z, (int, float)):
+                z_spin.setValue(pos.z)
             z_spin.valueChanged.connect(lambda v: setattr(pos, "z", v) or self.property_changed.emit())
-            form.addRow("Z:", z_spin)
+            world_pos_form.addRow("Z:", z_spin)
             
             h_spin = QDoubleSpinBox()
             h_spin.setRange(-360, 360)
-            h_spin.setValue(pos.h)
+            if isinstance(pos.h, (int, float)):
+                h_spin.setValue(pos.h)
             h_spin.valueChanged.connect(lambda v: setattr(pos, "h", v) or self.property_changed.emit())
-            form.addRow("Heading:", h_spin)
+            world_pos_form.addRow("H (Heading):", h_spin)
+            
+            p_spin = QDoubleSpinBox()
+            p_spin.setRange(-180, 180)
+            if isinstance(pos.p, (int, float)):
+                p_spin.setValue(pos.p)
+            p_spin.valueChanged.connect(lambda v: setattr(pos, "p", v) or self.property_changed.emit())
+            world_pos_form.addRow("P (Pitch):", p_spin)
+            
+            r_spin = QDoubleSpinBox()
+            r_spin.setRange(-180, 180)
+            if isinstance(pos.r, (int, float)):
+                r_spin.setValue(pos.r)
+            r_spin.valueChanged.connect(lambda v: setattr(pos, "r", v) or self.property_changed.emit())
+            world_pos_form.addRow("R (Roll):", r_spin)
         
-        elif action.lane_position:
+        # LanePositionフォーム
+        def build_lane_position_form():
+            if action.lane_position is None:
+                action.lane_position = LanePosition(road_id="", lane_id="")
             lane_pos = action.lane_position
+            
             road_edit = QLineEdit(lane_pos.road_id)
             road_edit.textChanged.connect(lambda text: setattr(lane_pos, "road_id", text) or self.property_changed.emit())
-            form.addRow("Road ID:", road_edit)
+            lane_pos_form.addRow("Road ID:", road_edit)
             
-            # lane_idは文字列型（XSDではString型）
             lane_edit = QLineEdit(str(lane_pos.lane_id))
             lane_edit.textChanged.connect(lambda text: setattr(lane_pos, "lane_id", text) or self.property_changed.emit())
-            form.addRow("Lane ID:", lane_edit)
+            lane_pos_form.addRow("Lane ID:", lane_edit)
             
             s_spin = QDoubleSpinBox()
             s_spin.setRange(0, 100000)
-            s_spin.setValue(lane_pos.s)
+            if isinstance(lane_pos.s, (int, float)):
+                s_spin.setValue(lane_pos.s)
             s_spin.valueChanged.connect(lambda v: setattr(lane_pos, "s", v) or self.property_changed.emit())
-            form.addRow("S:", s_spin)
+            lane_pos_form.addRow("S:", s_spin)
             
             offset_spin = QDoubleSpinBox()
             offset_spin.setRange(-10, 10)
-            offset_spin.setValue(lane_pos.offset)
+            if isinstance(lane_pos.offset, (int, float)):
+                offset_spin.setValue(lane_pos.offset)
             offset_spin.valueChanged.connect(lambda v: setattr(lane_pos, "offset", v) or self.property_changed.emit())
-            form.addRow("Offset:", offset_spin)
+            lane_pos_form.addRow("Offset:", offset_spin)
+            
+            # Orientation
+            if lane_pos.orientation is None:
+                lane_pos.orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+            self._build_orientation_form(lane_pos_form, lane_pos.orientation, lambda: self.property_changed.emit())
+        
+        # RoadPositionフォーム
+        def build_road_position_form():
+            if action.road_position is None:
+                action.road_position = RoadPosition(road_id="", s=0.0, t=0.0)
+            road_pos = action.road_position
+            
+            road_edit = QLineEdit(road_pos.road_id)
+            road_edit.textChanged.connect(lambda text: setattr(road_pos, "road_id", text) or self.property_changed.emit())
+            road_pos_form.addRow("Road ID:", road_edit)
+            
+            s_spin = QDoubleSpinBox()
+            s_spin.setRange(0, 100000)
+            if isinstance(road_pos.s, (int, float)):
+                s_spin.setValue(road_pos.s)
+            s_spin.valueChanged.connect(lambda v: setattr(road_pos, "s", v) or self.property_changed.emit())
+            road_pos_form.addRow("S:", s_spin)
+            
+            t_spin = QDoubleSpinBox()
+            t_spin.setRange(-100, 100)
+            if isinstance(road_pos.t, (int, float)):
+                t_spin.setValue(road_pos.t)
+            t_spin.valueChanged.connect(lambda v: setattr(road_pos, "t", v) or self.property_changed.emit())
+            road_pos_form.addRow("T:", t_spin)
+            
+            # Orientation
+            if road_pos.orientation is None:
+                road_pos.orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+            self._build_orientation_form(road_pos_form, road_pos.orientation, lambda: self.property_changed.emit())
+        
+        # RelativeWorldPositionフォーム
+        def build_relative_world_position_form():
+            entity_names = self._get_entity_names()
+            if action.relative_world_position is None:
+                action.relative_world_position = RelativeWorldPosition(
+                    entity_ref=entity_names[0] if entity_names else "",
+                    dx=0.0,
+                    dy=0.0
+                )
+            rel_pos = action.relative_world_position
+            
+            entity_combo = QComboBox()
+            entity_combo.addItems(entity_names if entity_names else [rel_pos.entity_ref])
+            if rel_pos.entity_ref in entity_names:
+                entity_combo.setCurrentText(rel_pos.entity_ref)
+            elif entity_names:
+                entity_combo.setCurrentIndex(0)
+                rel_pos.entity_ref = entity_names[0]
+            entity_combo.currentTextChanged.connect(
+                lambda text: (setattr(rel_pos, "entity_ref", text), self.property_changed.emit())
+            )
+            relative_world_pos_form.addRow("Entity Ref:", entity_combo)
+            
+            dx_spin = QDoubleSpinBox()
+            dx_spin.setRange(-10000, 10000)
+            if isinstance(rel_pos.dx, (int, float)):
+                dx_spin.setValue(rel_pos.dx)
+            dx_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dx", v) or self.property_changed.emit())
+            relative_world_pos_form.addRow("DX:", dx_spin)
+            
+            dy_spin = QDoubleSpinBox()
+            dy_spin.setRange(-10000, 10000)
+            if isinstance(rel_pos.dy, (int, float)):
+                dy_spin.setValue(rel_pos.dy)
+            dy_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dy", v) or self.property_changed.emit())
+            relative_world_pos_form.addRow("DY:", dy_spin)
+            
+            dz_spin = QDoubleSpinBox()
+            dz_spin.setRange(-100, 100)
+            if isinstance(rel_pos.dz, (int, float)):
+                dz_spin.setValue(rel_pos.dz)
+            dz_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dz", v) or self.property_changed.emit())
+            relative_world_pos_form.addRow("DZ:", dz_spin)
+            
+            # Orientation
+            if rel_pos.orientation is None:
+                rel_pos.orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+            self._build_orientation_form(relative_world_pos_form, rel_pos.orientation, lambda: self.property_changed.emit())
+        
+        # RelativeLanePositionフォーム
+        def build_relative_lane_position_form():
+            entity_names = self._get_entity_names()
+            if action.relative_lane_position is None:
+                action.relative_lane_position = RelativeLanePosition(
+                    entity_ref=entity_names[0] if entity_names else "",
+                    d_lane=0
+                )
+            rel_pos = action.relative_lane_position
+            
+            entity_combo = QComboBox()
+            entity_combo.addItems(entity_names if entity_names else [rel_pos.entity_ref])
+            if rel_pos.entity_ref in entity_names:
+                entity_combo.setCurrentText(rel_pos.entity_ref)
+            elif entity_names:
+                entity_combo.setCurrentIndex(0)
+                rel_pos.entity_ref = entity_names[0]
+            entity_combo.currentTextChanged.connect(
+                lambda text: (setattr(rel_pos, "entity_ref", text), self.property_changed.emit())
+            )
+            relative_lane_pos_form.addRow("Entity Ref:", entity_combo)
+            
+            d_lane_spin = QSpinBox()
+            d_lane_spin.setRange(-10, 10)
+            if isinstance(rel_pos.d_lane, int):
+                d_lane_spin.setValue(rel_pos.d_lane)
+            d_lane_spin.valueChanged.connect(lambda v: setattr(rel_pos, "d_lane", v) or self.property_changed.emit())
+            relative_lane_pos_form.addRow("D Lane:", d_lane_spin)
+            
+            ds_spin = QDoubleSpinBox()
+            ds_spin.setRange(-100000, 100000)
+            if rel_pos.ds is not None and isinstance(rel_pos.ds, (int, float)):
+                ds_spin.setValue(rel_pos.ds)
+            ds_spin.valueChanged.connect(lambda v: setattr(rel_pos, "ds", v) or self.property_changed.emit())
+            relative_lane_pos_form.addRow("DS:", ds_spin)
+            
+            offset_spin = QDoubleSpinBox()
+            offset_spin.setRange(-10, 10)
+            if rel_pos.offset is not None and isinstance(rel_pos.offset, (int, float)):
+                offset_spin.setValue(rel_pos.offset)
+            offset_spin.valueChanged.connect(lambda v: setattr(rel_pos, "offset", v) or self.property_changed.emit())
+            relative_lane_pos_form.addRow("Offset:", offset_spin)
+            
+            ds_lane_spin = QDoubleSpinBox()
+            ds_lane_spin.setRange(-100000, 100000)
+            if rel_pos.ds_lane is not None and isinstance(rel_pos.ds_lane, (int, float)):
+                ds_lane_spin.setValue(rel_pos.ds_lane)
+            ds_lane_spin.valueChanged.connect(lambda v: setattr(rel_pos, "ds_lane", v) or self.property_changed.emit())
+            relative_lane_pos_form.addRow("DS Lane:", ds_lane_spin)
+            
+            # Orientation
+            if rel_pos.orientation is None:
+                rel_pos.orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+            self._build_orientation_form(relative_lane_pos_form, rel_pos.orientation, lambda: self.property_changed.emit())
+        
+        # RelativeRoadPositionフォーム
+        def build_relative_road_position_form():
+            entity_names = self._get_entity_names()
+            if action.relative_road_position is None:
+                action.relative_road_position = RelativeRoadPosition(
+                    entity_ref=entity_names[0] if entity_names else "",
+                    ds=0.0,
+                    dt=0.0
+                )
+            rel_pos = action.relative_road_position
+            
+            entity_combo = QComboBox()
+            entity_combo.addItems(entity_names if entity_names else [rel_pos.entity_ref])
+            if rel_pos.entity_ref in entity_names:
+                entity_combo.setCurrentText(rel_pos.entity_ref)
+            elif entity_names:
+                entity_combo.setCurrentIndex(0)
+                rel_pos.entity_ref = entity_names[0]
+            entity_combo.currentTextChanged.connect(
+                lambda text: (setattr(rel_pos, "entity_ref", text), self.property_changed.emit())
+            )
+            relative_road_pos_form.addRow("Entity Ref:", entity_combo)
+            
+            ds_spin = QDoubleSpinBox()
+            ds_spin.setRange(-100000, 100000)
+            if isinstance(rel_pos.ds, (int, float)):
+                ds_spin.setValue(rel_pos.ds)
+            ds_spin.valueChanged.connect(lambda v: setattr(rel_pos, "ds", v) or self.property_changed.emit())
+            relative_road_pos_form.addRow("DS:", ds_spin)
+            
+            dt_spin = QDoubleSpinBox()
+            dt_spin.setRange(-100, 100)
+            if isinstance(rel_pos.dt, (int, float)):
+                dt_spin.setValue(rel_pos.dt)
+            dt_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dt", v) or self.property_changed.emit())
+            relative_road_pos_form.addRow("DT:", dt_spin)
+            
+            # Orientation
+            if rel_pos.orientation is None:
+                rel_pos.orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+            self._build_orientation_form(relative_road_pos_form, rel_pos.orientation, lambda: self.property_changed.emit())
+        
+        # RelativeObjectPositionフォーム
+        def build_relative_object_position_form():
+            entity_names = self._get_entity_names()
+            if action.relative_object_position is None:
+                action.relative_object_position = RelativeObjectPosition(
+                    entity_ref=entity_names[0] if entity_names else "",
+                    dx=0.0,
+                    dy=0.0
+                )
+            rel_pos = action.relative_object_position
+            
+            entity_combo = QComboBox()
+            entity_combo.addItems(entity_names if entity_names else [rel_pos.entity_ref])
+            if rel_pos.entity_ref in entity_names:
+                entity_combo.setCurrentText(rel_pos.entity_ref)
+            elif entity_names:
+                entity_combo.setCurrentIndex(0)
+                rel_pos.entity_ref = entity_names[0]
+            entity_combo.currentTextChanged.connect(
+                lambda text: (setattr(rel_pos, "entity_ref", text), self.property_changed.emit())
+            )
+            relative_object_pos_form.addRow("Entity Ref:", entity_combo)
+            
+            dx_spin = QDoubleSpinBox()
+            dx_spin.setRange(-10000, 10000)
+            if isinstance(rel_pos.dx, (int, float)):
+                dx_spin.setValue(rel_pos.dx)
+            dx_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dx", v) or self.property_changed.emit())
+            relative_object_pos_form.addRow("DX:", dx_spin)
+            
+            dy_spin = QDoubleSpinBox()
+            dy_spin.setRange(-10000, 10000)
+            if isinstance(rel_pos.dy, (int, float)):
+                dy_spin.setValue(rel_pos.dy)
+            dy_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dy", v) or self.property_changed.emit())
+            relative_object_pos_form.addRow("DY:", dy_spin)
+            
+            dz_spin = QDoubleSpinBox()
+            dz_spin.setRange(-100, 100)
+            if rel_pos.dz is not None and isinstance(rel_pos.dz, (int, float)):
+                dz_spin.setValue(rel_pos.dz)
+            dz_spin.valueChanged.connect(lambda v: setattr(rel_pos, "dz", v) or self.property_changed.emit())
+            relative_object_pos_form.addRow("DZ:", dz_spin)
+            
+            # Orientation
+            if rel_pos.orientation is None:
+                rel_pos.orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+            self._build_orientation_form(relative_object_pos_form, rel_pos.orientation, lambda: self.property_changed.emit())
+        
+        # 各フォームを構築
+        build_world_position_form()
+        build_lane_position_form()
+        build_road_position_form()
+        build_relative_world_position_form()
+        build_relative_lane_position_form()
+        build_relative_road_position_form()
+        build_relative_object_position_form()
+        
+        # Positionタイプ切り替え時の処理
+        def on_position_type_changed(text: str):
+            # すべてのウィジェットを非表示
+            world_pos_widget.setVisible(False)
+            lane_pos_widget.setVisible(False)
+            road_pos_widget.setVisible(False)
+            relative_world_pos_widget.setVisible(False)
+            relative_lane_pos_widget.setVisible(False)
+            relative_road_pos_widget.setVisible(False)
+            relative_object_pos_widget.setVisible(False)
+            
+            # 既存のPositionをクリア
+            action.position = None
+            action.lane_position = None
+            action.road_position = None
+            action.relative_world_position = None
+            action.relative_lane_position = None
+            action.relative_road_position = None
+            action.relative_object_position = None
+            
+            # 選択されたタイプに応じて表示とPositionオブジェクトを作成
+            if text == "WorldPosition":
+                world_pos_widget.setVisible(True)
+                if action.position is None:
+                    action.position = WorldPosition(x=0.0, y=0.0)
+            elif text == "LanePosition":
+                lane_pos_widget.setVisible(True)
+                if action.lane_position is None:
+                    action.lane_position = LanePosition(road_id="", lane_id="")
+            elif text == "RoadPosition":
+                road_pos_widget.setVisible(True)
+                if action.road_position is None:
+                    action.road_position = RoadPosition(road_id="", s=0.0, t=0.0)
+            elif text == "RelativeWorldPosition":
+                relative_world_pos_widget.setVisible(True)
+                entity_names = self._get_entity_names()
+                if action.relative_world_position is None:
+                    action.relative_world_position = RelativeWorldPosition(
+                        entity_ref=entity_names[0] if entity_names else "",
+                        dx=0.0,
+                        dy=0.0
+                    )
+            elif text == "RelativeLanePosition":
+                relative_lane_pos_widget.setVisible(True)
+                entity_names = self._get_entity_names()
+                if action.relative_lane_position is None:
+                    action.relative_lane_position = RelativeLanePosition(
+                        entity_ref=entity_names[0] if entity_names else "",
+                        d_lane=0
+                    )
+            elif text == "RelativeRoadPosition":
+                relative_road_pos_widget.setVisible(True)
+                entity_names = self._get_entity_names()
+                if action.relative_road_position is None:
+                    action.relative_road_position = RelativeRoadPosition(
+                        entity_ref=entity_names[0] if entity_names else "",
+                        ds=0.0,
+                        dt=0.0
+                    )
+            elif text == "RelativeObjectPosition":
+                relative_object_pos_widget.setVisible(True)
+                entity_names = self._get_entity_names()
+                if action.relative_object_position is None:
+                    action.relative_object_position = RelativeObjectPosition(
+                        entity_ref=entity_names[0] if entity_names else "",
+                        dx=0.0,
+                        dy=0.0
+                    )
+            
+            self.property_changed.emit()
+        
+        position_type_combo.currentTextChanged.connect(on_position_type_changed)
+        
+        # 初期表示を設定
+        on_position_type_changed(current_position_type)
+        
+        # 各ウィジェットをフォームに追加
+        form.addRow(world_pos_widget)
+        form.addRow(lane_pos_widget)
+        form.addRow(road_pos_widget)
+        form.addRow(relative_world_pos_widget)
+        form.addRow(relative_lane_pos_widget)
+        form.addRow(relative_road_pos_widget)
+        form.addRow(relative_object_pos_widget)
         
         group.setLayout(form)
         self._form_layout.addRow(group)
@@ -476,6 +886,58 @@ class PropertiesPanel(QWidget):
         entity_ref_edit = QLineEdit(private.entity_ref)
         entity_ref_edit.textChanged.connect(lambda text: setattr(private, "entity_ref", text) or self.property_changed.emit())
         self._form_layout.addRow("Entity Ref:", entity_ref_edit)
+    
+    def _get_entity_names(self) -> list[str]:
+        """シナリオ内のエンティティ名一覧を取得"""
+        entity_names = []
+        if self._scenario and self._scenario.entities:
+            for scenario_obj in self._scenario.entities.scenario_objects:
+                entity_names.append(scenario_obj.name)
+        return sorted(entity_names)
+    
+    def _build_orientation_form(self, parent_layout: QFormLayout, orientation: Optional[dict], on_changed):
+        """Orientation編集フォームを構築"""
+        if orientation is None:
+            orientation = {"type": "absolute", "h": 0.0, "p": 0.0, "r": 0.0}
+        
+        type_combo = QComboBox()
+        type_combo.addItems(["absolute", "relative"])
+        if "type" in orientation:
+            type_combo.setCurrentText(orientation["type"])
+        type_combo.currentTextChanged.connect(
+            lambda text: (orientation.update({"type": text}), on_changed())
+        )
+        parent_layout.addRow("Type:", type_combo)
+        
+        h_spin = QDoubleSpinBox()
+        h_spin.setRange(-360, 360)
+        h_val = orientation.get("h", 0.0)
+        if isinstance(h_val, (int, float)):
+            h_spin.setValue(h_val)
+        h_spin.valueChanged.connect(
+            lambda v: (orientation.update({"h": v}), on_changed())
+        )
+        parent_layout.addRow("H (Heading):", h_spin)
+        
+        p_spin = QDoubleSpinBox()
+        p_spin.setRange(-180, 180)
+        p_val = orientation.get("p", 0.0)
+        if isinstance(p_val, (int, float)):
+            p_spin.setValue(p_val)
+        p_spin.valueChanged.connect(
+            lambda v: (orientation.update({"p": v}), on_changed())
+        )
+        parent_layout.addRow("P (Pitch):", p_spin)
+        
+        r_spin = QDoubleSpinBox()
+        r_spin.setRange(-180, 180)
+        r_val = orientation.get("r", 0.0)
+        if isinstance(r_val, (int, float)):
+            r_spin.setValue(r_val)
+        r_spin.valueChanged.connect(
+            lambda v: (orientation.update({"r": v}), on_changed())
+        )
+        parent_layout.addRow("R (Roll):", r_spin)
     
     def _build_maneuver_group_form(self, mg: ManeuverGroup):
         """ManeuverGroup用フォーム"""
