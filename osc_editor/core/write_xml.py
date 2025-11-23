@@ -177,6 +177,31 @@ def write_catalog_locations(parent: ET.Element, catalog_locs: CatalogLocations):
         controller_catalog_elem = _create_element("ControllerCatalog", elem)
         directory_elem = _create_element("Directory", controller_catalog_elem)
         directory_elem.set("path", catalog_locs.controller_catalog)
+    
+    if catalog_locs.pedestrian_catalog:
+        pedestrian_catalog_elem = _create_element("PedestrianCatalog", elem)
+        directory_elem = _create_element("Directory", pedestrian_catalog_elem)
+        directory_elem.set("path", catalog_locs.pedestrian_catalog)
+    
+    if catalog_locs.misc_object_catalog:
+        misc_object_catalog_elem = _create_element("MiscObjectCatalog", elem)
+        directory_elem = _create_element("Directory", misc_object_catalog_elem)
+        directory_elem.set("path", catalog_locs.misc_object_catalog)
+    
+    if catalog_locs.environment_catalog:
+        environment_catalog_elem = _create_element("EnvironmentCatalog", elem)
+        directory_elem = _create_element("Directory", environment_catalog_elem)
+        directory_elem.set("path", catalog_locs.environment_catalog)
+    
+    if catalog_locs.maneuver_catalog:
+        maneuver_catalog_elem = _create_element("ManeuverCatalog", elem)
+        directory_elem = _create_element("Directory", maneuver_catalog_elem)
+        directory_elem.set("path", catalog_locs.maneuver_catalog)
+    
+    if catalog_locs.trajectory_catalog:
+        trajectory_catalog_elem = _create_element("TrajectoryCatalog", elem)
+        directory_elem = _create_element("Directory", trajectory_catalog_elem)
+        directory_elem.set("path", catalog_locs.trajectory_catalog)
 
 
 def write_world_position(parent: ET.Element, position: WorldPosition):

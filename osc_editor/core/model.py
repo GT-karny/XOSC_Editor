@@ -723,6 +723,11 @@ class CatalogLocations:
     vehicle_catalog: Optional[str] = None  # VehicleCatalogのDirectoryパス
     route_catalog: Optional[str] = None  # RouteCatalogのDirectoryパス
     controller_catalog: Optional[str] = None  # ControllerCatalogのDirectoryパス
+    pedestrian_catalog: Optional[str] = None  # PedestrianCatalogのDirectoryパス
+    misc_object_catalog: Optional[str] = None  # MiscObjectCatalogのDirectoryパス
+    environment_catalog: Optional[str] = None  # EnvironmentCatalogのDirectoryパス
+    maneuver_catalog: Optional[str] = None  # ManeuverCatalogのDirectoryパス
+    trajectory_catalog: Optional[str] = None  # TrajectoryCatalogのDirectoryパス
 
 
 # ============================================================================

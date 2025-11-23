@@ -252,10 +252,30 @@ def parse_catalog_locations(element: ET.Element) -> CatalogLocations:
     controller_catalog_elem = element.find(f"./{ns}ControllerCatalog/{ns}Directory")
     controller_catalog = controller_catalog_elem.get("path") if controller_catalog_elem is not None else None
     
+    pedestrian_catalog_elem = element.find(f"./{ns}PedestrianCatalog/{ns}Directory")
+    pedestrian_catalog = pedestrian_catalog_elem.get("path") if pedestrian_catalog_elem is not None else None
+    
+    misc_object_catalog_elem = element.find(f"./{ns}MiscObjectCatalog/{ns}Directory")
+    misc_object_catalog = misc_object_catalog_elem.get("path") if misc_object_catalog_elem is not None else None
+    
+    environment_catalog_elem = element.find(f"./{ns}EnvironmentCatalog/{ns}Directory")
+    environment_catalog = environment_catalog_elem.get("path") if environment_catalog_elem is not None else None
+    
+    maneuver_catalog_elem = element.find(f"./{ns}ManeuverCatalog/{ns}Directory")
+    maneuver_catalog = maneuver_catalog_elem.get("path") if maneuver_catalog_elem is not None else None
+    
+    trajectory_catalog_elem = element.find(f"./{ns}TrajectoryCatalog/{ns}Directory")
+    trajectory_catalog = trajectory_catalog_elem.get("path") if trajectory_catalog_elem is not None else None
+    
     return CatalogLocations(
         vehicle_catalog=vehicle_catalog,
         route_catalog=route_catalog,
-        controller_catalog=controller_catalog
+        controller_catalog=controller_catalog,
+        pedestrian_catalog=pedestrian_catalog,
+        misc_object_catalog=misc_object_catalog,
+        environment_catalog=environment_catalog,
+        maneuver_catalog=maneuver_catalog,
+        trajectory_catalog=trajectory_catalog
     )
 
 

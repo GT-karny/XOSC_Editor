@@ -3,12 +3,113 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_nr26vupr\scenario.xosc
-[2025-11-23 11:22:51]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_nr26vupr\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_wzjekqg6\scenario.xosc
+[2025-11-23 11:51:05]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_wzjekqg6\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 2482691016
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_nr26vupr/scenario.xosc (v1.0)
+[] [info] Generated seed 4132098782
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_wzjekqg6/scenario.xosc (v1.0)
 [] [info] 0 variables
-[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/curves_elevation.xodr
-[] [error] Exception: invalid stof argument
+[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/fabriksgatan.xodr
+[] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
+[] [info] Added route waypoint 0, 0.00: road_id 0 lane_id 1 s 63.00 (scenario)
+[] [info] Added route waypoint 1, 68.07: road_id 9 lane_id -1 s 5.07 (intermediate)
+[] [info] Added route waypoint 2, 377.57: road_id 2 lane_id 1 s 5.00 (scenario)
+[] [info] Added route waypoint 0, 0.00: road_id 0 lane_id 1 s 63.00 (scenario)
+[] [info] Added route waypoint 1, 68.07: road_id 9 lane_id -1 s 5.07 (intermediate)
+[] [info] Added route waypoint 2, 377.57: road_id 2 lane_id 1 s 5.00 (scenario)
+[] [info] Position on route at roadId=0, s=63.00
+[] [info] 3 parameters:
+[] [info]    PedestrianSpeed = 1.6
+[] [info]    HostSpeed = 9
+[] [info]    HostVehicle = car_white
+[0.000] [info] Window created at 60,60 with size 800,400
+[0.000] [info] Loaded scenegraph: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/models/fabriksgatan.osgb
+[0.000] [info] Adjusted pedestrian_adult bounding box to model walkman.osgb - xyz: -0.04, 0.00, 0.91 lwh: 1.05, 0.25, 1.78
+[0.000] [info] Init Ego RoutingAction initState -> startTransition -> runningState
+[0.000] [info] Init Ego TeleportAction initState -> startTransition -> runningState
+[0.000] [info] Starting teleport Action
+[0.000] [info] Entity Ego on route at roadId=0, s=63.00
+[0.000] [info] Ego New position:
+[0.000] [info] Pos(42.98, -71.25, 0.00) Rot(1.78, 0.00, 0.00) roadId 0 laneId 1 s 63.00 offset 0.00 t 1.75
+[0.000] [info] Init Ego LongitudinalAction initState -> startTransition -> runningState
+[0.000] [info] Init pedestrian_adult TeleportAction initState -> startTransition -> runningState
+[0.000] [info] Starting teleport Action
+[0.000] [info] pedestrian_adult New position:
+[0.000] [info] Pos(35.69, -23.63, 0.00) Rot(1.80, 0.00, 0.00) roadId 0 laneId 3 s 15.00 offset 0.50 t 5.30
+[0.000] [info] storyBoard initState -> startTransition -> runningState
+[0.000] [info] LTAPStory initState -> startTransition -> runningState
+[0.000] [info] LTAPActNPC initState -> initToStandbyTransition -> standbyState
+[0.000] [info] Init Ego RoutingAction runningState -> endTransition -> completeState
+[0.000] [info] Init Ego TeleportAction runningState -> endTransition -> completeState
+[0.000] [info] Init Ego LongitudinalAction runningState -> endTransition -> completeState
+[0.000] [info] Init pedestrian_adult TeleportAction runningState -> endTransition -> completeState
+[0.001] [info] ActStartCondition: true, delay: 0.00, 0.0010 > 0.0000, edge: none
+[0.001] [info] Trigger /------------------------------------------------
+[0.001] [info] Group 0:
+[0.001] [info] ActStartCondition: true
+[0.001] [info] Trigger  ------------------------------------------------/
+[0.001] [info] LTAPActNPC standbyState -> startTransition -> runningState
+[0.001] [info] ped_mangroup initState -> startTransition -> runningState
+[0.001] [info] ped_maneuver initState -> startTransition -> runningState
+[0.001] [info] ped_walk_event initState -> initToStandbyTransition -> standbyState
+[0.001] [info] ped_collide_event initState -> initToStandbyTransition -> standbyState
+[0.001] [info] ped_raise_event initState -> initToStandbyTransition -> standbyState
+[0.112] [info] ped_walk_event: true, delay: 0.00, traveled_dist: 1.01 >= 1.00, edge: rising
+[0.112] [info] Trigger /------------------------------------------------
+[0.112] [info] Group 0:
+[0.112] [info] ped_walk_event: true
+[0.112] [info] Triggering entity 0: Ego
+[0.112] [info] Trigger  ------------------------------------------------/
+[0.112] [info] ped_walk_event standbyState -> startTransition -> runningState
+[0.112] [info] walk_speed initState -> startTransition -> runningState
+[0.112] [info] walk_route initState -> startTransition -> runningState
+[0.911] [info] walk_speed runningState -> endTransition -> completeState
+[5.446] [info] ped_fall_condition: true, delay: 0.00, 1 collision(s): Ego and pedestrian_adult, edge: rising
+[5.446] [info] Trigger /------------------------------------------------
+[5.446] [info] Group 0:
+[5.446] [info] ped_fall_condition: true
+[5.446] [info] Triggering entity 0: Ego
+[5.446] [info] Trigger  ------------------------------------------------/
+[5.446] [info] walk_route runningState -> endTransition -> completeState
+[5.446] [info] ped_walk_event complete after 1 execution
+[5.446] [info] ped_walk_event runningState -> endTransition -> completeState
+[5.446] [info] Event ped_walk_event ended, overwritten by event ped_collide_event
+[5.446] [info] ped_collide_event standbyState -> startTransition -> runningState
+[5.446] [info] fall_action initState -> startTransition -> runningState
+[5.446] [info] Starting teleport Action
+[5.446] [info] pedestrian_adult New position:
+[5.446] [info] Pos(31.45, -19.49, 0.00) Rot(3.36, 0.00, 1.57) roadId 0 laneId 1 s 10.00 offset 0.34 t 2.09
+[5.446] [warn] Stopping object pedestrian_adult fall_action on conflicting Lateral & Longitudinal domain(s)
+[5.446] [info] fall_action runningState -> endTransition -> completeState
+[5.446] [info] be_still_action initState -> startTransition -> runningState
+[5.446] [info] be_still_action runningState -> endTransition -> completeState
+[5.446] [info] ped_collide_event complete after 1 execution
+[5.446] [info] ped_collide_event runningState -> endTransition -> completeState
+[5.453] [info] ped_raise_condition: true, delay: 0.80, be_still_action, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
+[5.460] [info] ped_raise_condition: false, delay: 0.80, be_still_action, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
+[6.258] [info] Trigger /------------------------------------------------
+[6.258] [info] Group 0:
+[6.258] [info] ped_raise_condition: true
+[6.258] [info] Trigger  ------------------------------------------------/
+[6.258] [info] ped_raise_event standbyState -> startTransition -> runningState
+[6.258] [info] raise_action initState -> startTransition -> runningState
+[6.258] [info] Starting teleport Action
+[6.258] [info] pedestrian_adult New position:
+[6.258] [info] Pos(31.42, -19.39, 0.00) Rot(3.36, 0.00, 0.00) roadId 0 laneId 1 s 9.90 offset 0.34 t 2.09
+[6.258] [info] raise_action runningState -> endTransition -> completeState
+[6.258] [info] ped_raise_event complete after 1 execution
+[6.258] [info] ped_raise_event runningState -> endTransition -> completeState
+[6.258] [info] ped_maneuver runningState -> endTransition -> completeState
+[6.258] [info] ped_mangroup complete after 1 execution
+[6.258] [info] ped_mangroup runningState -> endTransition -> completeState
+[6.258] [info] LTAPActNPC runningState -> endTransition -> completeState
+[6.258] [info] LTAPStory runningState -> endTransition -> completeState
+[6.265] [info] QuitCondition: true, delay: 3.00, raise_action, COMPLETE / END_TRANSITION == COMPLETE, edge: rising
+[6.272] [info] QuitCondition: false, delay: 3.00, raise_action, COMPLETE / UNDEFINED_TRANSITION == COMPLETE, edge: rising
+[9.266] [info] Trigger /------------------------------------------------
+[9.266] [info] Group 0:
+[9.266] [info] QuitCondition: true
+[9.266] [info] Trigger  ------------------------------------------------/
+[9.266] [info] storyBoard runningState -> stopTransition -> completeState
+[9.266] [info] Closing

@@ -12,7 +12,7 @@
 
 | カテゴリ | 対応済み | 一部対応 | 未対応 | 合計 | 対応率 |
 |---------|---------|---------|--------|------|--------|
-| 基本構造要素 | 12 | 2 | 3 | 17 | 82% |
+| 基本構造要素 | 13 | 1 | 3 | 17 | 88% |
 | Position関連 | 8 | 1 | 4 | 13 | 62% |
 | Action関連 | 11 | 5 | 20 | 36 | 44% |
 | Condition関連 | 9 | 2 | 10 | 21 | 52% |
@@ -21,7 +21,7 @@
 | Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **63** | **10** | **60** | **133** | **55%** |
+| **合計** | **68** | **5** | **60** | **133** | **55%** |
 
 ## 1. 基本構造要素
 
@@ -32,7 +32,7 @@
 | Properties (FileHeader内) | ❌ | FileHeader内のProperties要素未対応 |
 | ParameterDeclarations | ✅ | 完全対応 |
 | ParameterDeclaration | ✅ | 完全対応 |
-| CatalogLocations | ⚠️ | VehicleCatalog, RouteCatalog, ControllerCatalogのみ対応。PedestrianCatalog, MiscObjectCatalog, EnvironmentCatalog, ManeuverCatalog, TrajectoryCatalogは未対応 |
+| CatalogLocations | ✅ | すべてのCatalogLocationに対応（VehicleCatalog, RouteCatalog, ControllerCatalog, PedestrianCatalog, MiscObjectCatalog, EnvironmentCatalog, ManeuverCatalog, TrajectoryCatalog） |
 | CatalogReference | ✅ | 基本属性（catalogName, entryName）に対応。ParameterAssignmentsは未対応 |
 | ParameterAssignments | ❌ | CatalogReference内のParameterAssignments未対応 |
 | ParameterAssignment | ❌ | ParameterAssignments内のParameterAssignment未対応 |
@@ -308,11 +308,11 @@
 | VehicleCatalogLocation | ✅ | Directory/pathに対応 |
 | ControllerCatalogLocation | ✅ | Directory/pathに対応 |
 | RouteCatalogLocation | ✅ | Directory/pathに対応 |
-| PedestrianCatalogLocation | ❌ | 未対応 |
-| MiscObjectCatalogLocation | ❌ | 未対応 |
-| EnvironmentCatalogLocation | ❌ | 未対応 |
-| ManeuverCatalogLocation | ❌ | 未対応 |
-| TrajectoryCatalogLocation | ❌ | 未対応 |
+| PedestrianCatalogLocation | ✅ | Directory/pathに対応 |
+| MiscObjectCatalogLocation | ✅ | Directory/pathに対応 |
+| EnvironmentCatalogLocation | ✅ | Directory/pathに対応 |
+| ManeuverCatalogLocation | ✅ | Directory/pathに対応 |
+| TrajectoryCatalogLocation | ✅ | Directory/pathに対応 |
 | Directory | ✅ | path属性に対応 |
 
 ## 12. Variable関連
@@ -392,7 +392,8 @@
 
 ## 更新履歴
 
-- 2025-01-XX: 中優先度機能の実装完了（VisibilityAction, SynchronizeAction, AppearanceAction, EndOfRoadCondition, CollisionCondition, Clothoid, Nurbs）
+- 2025-11-23 11:59: Catalog関連の実装完了（PedestrianCatalogLocation, MiscObjectCatalogLocation, EnvironmentCatalogLocation, ManeuverCatalogLocation, TrajectoryCatalogLocation）
+- 2025-11-23 11:30: 中優先度機能の実装完了（VisibilityAction, SynchronizeAction, AppearanceAction, EndOfRoadCondition, CollisionCondition, Clothoid, Nurbs）
 - 2025-11-23 11:06: Position関連（相対座標系）、Vehicle/Pedestrian詳細属性、Route要素の実装完了
 - 2025-11-23 10:47: 初版作成（OpenSCENARIO 1.2.0 XSDとの比較）
 
