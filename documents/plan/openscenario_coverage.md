@@ -14,15 +14,15 @@
 |---------|---------|---------|--------|------|--------|
 | 基本構造要素 | 15 | 1 | 1 | 17 | 94% |
 | Position関連 | 11 | 0 | 2 | 13 | 85% |
-| Action関連 | 12 | 5 | 19 | 36 | 47% |
+| Action関連 | 17 | 3 | 14 | 34 | 59% |
 | Condition関連 | 21 | 1 | 0 | 22 | 95% |
 | Entity関連 | 12 | 1 | 3 | 16 | 81% |
 | Trajectory関連 | 8 | 0 | 1 | 9 | 89% |
-| Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
+| Dynamics関連 | 3 | 0 | 0 | 3 | 100% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | ParameterValueDistribution関連 | 10 | 0 | 0 | 10 | 100% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **95** | **4** | **45** | **144** | **69%** |
+| **合計** | **100** | **4** | **40** | **144** | **72%** |
 
 ## 1. 基本構造要素
 
@@ -81,20 +81,20 @@
 | LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffsetに対応 |
 | AssignRouteAction | ✅ | CatalogReferenceとRoute要素に対応 |
 | FollowTrajectoryAction | ✅ | Trajectory（deprecated）, TrajectoryRef, TimeReference, TrajectoryFollowingMode, initialDistanceOffsetに対応 |
-| RoutingAction | ✅ | AssignRouteAction, FollowTrajectoryActionに対応 |
+| RoutingAction | ✅ | AssignRouteAction, FollowTrajectoryAction, AcquirePositionActionに対応 |
 | ActivateControllerAction | ✅ | longitudinal, lateral属性に対応 |
-| LongitudinalAction | ⚠️ | SpeedActionのみ対応。LongitudinalDistanceAction, SpeedProfileActionは未対応 |
-| LateralAction | ⚠️ | LaneChangeAction, LaneOffsetActionのみ対応。LateralDistanceActionは未対応 |
-| LongitudinalDistanceAction | ❌ | 未対応 |
-| SpeedProfileAction | ❌ | 未対応 |
-| LateralDistanceAction | ❌ | 未対応 |
+| LongitudinalAction | ✅ | SpeedAction, LongitudinalDistanceAction, SpeedProfileActionに対応 |
+| LateralAction | ✅ | LaneChangeAction, LaneOffsetAction, LateralDistanceActionに対応 |
+| LongitudinalDistanceAction | ✅ | entityRef, continuous, freespace, distance, timeGap, displacement, coordinateSystem, DynamicConstraintsに対応 |
+| SpeedProfileAction | ✅ | followingMode, entityRef, DynamicConstraints, SpeedProfileEntry（speed, time属性）に対応 |
+| LateralDistanceAction | ✅ | entityRef, continuous, freespace, distance, displacement, coordinateSystem, DynamicConstraintsに対応 |
 | VisibilityAction | ✅ | graphics, sensors, traffic属性に対応。SensorReferenceSetは未対応 |
 | SynchronizeAction | ✅ | masterEntityRef, TargetPositionMaster, TargetPosition, targetToleranceMaster, targetTolerance, FinalSpeedに対応 |
-| ControllerAction | ⚠️ | ActivateControllerActionのみ対応。AssignControllerAction, OverrideControllerValueActionは未対応 |
+| ControllerAction | ✅ | AssignControllerAction, OverrideControllerValueAction, ActivateControllerActionに対応 |
 | AppearanceAction | ⚠️ | LightStateAction, AnimationActionの基本属性に対応。LightType/LightState, AnimationType/AnimationStateは未対応 |
 | LightStateAction | ⚠️ | transitionTime属性のみ対応。LightType, LightStateは未対応 |
 | AnimationAction | ⚠️ | loop, animationDuration属性のみ対応。AnimationType, AnimationStateは未対応 |
-| AcquirePositionAction | ❌ | 未対応 |
+| AcquirePositionAction | ✅ | Position要素（全Positionタイプ）に対応 |
 
 ### 3.2 GlobalAction
 
@@ -255,7 +255,7 @@
 |--------|---------|------|
 | TransitionDynamics | ✅ | dynamicsDimension, dynamicsShape, value属性に対応 |
 | LaneOffsetActionDynamics | ✅ | dynamicsShape, maxLateralAcc属性に対応 |
-| DynamicConstraints | ❌ | 未対応 |
+| DynamicConstraints | ✅ | maxAcceleration, maxAccelerationRate, maxDeceleration, maxDecelerationRate, maxSpeed属性に対応 |
 
 ## 8. Route関連
 
@@ -374,15 +374,15 @@
 | AnimationState | ❌ | AnimationAction内のAnimationState未対応 |
 | SensorReferenceSet | ❌ | VisibilityAction内のSensorReferenceSet未対応 |
 | SensorReference | ❌ | 未対応 |
-| Brake | ❌ | OverrideControllerValueAction関連で使用されるBrake未対応 |
+| Brake | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応。BrakePercent, BrakeForceの詳細は未対応 |
 | BrakePercent | ❌ | 未対応 |
 | BrakeForce | ❌ | 未対応 |
-| OverrideThrottleAction | ❌ | 未対応 |
-| OverrideBrakeAction | ❌ | 未対応 |
-| OverrideClutchAction | ❌ | 未対応 |
-| OverrideParkingBrakeAction | ❌ | 未対応 |
-| OverrideSteeringWheelAction | ❌ | 未対応 |
-| OverrideGearAction | ❌ | 未対応 |
+| OverrideThrottleAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active, value属性）。詳細な実装は未対応 |
+| OverrideBrakeAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active属性）。詳細な実装は未対応 |
+| OverrideClutchAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active, value属性）。詳細な実装は未対応 |
+| OverrideParkingBrakeAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active属性）。詳細な実装は未対応 |
+| OverrideSteeringWheelAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active, value属性）。詳細な実装は未対応 |
+| OverrideGearAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active属性）。詳細な実装は未対応 |
 | ManualGear | ❌ | OverrideGearAction内のManualGear未対応 |
 | AutomaticGear | ❌ | OverrideGearAction内のAutomaticGear未対応 |
 | Gear | ❌ | OverrideGearAction内のGear未対応 |
@@ -410,6 +410,8 @@
 
 ## 更新履歴
 
+- 2025-11-23 14:00: PrivateAction関連の実装完了（AcquirePositionAction, SpeedProfileAction, LongitudinalDistanceAction, LateralDistanceAction, ControllerAction, DynamicConstraints）
+- 2025-11-23 13:45: SpeedActionDynamicsのvalue属性パラメータ式対応修正（パラメータ式を文字列として保存できるように変更）
 - 2025-11-23 13:00: ParameterValueDistribution関連の実装完了（ScenarioFile, Deterministic, DeterministicMultiParameterDistribution, ValueSetDistribution, ParameterValueSet, DeterministicSingleParameterDistribution, DistributionSet, DistributionRange, Range, Element）
 - 2025-11-23 12:33: Condition要素の実装完了（TimeOfDayCondition, UserDefinedValueCondition, TrafficSignalCondition, TrafficSignalControllerCondition, VariableCondition, AccelerationCondition, StandStillCondition, SpeedCondition, RelativeSpeedCondition, DistanceCondition, RelativeDistanceCondition, RelativeClearanceCondition, RelativeLaneRange）
 - 2025-11-23 12:13: 最優先未実装機能の実装完了（ParameterAssignments/ParameterAssignment, TrajectoryRef, PositionOfCurrentEntity/PositionInRoadCoordinates）
