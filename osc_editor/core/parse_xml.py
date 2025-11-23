@@ -72,6 +72,19 @@ from osc_editor.core.model import (
     CollisionCondition,
     ParameterCondition,
     StoryboardElementStateCondition,
+    TimeOfDayCondition,
+    UserDefinedValueCondition,
+    TrafficSignalCondition,
+    TrafficSignalControllerCondition,
+    VariableCondition,
+    AccelerationCondition,
+    StandStillCondition,
+    SpeedCondition,
+    RelativeSpeedCondition,
+    DistanceCondition,
+    RelativeDistanceCondition,
+    RelativeClearanceCondition,
+    RelativeLaneRange,
     GlobalAction,
     ParameterAction,
     ObjectController,
@@ -1616,6 +1629,217 @@ def parse_storyboard_element_state_condition(element: ET.Element) -> Optional[St
     )
 
 
+def parse_time_of_day_condition(element: ET.Element) -> Optional[TimeOfDayCondition]:
+    """TimeOfDayConditionをパース"""
+    if element is None:
+        return None
+    date_time = _get_attr(element, "dateTime", "")
+    rule = _get_attr(element, "rule", "greaterThan")
+    if not date_time:
+        return None
+    return TimeOfDayCondition(date_time=date_time, rule=rule)
+
+
+def parse_user_defined_value_condition(element: ET.Element) -> Optional[UserDefinedValueCondition]:
+    """UserDefinedValueConditionをパース"""
+    if element is None:
+        return None
+    name = _get_attr(element, "name", "")
+    value = _get_attr(element, "value", "")
+    rule = _get_attr(element, "rule", "greaterThan")
+    if not name or not value:
+        return None
+    return UserDefinedValueCondition(name=name, value=value, rule=rule)
+
+
+def parse_traffic_signal_condition(element: ET.Element) -> Optional[TrafficSignalCondition]:
+    """TrafficSignalConditionをパース"""
+    if element is None:
+        return None
+    name = _get_attr(element, "name", "")
+    state = _get_attr(element, "state", "")
+    if not name or not state:
+        return None
+    return TrafficSignalCondition(name=name, state=state)
+
+
+def parse_traffic_signal_controller_condition(element: ET.Element) -> Optional[TrafficSignalControllerCondition]:
+    """TrafficSignalControllerConditionをパース"""
+    if element is None:
+        return None
+    traffic_signal_controller_ref = _get_attr(element, "trafficSignalControllerRef", "")
+    phase = _get_attr(element, "phase", "")
+    if not traffic_signal_controller_ref or not phase:
+        return None
+    return TrafficSignalControllerCondition(
+        traffic_signal_controller_ref=traffic_signal_controller_ref,
+        phase=phase
+    )
+
+
+def parse_variable_condition(element: ET.Element) -> Optional[VariableCondition]:
+    """VariableConditionをパース"""
+    if element is None:
+        return None
+    variable_ref = _get_attr(element, "variableRef", "")
+    value = _get_attr(element, "value", "")
+    rule = _get_attr(element, "rule", "greaterThan")
+    if not variable_ref or not value:
+        return None
+    return VariableCondition(variable_ref=variable_ref, value=value, rule=rule)
+
+
+def parse_acceleration_condition(element: ET.Element) -> Optional[AccelerationCondition]:
+    """AccelerationConditionをパース"""
+    if element is None:
+        return None
+    value = _get_attr_float(element, "value", 0.0)
+    rule = _get_attr(element, "rule", "greaterThan")
+    direction = _get_attr(element, "direction", None)
+    return AccelerationCondition(value=value, rule=rule, direction=direction)
+
+
+def parse_stand_still_condition(element: ET.Element) -> Optional[StandStillCondition]:
+    """StandStillConditionをパース"""
+    if element is None:
+        return None
+    duration = _get_attr_float(element, "duration", 0.0)
+    return StandStillCondition(duration=duration)
+
+
+def parse_speed_condition(element: ET.Element) -> Optional[SpeedCondition]:
+    """SpeedConditionをパース"""
+    if element is None:
+        return None
+    value = _get_attr_float(element, "value", 0.0)
+    rule = _get_attr(element, "rule", "greaterThan")
+    direction = _get_attr(element, "direction", None)
+    return SpeedCondition(value=value, rule=rule, direction=direction)
+
+
+def parse_relative_speed_condition(element: ET.Element) -> Optional[RelativeSpeedCondition]:
+    """RelativeSpeedConditionをパース"""
+    if element is None:
+        return None
+    entity_ref = _get_attr(element, "entityRef", "")
+    value = _get_attr_float(element, "value", 0.0)
+    rule = _get_attr(element, "rule", "greaterThan")
+    direction = _get_attr(element, "direction", None)
+    if not entity_ref:
+        return None
+    return RelativeSpeedCondition(
+        entity_ref=entity_ref,
+        value=value,
+        rule=rule,
+        direction=direction
+    )
+
+
+def parse_relative_lane_range(element: ET.Element) -> Optional[RelativeLaneRange]:
+    """RelativeLaneRangeをパース"""
+    if element is None:
+        return None
+    from_lane = _get_attr(element, "from", None)
+    to_lane = _get_attr(element, "to", None)
+    if from_lane is not None:
+        try:
+            from_lane = int(from_lane)
+        except (ValueError, TypeError):
+            pass  # パラメータ参照の可能性があるため文字列のまま
+    if to_lane is not None:
+        try:
+            to_lane = int(to_lane)
+        except (ValueError, TypeError):
+            pass  # パラメータ参照の可能性があるため文字列のまま
+    return RelativeLaneRange(from_lane=from_lane, to_lane=to_lane)
+
+
+def parse_distance_condition(element: ET.Element) -> Optional[DistanceCondition]:
+    """DistanceConditionをパース"""
+    if element is None:
+        return None
+    
+    value = _get_attr_float(element, "value", 0.0)
+    freespace = _get_attr_bool(element, "freespace", True)
+    rule = _get_attr(element, "rule", "greaterThan")
+    coordinate_system = _get_attr(element, "coordinateSystem", None)
+    relative_distance_type = _get_attr(element, "relativeDistanceType", None)
+    routing_algorithm = _get_attr(element, "routingAlgorithm", None)
+    along_route = _get_attr_bool(element, "alongRoute", None)  # deprecated
+    
+    ns = _detect_namespace(element)
+    position_container = element.find(f"./{ns}Position")
+    position = parse_position(position_container) if position_container is not None else None
+    
+    return DistanceCondition(
+        value=value,
+        position=position,
+        freespace=freespace,
+        rule=rule,
+        coordinate_system=coordinate_system,
+        relative_distance_type=relative_distance_type,
+        routing_algorithm=routing_algorithm,
+        along_route=along_route
+    )
+
+
+def parse_relative_distance_condition(element: ET.Element) -> Optional[RelativeDistanceCondition]:
+    """RelativeDistanceConditionをパース"""
+    if element is None:
+        return None
+    entity_ref = _get_attr(element, "entityRef", "")
+    value = _get_attr_float(element, "value", 0.0)
+    freespace = _get_attr_bool(element, "freespace", True)
+    relative_distance_type = _get_attr(element, "relativeDistanceType", "longitudinal")
+    rule = _get_attr(element, "rule", "greaterThan")
+    coordinate_system = _get_attr(element, "coordinateSystem", None)
+    routing_algorithm = _get_attr(element, "routingAlgorithm", None)
+    if not entity_ref:
+        return None
+    return RelativeDistanceCondition(
+        entity_ref=entity_ref,
+        value=value,
+        freespace=freespace,
+        relative_distance_type=relative_distance_type,
+        rule=rule,
+        coordinate_system=coordinate_system,
+        routing_algorithm=routing_algorithm
+    )
+
+
+def parse_relative_clearance_condition(element: ET.Element) -> Optional[RelativeClearanceCondition]:
+    """RelativeClearanceConditionをパース"""
+    if element is None:
+        return None
+    
+    opposite_lanes = _get_attr_bool(element, "oppositeLanes", False)
+    distance_forward = _get_attr_float(element, "distanceForward", None)
+    distance_backward = _get_attr_float(element, "distanceBackward", None)
+    free_space = _get_attr_bool(element, "freeSpace", True)
+    
+    ns = _detect_namespace(element)
+    relative_lane_ranges = []
+    for lane_range_elem in element.findall(f"./{ns}RelativeLaneRange"):
+        lane_range = parse_relative_lane_range(lane_range_elem)
+        if lane_range is not None:
+            relative_lane_ranges.append(lane_range)
+    
+    entity_refs = []
+    for entity_ref_elem in element.findall(f"./{ns}EntityRef"):
+        entity_ref = _get_attr(entity_ref_elem, "entityRef", "")
+        if entity_ref:
+            entity_refs.append(entity_ref)
+    
+    return RelativeClearanceCondition(
+        relative_lane_ranges=relative_lane_ranges,
+        entity_refs=entity_refs,
+        opposite_lanes=opposite_lanes,
+        distance_forward=distance_forward,
+        distance_backward=distance_backward,
+        free_space=free_space
+    )
+
+
 def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition]:
     """ByEntityConditionをパース"""
     if element is None:
@@ -1639,6 +1863,13 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
     reach_position_condition = None
     end_of_road_condition = None
     collision_condition = None
+    acceleration_condition = None
+    stand_still_condition = None
+    speed_condition = None
+    relative_speed_condition = None
+    distance_condition = None
+    relative_distance_condition = None
+    relative_clearance_condition = None
     
     entity_condition_elem = element.find(f"./{ns}EntityCondition")
     if entity_condition_elem is not None:
@@ -1669,11 +1900,42 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
                                 collision_elem = entity_condition_elem.find(f"./{ns}CollisionCondition")
                                 if collision_elem is not None:
                                     collision_condition = parse_collision_condition(collision_elem)
+                                else:
+                                    acceleration_elem = entity_condition_elem.find(f"./{ns}AccelerationCondition")
+                                    if acceleration_elem is not None:
+                                        acceleration_condition = parse_acceleration_condition(acceleration_elem)
+                                    else:
+                                        stand_still_elem = entity_condition_elem.find(f"./{ns}StandStillCondition")
+                                        if stand_still_elem is not None:
+                                            stand_still_condition = parse_stand_still_condition(stand_still_elem)
+                                        else:
+                                            speed_elem = entity_condition_elem.find(f"./{ns}SpeedCondition")
+                                            if speed_elem is not None:
+                                                speed_condition = parse_speed_condition(speed_elem)
+                                            else:
+                                                relative_speed_elem = entity_condition_elem.find(f"./{ns}RelativeSpeedCondition")
+                                                if relative_speed_elem is not None:
+                                                    relative_speed_condition = parse_relative_speed_condition(relative_speed_elem)
+                                                else:
+                                                    distance_elem = entity_condition_elem.find(f"./{ns}DistanceCondition")
+                                                    if distance_elem is not None:
+                                                        distance_condition = parse_distance_condition(distance_elem)
+                                                    else:
+                                                        relative_distance_elem = entity_condition_elem.find(f"./{ns}RelativeDistanceCondition")
+                                                        if relative_distance_elem is not None:
+                                                            relative_distance_condition = parse_relative_distance_condition(relative_distance_elem)
+                                                        else:
+                                                            relative_clearance_elem = entity_condition_elem.find(f"./{ns}RelativeClearanceCondition")
+                                                            if relative_clearance_elem is not None:
+                                                                relative_clearance_condition = parse_relative_clearance_condition(relative_clearance_elem)
     
     if (not triggering_entities and entity_condition is None and offroad_condition is None and
         traveled_distance_condition is None and time_to_collision_condition is None and
         reach_position_condition is None and end_of_road_condition is None and
-        collision_condition is None):
+        collision_condition is None and acceleration_condition is None and
+        stand_still_condition is None and speed_condition is None and
+        relative_speed_condition is None and distance_condition is None and
+        relative_distance_condition is None and relative_clearance_condition is None):
         return None
     
     return ByEntityCondition(
@@ -1686,6 +1948,13 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
         reach_position_condition=reach_position_condition,
         end_of_road_condition=end_of_road_condition,
         collision_condition=collision_condition,
+        acceleration_condition=acceleration_condition,
+        stand_still_condition=stand_still_condition,
+        speed_condition=speed_condition,
+        relative_speed_condition=relative_speed_condition,
+        distance_condition=distance_condition,
+        relative_distance_condition=relative_distance_condition,
+        relative_clearance_condition=relative_clearance_condition,
     )
 
 
@@ -1703,6 +1972,11 @@ def parse_condition(element: ET.Element) -> Condition:
     sim_time_condition = None
     parameter_condition = None
     storyboard_element_state_condition = None
+    time_of_day_condition = None
+    user_defined_value_condition = None
+    traffic_signal_condition = None
+    traffic_signal_controller_condition = None
+    variable_condition = None
     
     if by_value_elem is not None:
         sim_time_elem = by_value_elem.find(f"./{ns}SimulationTimeCondition")
@@ -1713,6 +1987,21 @@ def parse_condition(element: ET.Element) -> Condition:
         
         storyboard_elem = by_value_elem.find(f"./{ns}StoryboardElementStateCondition")
         storyboard_element_state_condition = parse_storyboard_element_state_condition(storyboard_elem) if storyboard_elem is not None else None
+        
+        time_of_day_elem = by_value_elem.find(f"./{ns}TimeOfDayCondition")
+        time_of_day_condition = parse_time_of_day_condition(time_of_day_elem) if time_of_day_elem is not None else None
+        
+        user_defined_value_elem = by_value_elem.find(f"./{ns}UserDefinedValueCondition")
+        user_defined_value_condition = parse_user_defined_value_condition(user_defined_value_elem) if user_defined_value_elem is not None else None
+        
+        traffic_signal_elem = by_value_elem.find(f"./{ns}TrafficSignalCondition")
+        traffic_signal_condition = parse_traffic_signal_condition(traffic_signal_elem) if traffic_signal_elem is not None else None
+        
+        traffic_signal_controller_elem = by_value_elem.find(f"./{ns}TrafficSignalControllerCondition")
+        traffic_signal_controller_condition = parse_traffic_signal_controller_condition(traffic_signal_controller_elem) if traffic_signal_controller_elem is not None else None
+        
+        variable_elem = by_value_elem.find(f"./{ns}VariableCondition")
+        variable_condition = parse_variable_condition(variable_elem) if variable_elem is not None else None
     
     by_entity_elem = element.find(f"./{ns}ByEntityCondition")
     by_entity_condition = parse_by_entity_condition(by_entity_elem) if by_entity_elem is not None else None
@@ -1725,6 +2014,11 @@ def parse_condition(element: ET.Element) -> Condition:
         by_entity_condition=by_entity_condition,
         storyboard_element_state_condition=storyboard_element_state_condition,
         parameter_condition=parameter_condition,
+        time_of_day_condition=time_of_day_condition,
+        user_defined_value_condition=user_defined_value_condition,
+        traffic_signal_condition=traffic_signal_condition,
+        traffic_signal_controller_condition=traffic_signal_controller_condition,
+        variable_condition=variable_condition,
     )
 
 

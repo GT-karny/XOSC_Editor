@@ -79,6 +79,19 @@ from osc_editor.core.model import (
     CollisionCondition,
     ParameterCondition,
     StoryboardElementStateCondition,
+    TimeOfDayCondition,
+    UserDefinedValueCondition,
+    TrafficSignalCondition,
+    TrafficSignalControllerCondition,
+    VariableCondition,
+    AccelerationCondition,
+    StandStillCondition,
+    SpeedCondition,
+    RelativeSpeedCondition,
+    DistanceCondition,
+    RelativeDistanceCondition,
+    RelativeClearanceCondition,
+    RelativeLaneRange,
     GlobalAction,
     ParameterAction,
     ObjectController,
@@ -1015,6 +1028,138 @@ def write_storyboard_element_state_condition(parent: ET.Element, condition: Stor
     elem.set("state", condition.state)
 
 
+def write_time_of_day_condition(parent: ET.Element, condition: TimeOfDayCondition):
+    """TimeOfDayConditionをXMLに書き込み"""
+    elem = _create_element("TimeOfDayCondition", parent)
+    elem.set("dateTime", str(condition.date_time))
+    elem.set("rule", condition.rule)
+
+
+def write_user_defined_value_condition(parent: ET.Element, condition: UserDefinedValueCondition):
+    """UserDefinedValueConditionをXMLに書き込み"""
+    elem = _create_element("UserDefinedValueCondition", parent)
+    elem.set("name", condition.name)
+    elem.set("value", condition.value)
+    elem.set("rule", condition.rule)
+
+
+def write_traffic_signal_condition(parent: ET.Element, condition: TrafficSignalCondition):
+    """TrafficSignalConditionをXMLに書き込み"""
+    elem = _create_element("TrafficSignalCondition", parent)
+    elem.set("name", condition.name)
+    elem.set("state", condition.state)
+
+
+def write_traffic_signal_controller_condition(parent: ET.Element, condition: TrafficSignalControllerCondition):
+    """TrafficSignalControllerConditionをXMLに書き込み"""
+    elem = _create_element("TrafficSignalControllerCondition", parent)
+    elem.set("trafficSignalControllerRef", condition.traffic_signal_controller_ref)
+    elem.set("phase", condition.phase)
+
+
+def write_variable_condition(parent: ET.Element, condition: VariableCondition):
+    """VariableConditionをXMLに書き込み"""
+    elem = _create_element("VariableCondition", parent)
+    elem.set("variableRef", condition.variable_ref)
+    elem.set("value", condition.value)
+    elem.set("rule", condition.rule)
+
+
+def write_acceleration_condition(parent: ET.Element, condition: AccelerationCondition):
+    """AccelerationConditionをXMLに書き込み"""
+    elem = _create_element("AccelerationCondition", parent)
+    elem.set("value", str(condition.value))
+    elem.set("rule", condition.rule)
+    if condition.direction is not None:
+        elem.set("direction", condition.direction)
+
+
+def write_stand_still_condition(parent: ET.Element, condition: StandStillCondition):
+    """StandStillConditionをXMLに書き込み"""
+    elem = _create_element("StandStillCondition", parent)
+    elem.set("duration", str(condition.duration))
+
+
+def write_speed_condition(parent: ET.Element, condition: SpeedCondition):
+    """SpeedConditionをXMLに書き込み"""
+    elem = _create_element("SpeedCondition", parent)
+    elem.set("value", str(condition.value))
+    elem.set("rule", condition.rule)
+    if condition.direction is not None:
+        elem.set("direction", condition.direction)
+
+
+def write_relative_speed_condition(parent: ET.Element, condition: RelativeSpeedCondition):
+    """RelativeSpeedConditionをXMLに書き込み"""
+    elem = _create_element("RelativeSpeedCondition", parent)
+    elem.set("entityRef", condition.entity_ref)
+    elem.set("value", str(condition.value))
+    elem.set("rule", condition.rule)
+    if condition.direction is not None:
+        elem.set("direction", condition.direction)
+
+
+def write_relative_lane_range(parent: ET.Element, lane_range: RelativeLaneRange):
+    """RelativeLaneRangeをXMLに書き込み"""
+    elem = _create_element("RelativeLaneRange", parent)
+    if lane_range.from_lane is not None:
+        elem.set("from", str(lane_range.from_lane))
+    if lane_range.to_lane is not None:
+        elem.set("to", str(lane_range.to_lane))
+
+
+def write_distance_condition(parent: ET.Element, condition: DistanceCondition):
+    """DistanceConditionをXMLに書き込み"""
+    elem = _create_element("DistanceCondition", parent)
+    elem.set("freespace", "true" if condition.freespace else "false")
+    elem.set("rule", condition.rule)
+    elem.set("value", str(condition.value))
+    if condition.coordinate_system is not None:
+        elem.set("coordinateSystem", condition.coordinate_system)
+    if condition.relative_distance_type is not None:
+        elem.set("relativeDistanceType", condition.relative_distance_type)
+    if condition.routing_algorithm is not None:
+        elem.set("routingAlgorithm", condition.routing_algorithm)
+    if condition.along_route is not None:
+        elem.set("alongRoute", "true" if condition.along_route else "false")
+    
+    if condition.position:
+        position_elem = _create_element("Position", elem)
+        write_position(position_elem, condition.position)
+
+
+def write_relative_distance_condition(parent: ET.Element, condition: RelativeDistanceCondition):
+    """RelativeDistanceConditionをXMLに書き込み"""
+    elem = _create_element("RelativeDistanceCondition", parent)
+    elem.set("entityRef", condition.entity_ref)
+    elem.set("freespace", "true" if condition.freespace else "false")
+    elem.set("relativeDistanceType", condition.relative_distance_type)
+    elem.set("rule", condition.rule)
+    elem.set("value", str(condition.value))
+    if condition.coordinate_system is not None:
+        elem.set("coordinateSystem", condition.coordinate_system)
+    if condition.routing_algorithm is not None:
+        elem.set("routingAlgorithm", condition.routing_algorithm)
+
+
+def write_relative_clearance_condition(parent: ET.Element, condition: RelativeClearanceCondition):
+    """RelativeClearanceConditionをXMLに書き込み"""
+    elem = _create_element("RelativeClearanceCondition", parent)
+    elem.set("oppositeLanes", "true" if condition.opposite_lanes else "false")
+    elem.set("freeSpace", "true" if condition.free_space else "false")
+    if condition.distance_forward is not None:
+        elem.set("distanceForward", str(condition.distance_forward))
+    if condition.distance_backward is not None:
+        elem.set("distanceBackward", str(condition.distance_backward))
+    
+    for lane_range in condition.relative_lane_ranges:
+        write_relative_lane_range(elem, lane_range)
+    
+    for entity_ref in condition.entity_refs:
+        entity_ref_elem = _create_element("EntityRef", elem)
+        entity_ref_elem.set("entityRef", entity_ref)
+
+
 def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
     """ByEntityConditionをXMLに書き込み"""
     elem = _create_element("ByEntityCondition", parent)
@@ -1033,7 +1178,14 @@ def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
         condition.time_to_collision_condition is not None or
         condition.reach_position_condition is not None or
         condition.end_of_road_condition is not None or
-        condition.collision_condition is not None
+        condition.collision_condition is not None or
+        condition.acceleration_condition is not None or
+        condition.stand_still_condition is not None or
+        condition.speed_condition is not None or
+        condition.relative_speed_condition is not None or
+        condition.distance_condition is not None or
+        condition.relative_distance_condition is not None or
+        condition.relative_clearance_condition is not None
     )
     
     if has_entity_condition:
@@ -1052,6 +1204,20 @@ def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
             write_end_of_road_condition(entity_condition_elem, condition.end_of_road_condition)
         elif condition.collision_condition is not None:
             write_collision_condition(entity_condition_elem, condition.collision_condition)
+        elif condition.acceleration_condition is not None:
+            write_acceleration_condition(entity_condition_elem, condition.acceleration_condition)
+        elif condition.stand_still_condition is not None:
+            write_stand_still_condition(entity_condition_elem, condition.stand_still_condition)
+        elif condition.speed_condition is not None:
+            write_speed_condition(entity_condition_elem, condition.speed_condition)
+        elif condition.relative_speed_condition is not None:
+            write_relative_speed_condition(entity_condition_elem, condition.relative_speed_condition)
+        elif condition.distance_condition is not None:
+            write_distance_condition(entity_condition_elem, condition.distance_condition)
+        elif condition.relative_distance_condition is not None:
+            write_relative_distance_condition(entity_condition_elem, condition.relative_distance_condition)
+        elif condition.relative_clearance_condition is not None:
+            write_relative_clearance_condition(entity_condition_elem, condition.relative_clearance_condition)
 
 
 def write_condition(parent: ET.Element, condition: Condition):
@@ -1061,7 +1227,12 @@ def write_condition(parent: ET.Element, condition: Condition):
     if (condition.simulation_time_condition is None and 
         condition.by_entity_condition is None and 
         condition.storyboard_element_state_condition is None and
-        condition.parameter_condition is None):
+        condition.parameter_condition is None and
+        condition.time_of_day_condition is None and
+        condition.user_defined_value_condition is None and
+        condition.traffic_signal_condition is None and
+        condition.traffic_signal_controller_condition is None and
+        condition.variable_condition is None):
         # 空のConditionは無効なので、書き出さない
         return
     
@@ -1075,7 +1246,12 @@ def write_condition(parent: ET.Element, condition: Condition):
     # ByValueCondition内の条件を書き込み
     by_value_needed = (condition.simulation_time_condition is not None or
                        condition.storyboard_element_state_condition is not None or
-                       condition.parameter_condition is not None)
+                       condition.parameter_condition is not None or
+                       condition.time_of_day_condition is not None or
+                       condition.user_defined_value_condition is not None or
+                       condition.traffic_signal_condition is not None or
+                       condition.traffic_signal_controller_condition is not None or
+                       condition.variable_condition is not None)
     
     if by_value_needed:
         by_value_elem = _create_element("ByValueCondition", elem)
@@ -1085,6 +1261,16 @@ def write_condition(parent: ET.Element, condition: Condition):
             write_storyboard_element_state_condition(by_value_elem, condition.storyboard_element_state_condition)
         elif condition.parameter_condition is not None:
             write_parameter_condition(by_value_elem, condition.parameter_condition)
+        elif condition.time_of_day_condition is not None:
+            write_time_of_day_condition(by_value_elem, condition.time_of_day_condition)
+        elif condition.user_defined_value_condition is not None:
+            write_user_defined_value_condition(by_value_elem, condition.user_defined_value_condition)
+        elif condition.traffic_signal_condition is not None:
+            write_traffic_signal_condition(by_value_elem, condition.traffic_signal_condition)
+        elif condition.traffic_signal_controller_condition is not None:
+            write_traffic_signal_controller_condition(by_value_elem, condition.traffic_signal_controller_condition)
+        elif condition.variable_condition is not None:
+            write_variable_condition(by_value_elem, condition.variable_condition)
     
     if condition.by_entity_condition is not None:
         write_by_entity_condition(elem, condition.by_entity_condition)
@@ -1098,7 +1284,12 @@ def write_condition_group(parent: ET.Element, condition_group: ConditionGroup):
         if (condition.simulation_time_condition is not None or 
             condition.by_entity_condition is not None or 
             condition.storyboard_element_state_condition is not None or
-            condition.parameter_condition is not None):
+            condition.parameter_condition is not None or
+            condition.time_of_day_condition is not None or
+            condition.user_defined_value_condition is not None or
+            condition.traffic_signal_condition is not None or
+            condition.traffic_signal_controller_condition is not None or
+            condition.variable_condition is not None):
             valid_conditions.append(condition)
     
     # 有効なConditionがない場合は、ConditionGroupを書き出さない

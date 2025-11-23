@@ -451,6 +451,118 @@ class StoryboardElementStateCondition:
 
 
 @dataclass
+class TimeOfDayCondition:
+    """TimeOfDayCondition（時刻条件）"""
+    date_time: Union[str, float]  # DateTime型、パラメータ参照を含む可能性があるため
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+
+
+@dataclass
+class UserDefinedValueCondition:
+    """UserDefinedValueCondition（ユーザー定義値条件）"""
+    name: str
+    value: str  # String型（required）
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+
+
+@dataclass
+class TrafficSignalCondition:
+    """TrafficSignalCondition（交通信号条件）"""
+    name: str
+    state: str
+
+
+@dataclass
+class TrafficSignalControllerCondition:
+    """TrafficSignalControllerCondition（交通信号制御器条件）"""
+    traffic_signal_controller_ref: str
+    phase: str
+
+
+@dataclass
+class VariableCondition:
+    """VariableCondition（変数条件）"""
+    variable_ref: str
+    value: str  # String型（required）
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+
+
+@dataclass
+class AccelerationCondition:
+    """AccelerationCondition（加速度条件）"""
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため（required）
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+    direction: Optional[str] = None  # longitudinal, lateral, vertical
+
+
+@dataclass
+class StandStillCondition:
+    """StandStillCondition（停止条件）"""
+    duration: Union[str, float]  # パラメータ参照を含む可能性があるため
+
+
+@dataclass
+class SpeedCondition:
+    """SpeedCondition（速度条件）"""
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため（required）
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+    direction: Optional[str] = None  # longitudinal, lateral, vertical
+
+
+@dataclass
+class RelativeSpeedCondition:
+    """RelativeSpeedCondition（相対速度条件）"""
+    entity_ref: str
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため（required）
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+    direction: Optional[str] = None  # longitudinal, lateral, vertical
+
+
+@dataclass
+class RelativeLaneRange:
+    """RelativeLaneRange（相対レーン範囲）"""
+    from_lane: Optional[Union[str, int]] = None  # Int型、パラメータ参照を含む可能性があるため
+    to_lane: Optional[Union[str, int]] = None  # Int型、パラメータ参照を含む可能性があるため
+
+
+@dataclass
+class DistanceCondition:
+    """DistanceCondition（距離条件）"""
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため（required）
+    position: Optional[Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                             RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]] = None
+    freespace: bool = True
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+    coordinate_system: Optional[str] = None  # entity, lane, road, trajectory
+    relative_distance_type: Optional[str] = None  # longitudinal, lateral, cartesianDistance, euclidianDistance
+    routing_algorithm: Optional[str] = None  # assignedRoute, fastest, leastIntersections, shortest, undefined
+    along_route: Optional[bool] = None  # deprecated
+
+
+@dataclass
+class RelativeDistanceCondition:
+    """RelativeDistanceCondition（相対距離条件）"""
+    entity_ref: str
+    value: Union[str, float]  # パラメータ参照を含む可能性があるため（required）
+    freespace: bool = True
+    relative_distance_type: str = "longitudinal"  # longitudinal, lateral, cartesianDistance, euclidianDistance
+    rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
+    coordinate_system: Optional[str] = None  # entity, lane, road, trajectory
+    routing_algorithm: Optional[str] = None  # assignedRoute, fastest, leastIntersections, shortest, undefined
+
+
+@dataclass
+class RelativeClearanceCondition:
+    """RelativeClearanceCondition（相対クリアランス条件）"""
+    relative_lane_ranges: List[RelativeLaneRange] = field(default_factory=list)
+    entity_refs: List[str] = field(default_factory=list)
+    opposite_lanes: bool = False
+    distance_forward: Optional[Union[str, float]] = None
+    distance_backward: Optional[Union[str, float]] = None
+    free_space: bool = True
+
+
+@dataclass
 class ByEntityCondition:
     """ByEntityCondition（エンティティによる条件）"""
     triggering_entities: List[str] = field(default_factory=list)  # Entity名のリスト
@@ -462,6 +574,13 @@ class ByEntityCondition:
     reach_position_condition: Optional[ReachPositionCondition] = None
     end_of_road_condition: Optional[EndOfRoadCondition] = None
     collision_condition: Optional[CollisionCondition] = None
+    acceleration_condition: Optional[AccelerationCondition] = None
+    stand_still_condition: Optional[StandStillCondition] = None
+    speed_condition: Optional[SpeedCondition] = None
+    relative_speed_condition: Optional[RelativeSpeedCondition] = None
+    distance_condition: Optional[DistanceCondition] = None
+    relative_distance_condition: Optional[RelativeDistanceCondition] = None
+    relative_clearance_condition: Optional[RelativeClearanceCondition] = None
 
 
 @dataclass
@@ -474,6 +593,11 @@ class Condition:
     by_entity_condition: Optional[ByEntityCondition] = None
     storyboard_element_state_condition: Optional[StoryboardElementStateCondition] = None
     parameter_condition: Optional[ParameterCondition] = None
+    time_of_day_condition: Optional[TimeOfDayCondition] = None
+    user_defined_value_condition: Optional[UserDefinedValueCondition] = None
+    traffic_signal_condition: Optional[TrafficSignalCondition] = None
+    traffic_signal_controller_condition: Optional[TrafficSignalControllerCondition] = None
+    variable_condition: Optional[VariableCondition] = None
 
 
 @dataclass

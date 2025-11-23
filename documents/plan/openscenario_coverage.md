@@ -15,13 +15,13 @@
 | 基本構造要素 | 15 | 1 | 1 | 17 | 94% |
 | Position関連 | 11 | 0 | 2 | 13 | 85% |
 | Action関連 | 12 | 5 | 19 | 36 | 47% |
-| Condition関連 | 9 | 2 | 10 | 21 | 52% |
+| Condition関連 | 21 | 1 | 0 | 22 | 95% |
 | Entity関連 | 12 | 1 | 3 | 16 | 81% |
 | Trajectory関連 | 8 | 0 | 1 | 9 | 89% |
 | Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **73** | **5** | **55** | **133** | **59%** |
+| **合計** | **85** | **4** | **45** | **134** | **66%** |
 
 ## 1. 基本構造要素
 
@@ -137,23 +137,23 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| ByValueCondition | ⚠️ | SimulationTimeCondition, ParameterCondition, StoryboardElementStateConditionのみ対応 |
+| ByValueCondition | ✅ | すべてのCondition要素に対応 |
 | SimulationTimeCondition | ✅ | value, rule属性に対応 |
 | ParameterCondition | ✅ | parameterRef, value, rule属性に対応 |
 | StoryboardElementStateCondition | ✅ | storyboardElementType, storyboardElementRef, state属性に対応 |
-| TimeOfDayCondition | ❌ | 未対応 |
-| UserDefinedValueCondition | ❌ | 未対応 |
-| TrafficSignalCondition | ❌ | 未対応 |
-| TrafficSignalControllerCondition | ❌ | 未対応 |
-| VariableCondition | ❌ | 未対応 |
+| TimeOfDayCondition | ✅ | dateTime, rule属性に対応 |
+| UserDefinedValueCondition | ✅ | name, value, rule属性に対応 |
+| TrafficSignalCondition | ✅ | name, state属性に対応 |
+| TrafficSignalControllerCondition | ✅ | trafficSignalControllerRef, phase属性に対応 |
+| VariableCondition | ✅ | variableRef, value, rule属性に対応 |
 
 ### 4.2 ByEntityCondition
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| ByEntityCondition | ⚠️ | TriggeringEntities, EntityConditionの一部のみ対応 |
+| ByEntityCondition | ✅ | すべてのEntityCondition要素に対応 |
 | TriggeringEntities | ⚠️ | EntityRefのみ対応。triggeringEntitiesRuleは対応 |
-| EntityCondition | ⚠️ | TimeHeadwayCondition, OffroadCondition, TraveledDistanceCondition, TimeToCollisionCondition, ReachPositionCondition, EndOfRoadCondition, CollisionConditionに対応 |
+| EntityCondition | ✅ | すべてのCondition要素に対応 |
 | TimeHeadwayCondition | ✅ | entityRef, value, freespace, coordinateSystem, relativeDistanceType, ruleに対応 |
 | OffroadCondition | ✅ | duration属性に対応 |
 | TraveledDistanceCondition | ✅ | value属性に対応 |
@@ -161,13 +161,13 @@
 | ReachPositionCondition | ✅ | tolerance, position（全Positionタイプ）に対応（deprecatedだが実装済み） |
 | EndOfRoadCondition | ✅ | duration属性に対応 |
 | CollisionCondition | ✅ | EntityRef, ByType（ByObjectType）に対応 |
-| AccelerationCondition | ❌ | 未対応 |
-| StandStillCondition | ❌ | 未対応 |
-| SpeedCondition | ❌ | 未対応 |
-| RelativeSpeedCondition | ❌ | 未対応 |
-| DistanceCondition | ❌ | 未対応 |
-| RelativeDistanceCondition | ❌ | 未対応 |
-| RelativeClearanceCondition | ❌ | 未対応 |
+| AccelerationCondition | ✅ | rule, value, direction属性に対応 |
+| StandStillCondition | ✅ | duration属性に対応 |
+| SpeedCondition | ✅ | rule, value, direction属性に対応 |
+| RelativeSpeedCondition | ✅ | entityRef, rule, value, direction属性に対応 |
+| DistanceCondition | ✅ | value, position, freespace, rule, coordinateSystem, relativeDistanceType, routingAlgorithm, alongRoute（deprecated）属性に対応 |
+| RelativeDistanceCondition | ✅ | entityRef, value, freespace, relativeDistanceType, rule, coordinateSystem, routingAlgorithm属性に対応 |
+| RelativeClearanceCondition | ✅ | relativeLaneRanges, entityRefs, oppositeLanes, distanceForward, distanceBackward, freeSpace属性に対応 |
 
 ### 4.3 Condition関連の補助要素
 
@@ -177,6 +177,7 @@
 | ConditionGroup | ✅ | Conditionのリストに対応 |
 | StartTrigger | ✅ | ConditionGroupのリストに対応 |
 | Trigger | ✅ | StartTrigger, StopTriggerで使用 |
+| RelativeLaneRange | ✅ | RelativeClearanceCondition内で使用（from, to属性） |
 
 ## 5. Entity関連
 
@@ -392,6 +393,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 12:33: Condition要素の実装完了（TimeOfDayCondition, UserDefinedValueCondition, TrafficSignalCondition, TrafficSignalControllerCondition, VariableCondition, AccelerationCondition, StandStillCondition, SpeedCondition, RelativeSpeedCondition, DistanceCondition, RelativeDistanceCondition, RelativeClearanceCondition, RelativeLaneRange）
 - 2025-11-23 12:13: 最優先未実装機能の実装完了（ParameterAssignments/ParameterAssignment, TrajectoryRef, PositionOfCurrentEntity/PositionInRoadCoordinates）
 - 2025-11-23 11:59: Catalog関連の実装完了（PedestrianCatalogLocation, MiscObjectCatalogLocation, EnvironmentCatalogLocation, ManeuverCatalogLocation, TrajectoryCatalogLocation）
 - 2025-11-23 11:30: 中優先度機能の実装完了（VisibilityAction, SynchronizeAction, AppearanceAction, EndOfRoadCondition, CollisionCondition, Clothoid, Nurbs）
