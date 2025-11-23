@@ -644,3 +644,215 @@ OpenSCENARIO.xsdで定義されている要素と、エディタでの操作状�
 - Environment関連要素の編集
 - Traffic関連要素の編集
 
+## 7. 実装優先度
+
+以下は、未対応要素の実装優先度を評価したものです。優先度は以下の基準で判定しています：
+
+- **使用頻度**: 一般的なシナリオでよく使われる要素
+- **ユーザビリティ**: 編集できると便利な要素
+- **実装の複雑さ**: 既存実装との整合性、実装の容易さ
+- **依存関係**: 他の要素の実装に必要な要素
+
+### 7.1 優先度P1（高優先度）- 基本的なシナリオ作成に必須
+
+#### 7.1.1 Storyboard階層要素の基本属性編集
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| Story (name) | P1 | ストーリー名の編集は必須 | 低（既存Event実装と同様） |
+| Act (name) | P1 | アクト名の編集は必須 | 低（既存Event実装と同様） |
+| ManeuverGroup (name, maximumExecutionCount, actors) | P1 | マニューバーグループの基本設定 | 中（actorsの選択UIが必要） |
+| Maneuver (name) | P1 | マニューバー名の編集は必須 | 低（既存Event実装と同様） |
+| Action (name) | P1 | アクション名の編集は必須 | 低（既存Event実装と同様） |
+| Private (entityRef) | P1 | プライベートアクションのエンティティ参照 | 低（既存実装と同様） |
+
+**実装方針**: 既存のEvent実装パターンを踏襲し、name属性の編集フォームを追加。
+
+#### 7.1.2 Positionタイプの拡張（TeleportAction内）
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| RoadPosition | P1 | 道路座標はよく使われる | 低（LanePositionと類似） |
+| RelativeWorldPosition | P1 | 相対位置は頻繁に使用 | 中（entityRefの選択UIが必要） |
+| RelativeLanePosition | P1 | 相対レーン位置は頻繁に使用 | 中（entityRefの選択UIが必要） |
+| RelativeRoadPosition | P1 | 相対道路位置はよく使われる | 中（entityRefの選択UIが必要） |
+| RelativeObjectPosition | P1 | 相対オブジェクト位置はよく使われる | 中（entityRefの選択UIが必要） |
+| Orientation | P1 | 方向情報は多くのPositionで必要 | 低（h, p, rの編集） |
+
+**実装方針**: 既存のWorldPosition/LanePosition実装を拡張し、Positionタイプの選択UIを追加。
+
+#### 7.1.3 主要なConditionの実装
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| TimeHeadwayCondition | P1 | 時間ヘッドウェイ条件は頻繁に使用 | 中（entityRef選択、freespace等の属性） |
+| DistanceCondition | P1 | 距離条件は頻繁に使用 | 中（Position選択、coordinateSystem等） |
+| RelativeDistanceCondition | P1 | 相対距離条件は頻繁に使用 | 中（entityRef選択、relativeDistanceType等） |
+| SpeedCondition | P1 | 速度条件は頻繁に使用 | 低（既存SimulationTimeConditionと類似） |
+| RelativeSpeedCondition | P1 | 相対速度条件は頻繁に使用 | 中（entityRef選択） |
+| TraveledDistanceCondition | P1 | 走行距離条件はよく使われる | 低（valueのみ） |
+| ReachPositionCondition | P1 | 位置到達条件はよく使われる | 中（Position選択、tolerance） |
+
+**実装方針**: 既存のSimulationTimeCondition実装を参考に、Conditionタイプの選択UIを追加。
+
+#### 7.1.4 主要なPrivateActionの実装
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| LaneOffsetAction | P1 | レーンオフセットはよく使われる | 低（LaneChangeActionと類似） |
+| LongitudinalDistanceAction | P1 | 縦方向距離アクションは頻繁に使用 | 中（entityRef選択、DynamicConstraints等） |
+| RoutingAction / AssignRouteAction | P1 | ルート割り当ては重要な機能 | 高（Route/Waypointの編集UIが必要） |
+| FollowTrajectoryAction | P1 | 軌跡追従は重要な機能 | 高（Trajectory編集UIが必要） |
+
+**実装方針**: 既存のSpeedAction/LaneChangeAction実装パターンを踏襲。
+
+### 7.2 優先度P2（中優先度）- 実用的なシナリオ作成に有用
+
+#### 7.2.1 Entity関連の基本編集
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| Vehicle (基本属性) | P2 | 車両の基本情報編集 | 中（vehicleCategory, role, mass等） |
+| Vehicle (BoundingBox) | P2 | 車両のサイズ編集 | 中（Center, Dimensionsの編集） |
+| Vehicle (Performance) | P2 | 車両の性能パラメータ | 中（maxSpeed, maxAcceleration等） |
+| Pedestrian (基本属性) | P2 | 歩行者の基本情報編集 | 低（Vehicleと類似） |
+| MiscObject (基本属性) | P2 | その他オブジェクトの基本情報 | 低（Vehicleと類似） |
+
+**実装方針**: ScenarioObjectの編集フォームを拡張し、Vehicle/Pedestrian/MiscObjectの基本属性を編集可能にする。
+
+#### 7.2.2 Conditionの拡張
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| ByEntityCondition | P2 | エンティティによる条件は有用 | 高（TriggeringEntities, EntityConditionの組み合わせ） |
+| TimeToCollisionCondition | P2 | 衝突までの時間条件は有用 | 中（target選択、Position選択） |
+| AccelerationCondition | P2 | 加速度条件は有用 | 低（既存SpeedConditionと類似） |
+| StandStillCondition | P2 | 停止条件は有用 | 低（durationのみ） |
+| CollisionCondition | P2 | 衝突条件は有用 | 中（EntityRef/ByType選択） |
+| OffroadCondition | P2 | オフロード条件は有用 | 低（durationのみ） |
+| EndOfRoadCondition | P2 | 道路終端条件は有用 | 低（durationのみ） |
+| ParameterCondition | P2 | パラメータ条件は有用 | 低（parameterRef, rule, value） |
+| VariableCondition | P2 | 変数条件は有用（1.2新機能） | 低（variableRef, rule, value） |
+
+**実装方針**: 既存のCondition実装パターンを拡張。
+
+#### 7.2.3 その他のPrivateAction
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| SynchronizeAction | P2 | 同期アクションは有用 | 高（masterEntityRef, targetPosition等） |
+| SpeedProfileAction | P2 | 速度プロファイルは有用 | 中（SpeedProfileEntryのリスト編集） |
+| LateralDistanceAction | P2 | 横方向距離アクション | 中（LongitudinalDistanceActionと類似） |
+| AcquirePositionAction | P2 | 位置取得アクション | 低（Position選択のみ） |
+| VisibilityAction | P2 | 可視性アクション | 低（graphics, sensors, trafficのBoolean） |
+
+**実装方針**: 既存のPrivateAction実装パターンを踏襲。
+
+#### 7.2.4 Trigger/StartTriggerの拡張
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| ConditionGroup (複数条件のAND/OR) | P2 | 条件グループの編集は有用 | 高（条件の追加・削除・並び替えUI） |
+| Condition (delay, conditionEdge) | P2 | 条件の詳細属性編集 | 中（既存実装の拡張） |
+| StopTrigger | P2 | 停止トリガーの編集 | 低（StartTriggerと同様） |
+
+**実装方針**: 既存のStartTrigger実装を拡張し、複数条件の管理UIを追加。
+
+### 7.3 優先度P3（低優先度）- 高度な機能・特殊用途
+
+#### 7.3.1 Environment関連
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| EnvironmentAction | P3 | 環境アクションは特殊用途 | 中（Environment/CatalogReference選択） |
+| TimeOfDay | P3 | 時刻設定は特殊用途 | 低（dateTime, animation） |
+| Weather | P3 | 天候設定は特殊用途 | 中（Sun, Fog, Precipitation等） |
+| RoadCondition | P3 | 道路条件は特殊用途 | 低（frictionScaleFactor, wetness） |
+
+**実装方針**: 必要に応じて段階的に実装。
+
+#### 7.3.2 Controller関連
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| ControllerAction | P3 | コントローラーアクションは特殊用途 | 中（AssignControllerAction等） |
+| OverrideControllerValueAction | P3 | コントローラー値上書きは特殊用途 | 高（Throttle, Brake, Gear等の複雑なUI） |
+| ActivateControllerAction | P3 | コントローラー有効化は特殊用途 | 低（Boolean属性のみ） |
+
+**実装方針**: 高度なシミュレーション用途向け。必要に応じて実装。
+
+#### 7.3.3 Traffic関連
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| TrafficAction | P3 | 交通アクションは特殊用途 | 高（TrafficDefinition等の複雑な構造） |
+| TrafficSourceAction | P3 | 交通ソースは特殊用途 | 高（TrafficDefinition, Position等） |
+| TrafficSwarmAction | P3 | 交通群は特殊用途 | 高（複雑な分布設定） |
+
+**実装方針**: 交通流シミュレーション用途向け。必要に応じて実装。
+
+#### 7.3.4 Appearance/Animation関連
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| AppearanceAction | P3 | 外観アクションは特殊用途 | 中（LightStateAction, AnimationAction） |
+| LightStateAction | P3 | ライト状態は特殊用途 | 中（LightType, LightStateの編集） |
+| AnimationAction | P3 | アニメーションは特殊用途 | 高（複雑なAnimationType選択） |
+
+**実装方針**: 可視化用途向け。必要に応じて実装。
+
+#### 7.3.5 Trajectory関連
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| Trajectory | P3 | 軌跡は特殊用途 | 高（Polyline/Clothoid/Nurbsの編集UI） |
+| Polyline | P3 | ポリラインは特殊用途 | 高（Vertexのリスト編集） |
+| Clothoid | P3 | クロソイドは特殊用途 | 高（複雑な数学的パラメータ） |
+| Nurbs | P3 | NURBSは特殊用途 | 高（ControlPoint, Knotの編集） |
+
+**実装方針**: 高度な軌跡定義用途向け。必要に応じて実装。
+
+#### 7.3.6 ParameterValueDistribution関連
+
+| 要素名 | 優先度 | 理由 | 実装の複雑さ |
+|--------|--------|------|-------------|
+| ParameterValueDistribution | P3 | パラメータ分布は特殊用途 | 高（複雑な分布設定UI） |
+| Deterministic | P3 | 決定論的分布は特殊用途 | 高（DistributionSet等の編集） |
+| Stochastic | P3 | 確率的分布は特殊用途 | 高（確率分布の編集UI） |
+
+**実装方針**: パラメータ研究用途向け。必要に応じて実装。
+
+### 7.4 実装優先度サマリー
+
+| 優先度 | 要素数 | 主なカテゴリ | 実装時期の目安 |
+|--------|--------|-------------|---------------|
+| P1（高） | 約30要素 | Storyboard階層、Position、主要Condition、主要Action | 第1フェーズ（基本機能） |
+| P2（中） | 約25要素 | Entity編集、Condition拡張、その他Action | 第2フェーズ（実用機能） |
+| P3（低） | 約86要素 | Environment、Traffic、Controller、Trajectory等 | 第3フェーズ（高度機能） |
+
+### 7.5 実装推奨順序
+
+1. **フェーズ1: 基本機能の拡張**
+   - Storyboard階層要素のname属性編集（Story, Act, ManeuverGroup, Maneuver, Action）
+   - Positionタイプの拡張（RoadPosition, RelativeWorldPosition, RelativeLanePosition等）
+   - 主要なCondition（TimeHeadwayCondition, DistanceCondition, SpeedCondition等）
+   - LaneOffsetAction
+
+2. **フェーズ2: 実用機能の追加**
+   - Vehicle/Pedestrian/MiscObjectの基本属性編集
+   - LongitudinalDistanceAction
+   - RoutingAction / AssignRouteAction
+   - ConditionGroupの拡張（複数条件の管理）
+
+3. **フェーズ3: 高度機能の追加**
+   - FollowTrajectoryAction（Trajectory編集UI含む）
+   - SynchronizeAction
+   - ByEntityCondition
+   - Environment関連
+
+4. **フェーズ4: 特殊用途機能**
+   - Traffic関連
+   - Controller関連
+   - Appearance/Animation関連
+   - ParameterValueDistribution関連
+
