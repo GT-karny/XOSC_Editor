@@ -121,6 +121,33 @@ from osc_editor.core.model import (
     Axle,
     Route,
     Waypoint,
+    Color,
+    ColorRgb,
+    ColorCmyk,
+    LightType,
+    VehicleLight,
+    UserDefinedLight,
+    LightState,
+    AnimationType,
+    ComponentAnimation,
+    PedestrianAnimation,
+    AnimationFile,
+    UserDefinedAnimation,
+    VehicleComponent,
+    UserDefinedComponent,
+    PedestrianGesture,
+    AnimationState,
+    Brake,
+    BrakeInput,
+    ManualGear,
+    AutomaticGear,
+    Gear,
+    OverrideThrottleAction,
+    OverrideBrakeAction,
+    OverrideClutchAction,
+    OverrideParkingBrakeAction,
+    OverrideSteeringWheelAction,
+    OverrideGearAction,
 )
 
 
@@ -286,9 +313,24 @@ def parse_road_network(element: ET.Element) -> RoadNetwork:
     logic_file_elem = element.find(f"./{ns}LogicFile")
     scene_graph_elem = element.find(f"./{ns}SceneGraphFile")
     
+    # UsedArea要素のパース（Positionのリスト、2つ以上）
+    used_area = None
+    used_area_elem = element.find(f"./{ns}UsedArea")
+    if used_area_elem is not None:
+        position_elems = used_area_elem.findall(f"./{ns}Position")
+        if position_elems:
+            used_area = []
+            for pos_elem in position_elems:
+                pos = parse_position(pos_elem)
+                if pos is not None:
+                    used_area.append(pos)
+            if not used_area:
+                used_area = None
+    
     return RoadNetwork(
         logic_file=logic_file_elem.get("filepath") if logic_file_elem is not None else None,
         scene_graph_file=scene_graph_elem.get("filepath") if scene_graph_elem is not None else None,
+        used_area=used_area,
     )
 
 
@@ -1419,13 +1461,98 @@ def parse_assign_controller_action(element: ET.Element) -> Optional[AssignContro
     )
 
 
-def parse_override_controller_value_action(element: ET.Element) -> Optional[OverrideControllerValueAction]:
-    """OverrideControllerValueActionをパース（基本的な構造のみ）"""
+def parse_brake(element: ET.Element) -> Optional[Brake]:
+    """Brakeをパース"""
+    if element is None:
+        return None
+    
+    value = _get_attr_float(element, "value", 0.0)
+    max_rate = _get_attr_float(element, "maxRate", None)
+    
+    return Brake(value=value, max_rate=max_rate)
+
+
+def parse_brake_input(element: ET.Element) -> Optional[BrakeInput]:
+    """BrakeInputをパース"""
     if element is None:
         return None
     
     ns = _detect_namespace(element)
-    # 将来的な拡張として辞書型で保存
+    brake_percent = None
+    brake_force = None
+    
+    brake_percent_elem = element.find(f"./{ns}BrakePercent")
+    if brake_percent_elem is not None:
+        brake_percent = parse_brake(brake_percent_elem)
+    
+    brake_force_elem = element.find(f"./{ns}BrakeForce")
+    if brake_force_elem is not None:
+        brake_force = parse_brake(brake_force_elem)
+    
+    if brake_percent is None and brake_force is None:
+        return None
+    
+    return BrakeInput(brake_percent=brake_percent, brake_force=brake_force)
+
+
+def parse_manual_gear(element: ET.Element) -> Optional[ManualGear]:
+    """ManualGearをパース"""
+    if element is None:
+        return None
+    
+    number_attr = element.get("number")
+    if number_attr is None:
+        return None
+    
+    try:
+        number = int(number_attr)
+    except (ValueError, TypeError):
+        number = number_attr  # パラメータ参照の場合は文字列として保持
+    
+    return ManualGear(number=number)
+
+
+def parse_automatic_gear(element: ET.Element) -> Optional[AutomaticGear]:
+    """AutomaticGearをパース"""
+    if element is None:
+        return None
+    
+    gear = _get_attr(element, "gear", "")
+    if not gear:
+        return None
+    
+    return AutomaticGear(gear=gear)
+
+
+def parse_gear(element: ET.Element) -> Optional[Gear]:
+    """Gearをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    manual_gear = None
+    automatic_gear = None
+    
+    manual_gear_elem = element.find(f"./{ns}ManualGear")
+    if manual_gear_elem is not None:
+        manual_gear = parse_manual_gear(manual_gear_elem)
+    
+    automatic_gear_elem = element.find(f"./{ns}AutomaticGear")
+    if automatic_gear_elem is not None:
+        automatic_gear = parse_automatic_gear(automatic_gear_elem)
+    
+    if manual_gear is None and automatic_gear is None:
+        return None
+    
+    return Gear(manual_gear=manual_gear, automatic_gear=automatic_gear)
+
+
+def parse_override_controller_value_action(element: ET.Element) -> Optional[OverrideControllerValueAction]:
+    """OverrideControllerValueActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
     throttle_elem = element.find(f"./{ns}Throttle")
     brake_elem = element.find(f"./{ns}Brake")
     clutch_elem = element.find(f"./{ns}Clutch")
@@ -1435,27 +1562,63 @@ def parse_override_controller_value_action(element: ET.Element) -> Optional[Over
     
     throttle = None
     if throttle_elem is not None:
-        throttle = {"active": _get_attr_bool(throttle_elem, "active", True), "value": _get_attr_float(throttle_elem, "value", 0.0)}
+        active = _get_attr_bool(throttle_elem, "active", True)
+        value = _get_attr_float(throttle_elem, "value", 0.0)
+        max_rate = _get_attr_float(throttle_elem, "maxRate", None)
+        throttle = OverrideThrottleAction(active=active, value=value, max_rate=max_rate)
     
     brake = None
     if brake_elem is not None:
-        brake = {"active": _get_attr_bool(brake_elem, "active", True)}
+        active = _get_attr_bool(brake_elem, "active", True)
+        brake_input = None
+        brake_input_elem = brake_elem.find(f"./{ns}BrakePercent")
+        if brake_input_elem is None:
+            brake_input_elem = brake_elem.find(f"./{ns}BrakeForce")
+        if brake_input_elem is not None:
+            # BrakeInputのパース（BrakePercentまたはBrakeForce）
+            brake_input = parse_brake_input(brake_elem)
+        value = _get_attr_float(brake_elem, "value", None)  # deprecated
+        brake = OverrideBrakeAction(active=active, brake_input=brake_input, value=value)
     
     clutch = None
     if clutch_elem is not None:
-        clutch = {"active": _get_attr_bool(clutch_elem, "active", True), "value": _get_attr_float(clutch_elem, "value", 0.0)}
+        active = _get_attr_bool(clutch_elem, "active", True)
+        value = _get_attr_float(clutch_elem, "value", 0.0)
+        max_rate = _get_attr_float(clutch_elem, "maxRate", None)
+        clutch = OverrideClutchAction(active=active, value=value, max_rate=max_rate)
     
     parking_brake = None
     if parking_brake_elem is not None:
-        parking_brake = {"active": _get_attr_bool(parking_brake_elem, "active", True)}
+        active = _get_attr_bool(parking_brake_elem, "active", True)
+        brake_input = None
+        brake_input_elem = parking_brake_elem.find(f"./{ns}BrakePercent")
+        if brake_input_elem is None:
+            brake_input_elem = parking_brake_elem.find(f"./{ns}BrakeForce")
+        if brake_input_elem is not None:
+            # BrakeInputのパース（BrakePercentまたはBrakeForce）
+            brake_input = parse_brake_input(parking_brake_elem)
+        value = _get_attr_float(parking_brake_elem, "value", None)  # deprecated
+        parking_brake = OverrideParkingBrakeAction(active=active, brake_input=brake_input, value=value)
     
     steering_wheel = None
     if steering_wheel_elem is not None:
-        steering_wheel = {"active": _get_attr_bool(steering_wheel_elem, "active", True), "value": _get_attr_float(steering_wheel_elem, "value", 0.0)}
+        active = _get_attr_bool(steering_wheel_elem, "active", True)
+        value = _get_attr_float(steering_wheel_elem, "value", 0.0)
+        max_rate = _get_attr_float(steering_wheel_elem, "maxRate", None)
+        max_torque = _get_attr_float(steering_wheel_elem, "maxTorque", None)
+        steering_wheel = OverrideSteeringWheelAction(active=active, value=value, max_rate=max_rate, max_torque=max_torque)
     
     gear = None
     if gear_elem is not None:
-        gear = {"active": _get_attr_bool(gear_elem, "active", True)}
+        active = _get_attr_bool(gear_elem, "active", True)
+        gear_obj = None
+        gear_obj_elem = gear_elem.find(f"./{ns}ManualGear")
+        if gear_obj_elem is None:
+            gear_obj_elem = gear_elem.find(f"./{ns}AutomaticGear")
+        if gear_obj_elem is not None:
+            gear_obj = parse_gear(gear_elem)
+        number = _get_attr_float(gear_elem, "number", None)  # deprecated
+        gear = OverrideGearAction(active=active, gear=gear_obj, number=number)
     
     if throttle is None and brake is None and clutch is None and parking_brake is None and steering_wheel is None and gear is None:
         return None
@@ -1522,12 +1685,26 @@ def parse_visibility_action(element: ET.Element) -> Optional[VisibilityAction]:
     sensors = _get_attr_bool(element, "sensors", True)
     traffic = _get_attr_bool(element, "traffic", True)
     
-    # SensorReferenceSet要素は将来対応（現時点では省略）
+    # SensorReferenceSet要素のパース
+    sensor_reference_set = None
+    ns = _detect_namespace(element)
+    sensor_ref_set_elem = element.find(f"./{ns}SensorReferenceSet")
+    if sensor_ref_set_elem is not None:
+        sensor_ref_elems = sensor_ref_set_elem.findall(f"./{ns}SensorReference")
+        if sensor_ref_elems:
+            sensor_reference_set = []
+            for sensor_ref_elem in sensor_ref_elems:
+                name = _get_attr(sensor_ref_elem, "name", "")
+                if name:
+                    sensor_reference_set.append(name)
+            if not sensor_reference_set:
+                sensor_reference_set = None
     
     return VisibilityAction(
         graphics=graphics,
         sensors=sensors,
         traffic=traffic,
+        sensor_reference_set=sensor_reference_set,
     )
 
 
@@ -1627,6 +1804,294 @@ def parse_synchronize_action(element: ET.Element) -> Optional[SynchronizeAction]
     )
 
 
+def parse_color_rgb(element: ET.Element) -> Optional[ColorRgb]:
+    """ColorRgbをパース"""
+    if element is None:
+        return None
+    
+    red = _get_attr_float(element, "red", 0.0)
+    green = _get_attr_float(element, "green", 0.0)
+    blue = _get_attr_float(element, "blue", 0.0)
+    
+    return ColorRgb(red=red, green=green, blue=blue)
+
+
+def parse_color_cmyk(element: ET.Element) -> Optional[ColorCmyk]:
+    """ColorCmykをパース"""
+    if element is None:
+        return None
+    
+    cyan = _get_attr_float(element, "cyan", 0.0)
+    magenta = _get_attr_float(element, "magenta", 0.0)
+    yellow = _get_attr_float(element, "yellow", 0.0)
+    key = _get_attr_float(element, "key", 0.0)
+    
+    return ColorCmyk(cyan=cyan, magenta=magenta, yellow=yellow, key=key)
+
+
+def parse_color(element: ET.Element) -> Optional[Color]:
+    """Colorをパース"""
+    if element is None:
+        return None
+    
+    color_type = _get_attr(element, "colorType", "")
+    if not color_type:
+        return None
+    
+    ns = _detect_namespace(element)
+    color_rgb = None
+    color_cmyk = None
+    
+    color_rgb_elem = element.find(f"./{ns}ColorRgb")
+    if color_rgb_elem is not None:
+        color_rgb = parse_color_rgb(color_rgb_elem)
+    
+    color_cmyk_elem = element.find(f"./{ns}ColorCmyk")
+    if color_cmyk_elem is not None:
+        color_cmyk = parse_color_cmyk(color_cmyk_elem)
+    
+    return Color(color_type=color_type, color_rgb=color_rgb, color_cmyk=color_cmyk)
+
+
+def parse_vehicle_light(element: ET.Element) -> Optional[VehicleLight]:
+    """VehicleLightをパース"""
+    if element is None:
+        return None
+    
+    vehicle_light_type = _get_attr(element, "vehicleLightType", "")
+    if not vehicle_light_type:
+        return None
+    
+    return VehicleLight(vehicle_light_type=vehicle_light_type)
+
+
+def parse_user_defined_light(element: ET.Element) -> Optional[UserDefinedLight]:
+    """UserDefinedLightをパース"""
+    if element is None:
+        return None
+    
+    user_defined_light_type = _get_attr(element, "userDefinedLightType", "")
+    if not user_defined_light_type:
+        return None
+    
+    return UserDefinedLight(user_defined_light_type=user_defined_light_type)
+
+
+def parse_light_type(element: ET.Element) -> Optional[LightType]:
+    """LightTypeをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    vehicle_light = None
+    user_defined_light = None
+    
+    vehicle_light_elem = element.find(f"./{ns}VehicleLight")
+    if vehicle_light_elem is not None:
+        vehicle_light = parse_vehicle_light(vehicle_light_elem)
+    
+    user_defined_light_elem = element.find(f"./{ns}UserDefinedLight")
+    if user_defined_light_elem is not None:
+        user_defined_light = parse_user_defined_light(user_defined_light_elem)
+    
+    if vehicle_light is None and user_defined_light is None:
+        return None
+    
+    return LightType(vehicle_light=vehicle_light, user_defined_light=user_defined_light)
+
+
+def parse_light_state(element: ET.Element) -> Optional[LightState]:
+    """LightStateをパース"""
+    if element is None:
+        return None
+    
+    mode = _get_attr(element, "mode", "")
+    if not mode:
+        return None
+    
+    ns = _detect_namespace(element)
+    color = None
+    color_elem = element.find(f"./{ns}Color")
+    if color_elem is not None:
+        color = parse_color(color_elem)
+    
+    luminous_intensity = _get_attr_float(element, "luminousIntensity", None)
+    flashing_on_duration = _get_attr_float(element, "flashingOnDuration", None)
+    flashing_off_duration = _get_attr_float(element, "flashingOffDuration", None)
+    
+    return LightState(
+        mode=mode,
+        color=color,
+        luminous_intensity=luminous_intensity,
+        flashing_on_duration=flashing_on_duration,
+        flashing_off_duration=flashing_off_duration,
+    )
+
+
+def parse_vehicle_component(element: ET.Element) -> Optional[VehicleComponent]:
+    """VehicleComponentをパース"""
+    if element is None:
+        return None
+    
+    vehicle_component_type = _get_attr(element, "vehicleComponentType", "")
+    if not vehicle_component_type:
+        return None
+    
+    return VehicleComponent(vehicle_component_type=vehicle_component_type)
+
+
+def parse_user_defined_component(element: ET.Element) -> Optional[UserDefinedComponent]:
+    """UserDefinedComponentをパース"""
+    if element is None:
+        return None
+    
+    user_defined_component_type = _get_attr(element, "userDefinedComponentType", "")
+    if not user_defined_component_type:
+        return None
+    
+    return UserDefinedComponent(user_defined_component_type=user_defined_component_type)
+
+
+def parse_component_animation(element: ET.Element) -> Optional[ComponentAnimation]:
+    """ComponentAnimationをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    vehicle_component_elem = element.find(f"./{ns}VehicleComponent")
+    user_defined_component_elem = element.find(f"./{ns}UserDefinedComponent")
+    
+    if vehicle_component_elem is None or user_defined_component_elem is None:
+        return None
+    
+    vehicle_component = parse_vehicle_component(vehicle_component_elem)
+    user_defined_component = parse_user_defined_component(user_defined_component_elem)
+    
+    if vehicle_component is None or user_defined_component is None:
+        return None
+    
+    return ComponentAnimation(
+        vehicle_component=vehicle_component,
+        user_defined_component=user_defined_component,
+    )
+
+
+def parse_pedestrian_gesture(element: ET.Element) -> Optional[PedestrianGesture]:
+    """PedestrianGestureをパース"""
+    if element is None:
+        return None
+    
+    gesture = _get_attr(element, "gesture", "")
+    if not gesture:
+        return None
+    
+    return PedestrianGesture(gesture=gesture)
+
+
+def parse_pedestrian_animation(element: ET.Element) -> Optional[PedestrianAnimation]:
+    """PedestrianAnimationをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    motion = _get_attr(element, "motion", None)
+    user_defined_pedestrian_animation = _get_attr(element, "userDefinedPedestrianAnimation", None)
+    
+    gestures = []
+    gesture_elems = element.findall(f"./{ns}PedestrianGesture")
+    for gesture_elem in gesture_elems:
+        gesture = parse_pedestrian_gesture(gesture_elem)
+        if gesture is not None:
+            gestures.append(gesture)
+    
+    return PedestrianAnimation(
+        motion=motion,
+        user_defined_pedestrian_animation=user_defined_pedestrian_animation,
+        gestures=gestures,
+    )
+
+
+def parse_animation_file(element: ET.Element) -> Optional[AnimationFile]:
+    """AnimationFileをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    file_elem = element.find(f"./{ns}File")
+    if file_elem is None:
+        return None
+    
+    filepath = _get_attr(file_elem, "filepath", "")
+    if not filepath:
+        return None
+    
+    time_offset = _get_attr_float(element, "timeOffset", None)
+    
+    return AnimationFile(filepath=filepath, time_offset=time_offset)
+
+
+def parse_user_defined_animation(element: ET.Element) -> Optional[UserDefinedAnimation]:
+    """UserDefinedAnimationをパース"""
+    if element is None:
+        return None
+    
+    user_defined_animation_type = _get_attr(element, "userDefinedAnimationType", "")
+    if not user_defined_animation_type:
+        return None
+    
+    return UserDefinedAnimation(user_defined_animation_type=user_defined_animation_type)
+
+
+def parse_animation_type(element: ET.Element) -> Optional[AnimationType]:
+    """AnimationTypeをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    component_animation = None
+    pedestrian_animation = None
+    animation_file = None
+    user_defined_animation = None
+    
+    component_animation_elem = element.find(f"./{ns}ComponentAnimation")
+    if component_animation_elem is not None:
+        component_animation = parse_component_animation(component_animation_elem)
+    
+    pedestrian_animation_elem = element.find(f"./{ns}PedestrianAnimation")
+    if pedestrian_animation_elem is not None:
+        pedestrian_animation = parse_pedestrian_animation(pedestrian_animation_elem)
+    
+    animation_file_elem = element.find(f"./{ns}AnimationFile")
+    if animation_file_elem is not None:
+        animation_file = parse_animation_file(animation_file_elem)
+    
+    user_defined_animation_elem = element.find(f"./{ns}UserDefinedAnimation")
+    if user_defined_animation_elem is not None:
+        user_defined_animation = parse_user_defined_animation(user_defined_animation_elem)
+    
+    if component_animation is None and pedestrian_animation is None and animation_file is None and user_defined_animation is None:
+        return None
+    
+    return AnimationType(
+        component_animation=component_animation,
+        pedestrian_animation=pedestrian_animation,
+        animation_file=animation_file,
+        user_defined_animation=user_defined_animation,
+    )
+
+
+def parse_animation_state(element: ET.Element) -> Optional[AnimationState]:
+    """AnimationStateをパース"""
+    if element is None:
+        return None
+    
+    state = _get_attr_float(element, "state", None)
+    if state is None:
+        return None
+    
+    return AnimationState(state=state)
+
+
 def parse_appearance_action(element: ET.Element) -> Optional[AppearanceAction]:
     """AppearanceActionをパース"""
     if element is None:
@@ -1638,20 +2103,48 @@ def parse_appearance_action(element: ET.Element) -> Optional[AppearanceAction]:
     light_state_elem = element.find(f"./{ns}LightStateAction")
     light_state_action = None
     if light_state_elem is not None:
-        # 簡易実装：dictとして保存（将来の拡張用）
         transition_time = _get_attr_float(light_state_elem, "transitionTime", None)
-        light_state_action = {"transitionTime": transition_time}
-        # LightType, LightState要素は将来対応
+        light_type_elem = light_state_elem.find(f"./{ns}LightType")
+        light_state_elem_inner = light_state_elem.find(f"./{ns}LightState")
+        
+        light_type = None
+        if light_type_elem is not None:
+            light_type = parse_light_type(light_type_elem)
+        
+        light_state = None
+        if light_state_elem_inner is not None:
+            light_state = parse_light_state(light_state_elem_inner)
+        
+        if light_type is not None or light_state is not None:
+            light_state_action = {
+                "transitionTime": transition_time,
+                "lightType": light_type,
+                "lightState": light_state,
+            }
     
     # AnimationAction要素（optional）
     animation_elem = element.find(f"./{ns}AnimationAction")
     animation_action = None
     if animation_elem is not None:
-        # 簡易実装：dictとして保存（将来の拡張用）
         loop = _get_attr_bool(animation_elem, "loop", False)
         animation_duration = _get_attr_float(animation_elem, "animationDuration", None)
-        animation_action = {"loop": loop, "animationDuration": animation_duration}
-        # AnimationType, AnimationState要素は将来対応
+        animation_type_elem = animation_elem.find(f"./{ns}AnimationType")
+        animation_state_elem = animation_elem.find(f"./{ns}AnimationState")
+        
+        animation_type = None
+        if animation_type_elem is not None:
+            animation_type = parse_animation_type(animation_type_elem)
+        
+        animation_state = None
+        if animation_state_elem is not None:
+            animation_state = parse_animation_state(animation_state_elem)
+        
+        animation_action = {
+            "loop": loop,
+            "animationDuration": animation_duration,
+            "animationType": animation_type,
+            "animationState": animation_state,
+        }
     
     if light_state_action is None and animation_action is None:
         return None
@@ -1970,8 +2463,19 @@ def parse_time_to_collision_condition(element: ET.Element) -> Optional[TimeToCol
     rule = _get_attr(element, "rule", "lessThan")
     
     ns = _detect_namespace(element)
-    target_elem = element.find(f"./{ns}TimeToCollisionConditionTarget/{ns}EntityRef")
-    target_entity_ref = _get_attr(target_elem, "entityRef", "") if target_elem is not None else None
+    target_elem = element.find(f"./{ns}TimeToCollisionConditionTarget")
+    target_entity_ref = None
+    target_position = None
+    
+    if target_elem is not None:
+        # EntityRefまたはPositionのchoice
+        entity_ref_elem = target_elem.find(f"./{ns}EntityRef")
+        if entity_ref_elem is not None:
+            target_entity_ref = _get_attr(entity_ref_elem, "entityRef", "")
+        else:
+            position_elem = target_elem.find(f"./{ns}Position")
+            if position_elem is not None:
+                target_position = parse_position(position_elem)
     
     return TimeToCollisionCondition(
         value=value,
@@ -1980,6 +2484,7 @@ def parse_time_to_collision_condition(element: ET.Element) -> Optional[TimeToCol
         relative_distance_type=relative_distance_type,
         rule=rule,
         target_entity_ref=target_entity_ref,
+        target_position=target_position,
     )
 
 

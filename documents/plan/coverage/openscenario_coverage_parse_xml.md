@@ -21,8 +21,8 @@
 | Dynamics関連 | 3 | 0 | 0 | 3 | 100% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | ParameterValueDistribution関連 | 10 | 0 | 0 | 10 | 100% |
-| その他 | 5 | 1 | 12 | 18 | 33% |
-| **合計** | **102** | **3** | **39** | **144** | **73%** |
+| その他 | 17 | 1 | 0 | 18 | 94% |
+| **合計** | **114** | **3** | **27** | **144** | **79%** |
 
 ## 1. 基本構造要素
 
@@ -354,41 +354,42 @@
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
 | Actors | ⚠️ | EntityRefのみ対応。selectTriggeringEntitiesは部分的に対応 |
-| UsedArea | ❌ | RoadNetwork内のUsedArea未対応 |
+| UsedArea | ✅ | RoadNetwork内のUsedAreaに対応（Positionのリスト、2つ以上） |
 | SteadyState | ✅ | FinalSpeed内のAbsoluteSpeed, RelativeSpeedToMaster内のSteadyStateに対応 |
 | TargetDistanceSteadyState | ✅ | FinalSpeed内のAbsoluteSpeed, RelativeSpeedToMaster内で対応 |
 | TargetTimeSteadyState | ✅ | FinalSpeed内のAbsoluteSpeed, RelativeSpeedToMaster内で対応 |
-| Color | ❌ | AppearanceAction関連で使用されるColor未対応 |
-| ColorRgb | ❌ | 未対応 |
-| ColorCmyk | ❌ | 未対応 |
-| LightType | ❌ | LightStateAction内のLightType未対応 |
-| VehicleLight | ❌ | 未対応 |
-| UserDefinedLight | ❌ | 未対応 |
-| LightState | ❌ | LightStateAction内のLightState未対応 |
-| AnimationType | ❌ | AnimationAction内のAnimationType未対応 |
-| ComponentAnimation | ❌ | 未対応 |
-| PedestrianAnimation | ❌ | 未対応 |
-| AnimationFile | ❌ | 未対応 |
-| UserDefinedAnimation | ❌ | 未対応 |
-| VehicleComponent | ❌ | ComponentAnimation内のVehicleComponent未対応 |
-| UserDefinedComponent | ❌ | ComponentAnimation内のUserDefinedComponent未対応 |
-| PedestrianGesture | ❌ | PedestrianAnimation内のPedestrianGesture未対応 |
-| AnimationState | ❌ | AnimationAction内のAnimationState未対応 |
-| SensorReferenceSet | ❌ | VisibilityAction内のSensorReferenceSet未対応 |
-| SensorReference | ❌ | 未対応 |
-| Brake | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応。BrakePercent, BrakeForceの詳細は未対応 |
-| BrakePercent | ❌ | 未対応 |
-| BrakeForce | ❌ | 未対応 |
-| OverrideThrottleAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active, value属性）。詳細な実装は未対応 |
-| OverrideBrakeAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active属性）。詳細な実装は未対応 |
-| OverrideClutchAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active, value属性）。詳細な実装は未対応 |
-| OverrideParkingBrakeAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active属性）。詳細な実装は未対応 |
-| OverrideSteeringWheelAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active, value属性）。詳細な実装は未対応 |
-| OverrideGearAction | ⚠️ | OverrideControllerValueAction内で基本的な構造に対応（active属性）。詳細な実装は未対応 |
-| ManualGear | ❌ | OverrideGearAction内のManualGear未対応 |
-| AutomaticGear | ❌ | OverrideGearAction内のAutomaticGear未対応 |
-| Gear | ❌ | OverrideGearAction内のGear未対応 |
-| TimeToCollisionConditionTarget | ⚠️ | EntityRefのみ対応。Positionは未対応 |
+| Color | ✅ | AppearanceAction関連で使用されるColorに対応（ColorRgb, ColorCmykのchoice、colorType属性） |
+| ColorRgb | ✅ | Color内のColorRgbに対応（red, green, blue属性） |
+| ColorCmyk | ✅ | Color内のColorCmykに対応（cyan, magenta, yellow, key属性） |
+| LightType | ✅ | LightStateAction内のLightTypeに対応（VehicleLight, UserDefinedLightのchoice） |
+| VehicleLight | ✅ | LightType内のVehicleLightに対応（vehicleLightType属性） |
+| UserDefinedLight | ✅ | LightType内のUserDefinedLightに対応（userDefinedLightType属性） |
+| LightState | ✅ | LightStateAction内のLightStateに対応（mode属性、Color要素、luminousIntensity, flashingOnDuration, flashingOffDuration属性） |
+| AnimationType | ✅ | AnimationAction内のAnimationTypeに対応（ComponentAnimation, PedestrianAnimation, AnimationFile, UserDefinedAnimationのchoice） |
+| ComponentAnimation | ✅ | AnimationType内のComponentAnimationに対応（VehicleComponent, UserDefinedComponent） |
+| PedestrianAnimation | ✅ | AnimationType内のPedestrianAnimationに対応（motion, userDefinedPedestrianAnimation属性、PedestrianGestureのリスト） |
+| AnimationFile | ✅ | AnimationType内のAnimationFileに対応（File要素、timeOffset属性） |
+| UserDefinedAnimation | ✅ | AnimationType内のUserDefinedAnimationに対応（userDefinedAnimationType属性） |
+| VehicleComponent | ✅ | ComponentAnimation内のVehicleComponentに対応（vehicleComponentType属性） |
+| UserDefinedComponent | ✅ | ComponentAnimation内のUserDefinedComponentに対応（userDefinedComponentType属性） |
+| PedestrianGesture | ✅ | PedestrianAnimation内のPedestrianGestureに対応（gesture属性） |
+| AnimationState | ✅ | AnimationAction内のAnimationStateに対応（state属性） |
+| SensorReferenceSet | ✅ | VisibilityAction内のSensorReferenceSetに対応（SensorReferenceのリスト） |
+| SensorReference | ✅ | SensorReferenceSet内のSensorReferenceに対応（name属性） |
+| Brake | ✅ | OverrideControllerValueAction内のBrakeに対応（value, maxRate属性） |
+| BrakePercent | ✅ | BrakeInput内のBrakePercentに対応（Brake型） |
+| BrakeForce | ✅ | BrakeInput内のBrakeForceに対応（Brake型） |
+| BrakeInput | ✅ | OverrideBrakeAction, OverrideParkingBrakeAction内のBrakeInputに対応（BrakePercent, BrakeForceのchoice） |
+| OverrideThrottleAction | ✅ | OverrideControllerValueAction内のOverrideThrottleActionに対応（active, value, maxRate属性） |
+| OverrideBrakeAction | ✅ | OverrideControllerValueAction内のOverrideBrakeActionに対応（active属性、BrakeInput要素） |
+| OverrideClutchAction | ✅ | OverrideControllerValueAction内のOverrideClutchActionに対応（active, value, maxRate属性） |
+| OverrideParkingBrakeAction | ✅ | OverrideControllerValueAction内のOverrideParkingBrakeActionに対応（active属性、BrakeInput要素） |
+| OverrideSteeringWheelAction | ✅ | OverrideControllerValueAction内のOverrideSteeringWheelActionに対応（active, value, maxRate, maxTorque属性） |
+| OverrideGearAction | ✅ | OverrideControllerValueAction内のOverrideGearActionに対応（active属性、Gear要素） |
+| ManualGear | ✅ | OverrideGearAction内のManualGearに対応（number属性） |
+| AutomaticGear | ✅ | OverrideGearAction内のAutomaticGearに対応（gear属性） |
+| Gear | ✅ | OverrideGearAction内のGearに対応（ManualGear, AutomaticGearのchoice） |
+| TimeToCollisionConditionTarget | ✅ | EntityRef, Positionの両方に対応 |
 
 ## 実装の優先順位
 
@@ -412,6 +413,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 15:00: その他の要素の実装完了（UsedArea, Color関連, LightStateAction詳細, AnimationAction詳細, SensorReferenceSet, OverrideControllerValueAction詳細, TimeToCollisionConditionTargetのPosition要素対応）
 - 2025-11-23 14:34: MiscObjectの実装完了（name, miscObjectCategory, mass, model3d属性、ParameterDeclarations, BoundingBox, Propertiesに対応）
 - 2025-11-23 14:24: Action関連補助要素の実装完了（AbsoluteTargetLaneのString型対応、RelativeTargetLaneOffset、FinalSpeed内のSteadyState対応：TargetDistanceSteadyState/TargetTimeSteadyState）
 - 2025-11-23 14:00: PrivateAction関連の実装完了（AcquirePositionAction, SpeedProfileAction, LongitudinalDistanceAction, LateralDistanceAction, ControllerAction, DynamicConstraints）

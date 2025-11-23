@@ -22,8 +22,8 @@
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | ParameterValueDistribution関連 | 10 | 0 | 0 | 10 | 100% |
 | Variable関連 | 9 | 0 | 0 | 9 | 100% |
-| その他 | 4 | 1 | 13 | 18 | 28% |
-| **合計** | **112** | **4** | **39** | **155** | **75%** |
+| その他 | 17 | 1 | 0 | 18 | 94% |
+| **合計** | **125** | **4** | **26** | **155** | **81%** |
 
 ## 1. 基本構造要素
 
@@ -41,7 +41,7 @@
 | CatalogReference | ✅ | catalogName, entryName属性、ParameterAssignmentsに対応 |
 | ParameterAssignments | ✅ | CatalogReference内のParameterAssignmentsに対応 |
 | ParameterAssignment | ✅ | parameterRef, value属性に対応 |
-| RoadNetwork | ⚠️ | LogicFile, SceneGraphFileのみ対応。TrafficSignals, UsedAreaは未対応 |
+| RoadNetwork | ⚠️ | LogicFile, SceneGraphFile, UsedAreaに対応。TrafficSignalsは未対応 |
 | Entities | ✅ | ScenarioObjectのリストに対応 |
 | ScenarioObject | ✅ | Vehicle, Pedestrian, MiscObject, CatalogReference, ObjectControllerに対応 |
 | Storyboard | ✅ | Init, Story, StopTriggerに対応 |
@@ -95,9 +95,9 @@
 | RoutingAction | ✅ | AssignRouteAction, FollowTrajectoryAction, AcquirePositionActionに対応 |
 | ActivateControllerAction | ✅ | controllerRef, longitudinal, lateral, animation, lighting属性に対応 |
 | ControllerAction | ✅ | AssignControllerAction, OverrideControllerValueAction, ActivateControllerActionに対応 |
-| VisibilityAction | ✅ | graphics, sensors, traffic属性に対応。SensorReferenceSetは未対応 |
+| VisibilityAction | ✅ | graphics, sensors, traffic属性、SensorReferenceSetに対応 |
 | SynchronizeAction | ✅ | masterEntityRef, TargetPositionMaster, TargetPosition, targetToleranceMaster, targetTolerance, FinalSpeedに対応 |
-| AppearanceAction | ⚠️ | LightStateAction, AnimationActionの基本属性に対応。LightType/LightState, AnimationType/AnimationStateの詳細は未対応 |
+| AppearanceAction | ✅ | LightStateAction, AnimationActionの詳細に対応（LightType/LightState, AnimationType/AnimationState含む） |
 | LongitudinalAction | ✅ | SpeedAction, LongitudinalDistanceAction, SpeedProfileActionに対応 |
 | LateralAction | ✅ | LaneChangeAction, LaneOffsetAction, LateralDistanceActionに対応 |
 | LongitudinalDistanceAction | ✅ | entityRef, continuous, freespace, distance, timeGap, displacement, coordinateSystem, DynamicConstraintsに対応 |
@@ -171,7 +171,7 @@
 | TimeHeadwayCondition | ✅ | entityRef, value, freespace, coordinateSystem, relativeDistanceType, rule属性に対応 |
 | OffroadCondition | ✅ | duration属性に対応 |
 | TraveledDistanceCondition | ✅ | value属性に対応 |
-| TimeToCollisionCondition | ✅ | value, freespace, coordinateSystem, relativeDistanceType, rule, target_entity_refに対応 |
+| TimeToCollisionCondition | ✅ | value, freespace, coordinateSystem, relativeDistanceType, rule, target_entity_ref, target_positionに対応 |
 | ReachPositionCondition | ✅ | tolerance, position（全Positionタイプ）に対応（deprecatedだが実装済み） |
 | EndOfRoadCondition | ✅ | duration属性に対応 |
 | CollisionCondition | ✅ | EntityRef, ByType（ByObjectType）に対応 |
@@ -328,13 +328,12 @@
 | GeoPosition | ❌ | 地理座標系の位置指定に対応する必要あり |
 | TrajectoryPosition | ❌ | 軌跡上の位置指定に対応する必要あり |
 | EntitySelection | ❌ | エンティティ選択機能に対応する必要あり |
-| LightStateAction詳細 | ❌ | LightType, LightStateの詳細実装が必要 |
-| AnimationAction詳細 | ❌ | AnimationType, AnimationStateの詳細実装が必要 |
-| RoadNetwork詳細 | ❌ | TrafficSignals, UsedAreaに対応する必要あり |
+| RoadNetwork詳細 | ❌ | TrafficSignalsに対応する必要あり（UsedAreaは対応済み） |
 | FileHeader詳細 | ❌ | License, Properties要素に対応する必要あり |
 
 ## 更新履歴
 
+- 2025-11-23 15:00: その他の要素の書き出し機能実装完了（UsedArea, Color関連, LightStateAction詳細, AnimationAction詳細, SensorReferenceSet, OverrideControllerValueAction詳細, TimeToCollisionConditionTargetのPosition要素対応）
 - 2025-11-23 14:34: MiscObjectの書き出し機能実装完了（name, miscObjectCategory, mass, model3d属性、ParameterDeclarations, BoundingBox, Propertiesに対応）
 - 2025-11-23 14:24: Action関連補助要素の実装完了（AbsoluteTargetLaneのString型対応、RelativeTargetLaneOffset、FinalSpeed内のSteadyState対応：TargetDistanceSteadyState/TargetTimeSteadyState）
 - 2025-11-23 14:00: Variable関連の実装完了（VariableDeclarations, VariableDeclaration, VariableAction, VariableSetAction, VariableModifyAction, VariableModifyRule, VariableAddValueRule, VariableMultiplyByValueRule, VariableCondition）

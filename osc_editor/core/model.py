@@ -369,15 +369,96 @@ class AssignControllerAction:
 
 
 @dataclass
+class Brake:
+    """Brake（ブレーキ）"""
+    value: Union[str, float]  # required (Double型)
+    max_rate: Optional[Union[str, float]] = None  # optional (maxRate属性)
+
+
+@dataclass
+class BrakeInput:
+    """BrakeInput（ブレーキ入力）"""
+    brake_percent: Optional[Brake] = None  # BrakePercentまたはBrakeForceのchoice
+    brake_force: Optional[Brake] = None  # BrakePercentまたはBrakeForceのchoice
+
+
+@dataclass
+class ManualGear:
+    """ManualGear（マニュアルギア）"""
+    number: Union[str, int]  # required (Int型、パラメータ参照も可)
+
+
+@dataclass
+class AutomaticGear:
+    """AutomaticGear（オートマチックギア）"""
+    gear: str  # required (AutomaticGearType: n, p, r, d)
+
+
+@dataclass
+class Gear:
+    """Gear（ギア）"""
+    manual_gear: Optional[ManualGear] = None  # ManualGearまたはAutomaticGearのchoice
+    automatic_gear: Optional[AutomaticGear] = None  # ManualGearまたはAutomaticGearのchoice
+
+
+@dataclass
+class OverrideThrottleAction:
+    """OverrideThrottleAction（スロットル上書きアクション）"""
+    active: Union[str, bool]  # required (Boolean型)
+    value: Union[str, float]  # required (Double型)
+    max_rate: Optional[Union[str, float]] = None  # optional (maxRate属性)
+
+
+@dataclass
+class OverrideBrakeAction:
+    """OverrideBrakeAction（ブレーキ上書きアクション）"""
+    active: Union[str, bool]  # required (Boolean型)
+    brake_input: Optional[BrakeInput] = None  # optional (BrakeInput: BrakePercentまたはBrakeForce)
+    value: Optional[Union[str, float]] = None  # optional (deprecated)
+
+
+@dataclass
+class OverrideClutchAction:
+    """OverrideClutchAction（クラッチ上書きアクション）"""
+    active: Union[str, bool]  # required (Boolean型)
+    value: Union[str, float]  # required (Double型)
+    max_rate: Optional[Union[str, float]] = None  # optional (maxRate属性)
+
+
+@dataclass
+class OverrideParkingBrakeAction:
+    """OverrideParkingBrakeAction（パーキングブレーキ上書きアクション）"""
+    active: Union[str, bool]  # required (Boolean型)
+    brake_input: Optional[BrakeInput] = None  # optional (BrakeInput: BrakePercentまたはBrakeForce)
+    value: Optional[Union[str, float]] = None  # optional (deprecated)
+
+
+@dataclass
+class OverrideSteeringWheelAction:
+    """OverrideSteeringWheelAction（ステアリングホイール上書きアクション）"""
+    active: Union[str, bool]  # required (Boolean型)
+    value: Union[str, float]  # required (Double型)
+    max_rate: Optional[Union[str, float]] = None  # optional (maxRate属性)
+    max_torque: Optional[Union[str, float]] = None  # optional (maxTorque属性)
+
+
+@dataclass
+class OverrideGearAction:
+    """OverrideGearAction（ギア上書きアクション）"""
+    active: Union[str, bool]  # required (Boolean型)
+    gear: Optional[Gear] = None  # optional (Gear: ManualGearまたはAutomaticGear)
+    number: Optional[Union[str, float]] = None  # optional (deprecated)
+
+
+@dataclass
 class OverrideControllerValueAction:
     """OverrideControllerValueAction（コントローラー値上書きアクション）"""
-    # 将来的な拡張として辞書型で保存
-    throttle: Optional[dict] = None  # OverrideThrottleAction
-    brake: Optional[dict] = None  # OverrideBrakeAction
-    clutch: Optional[dict] = None  # OverrideClutchAction
-    parking_brake: Optional[dict] = None  # OverrideParkingBrakeAction
-    steering_wheel: Optional[dict] = None  # OverrideSteeringWheelAction
-    gear: Optional[dict] = None  # OverrideGearAction
+    throttle: Optional[OverrideThrottleAction] = None  # optional
+    brake: Optional[OverrideBrakeAction] = None  # optional
+    clutch: Optional[OverrideClutchAction] = None  # optional
+    parking_brake: Optional[OverrideParkingBrakeAction] = None  # optional
+    steering_wheel: Optional[OverrideSteeringWheelAction] = None  # optional
+    gear: Optional[OverrideGearAction] = None  # optional
 
 
 @dataclass
@@ -404,7 +485,7 @@ class VisibilityAction:
     graphics: Union[str, bool]  # Boolean型, required
     sensors: Union[str, bool]  # Boolean型, required
     traffic: Union[str, bool]  # Boolean型, required
-    sensor_reference_set: Optional[dict] = None  # SensorReferenceSet要素（将来の拡張用）
+    sensor_reference_set: Optional[List[str]] = None  # SensorReferenceSet要素（SensorReferenceのname属性のリスト）
 
 
 @dataclass
@@ -430,6 +511,121 @@ class SynchronizeAction:
     target_tolerance_master: Optional[Union[str, float]] = None  # optional
     target_tolerance: Optional[Union[str, float]] = None  # optional
     final_speed: Optional[dict] = None  # FinalSpeed要素（AbsoluteSpeedまたはRelativeSpeedToMaster）。SteadyState情報を含む
+
+
+@dataclass
+class ColorRgb:
+    """ColorRgb（RGB色）"""
+    red: Union[str, float]  # required
+    green: Union[str, float]  # required
+    blue: Union[str, float]  # required
+
+
+@dataclass
+class ColorCmyk:
+    """ColorCmyk（CMYK色）"""
+    cyan: Union[str, float]  # required
+    magenta: Union[str, float]  # required
+    yellow: Union[str, float]  # required
+    key: Union[str, float]  # required
+
+
+@dataclass
+class Color:
+    """Color（色）"""
+    color_type: str  # required (ColorType: other, red, yellow, green, blue, violet, orange, brown, black, grey, white)
+    color_rgb: Optional[ColorRgb] = None  # ColorRgbまたはColorCmykのchoice
+    color_cmyk: Optional[ColorCmyk] = None  # ColorRgbまたはColorCmykのchoice
+
+
+@dataclass
+class VehicleLight:
+    """VehicleLight（車両ライト）"""
+    vehicle_light_type: str  # required (VehicleLightType: daytimeRunningLights, lowBeam, highBeam, fogLights, fogLightsFront, fogLightsRear, brakeLights, warningLights, indicatorLeft, indicatorRight, reversingLights, licensePlateIllumination, specialPurposeLights)
+
+
+@dataclass
+class UserDefinedLight:
+    """UserDefinedLight（ユーザー定義ライト）"""
+    user_defined_light_type: str  # required (String型)
+
+
+@dataclass
+class LightType:
+    """LightType（ライトタイプ）"""
+    vehicle_light: Optional[VehicleLight] = None  # VehicleLightまたはUserDefinedLightのchoice
+    user_defined_light: Optional[UserDefinedLight] = None  # VehicleLightまたはUserDefinedLightのchoice
+
+
+@dataclass
+class LightState:
+    """LightState（ライト状態）"""
+    mode: str  # required (LightMode: on, off, flashing)
+    color: Optional[Color] = None  # optional
+    luminous_intensity: Optional[Union[str, float]] = None  # optional
+    flashing_on_duration: Optional[Union[str, float]] = None  # optional
+    flashing_off_duration: Optional[Union[str, float]] = None  # optional
+
+
+@dataclass
+class VehicleComponent:
+    """VehicleComponent（車両コンポーネント）"""
+    vehicle_component_type: str  # required (VehicleComponentType: hood, trunk, doorFrontRight, doorFrontLeft, doorRearRight, doorRearLeft, windowFrontRight, windowFrontLeft, windowRearRight, windowRearLeft, sideMirrors, sideMirrorRight, sideMirrorLeft)
+
+
+@dataclass
+class UserDefinedComponent:
+    """UserDefinedComponent（ユーザー定義コンポーネント）"""
+    user_defined_component_type: str  # required (String型)
+
+
+@dataclass
+class ComponentAnimation:
+    """ComponentAnimation（コンポーネントアニメーション）"""
+    vehicle_component: VehicleComponent  # required
+    user_defined_component: UserDefinedComponent  # required
+
+
+@dataclass
+class PedestrianGesture:
+    """PedestrianGesture（歩行者ジェスチャー）"""
+    gesture: str  # required (PedestrianGestureType: phoneCallRightHand, phoneCallLeftHand, phoneTextRightHand, phoneTextLeftHand, wavingRightArm, wavingLeftArm, umbrellaRightHand, umbrellaLeftHand, crossArms, coffeeRightHand, coffeeLeftHand, sandwichRightHand, sandwichLeftHand)
+
+
+@dataclass
+class PedestrianAnimation:
+    """PedestrianAnimation（歩行者アニメーション）"""
+    motion: Optional[str] = None  # optional (PedestrianMotionType: standing, sitting, lying, squatting, walking, running, reeling, crawling, cycling, jumping, ducking, bendingDown)
+    user_defined_pedestrian_animation: Optional[str] = None  # optional (String型)
+    gestures: List[PedestrianGesture] = field(default_factory=list)  # PedestrianGestureのリスト（0以上）
+
+
+@dataclass
+class AnimationFile:
+    """AnimationFile（アニメーションファイル）"""
+    filepath: str  # required (File/filepath属性)
+    time_offset: Optional[Union[str, float]] = None  # optional (timeOffset属性)
+
+
+@dataclass
+class UserDefinedAnimation:
+    """UserDefinedAnimation（ユーザー定義アニメーション）"""
+    user_defined_animation_type: str  # required (String型)
+
+
+@dataclass
+class AnimationType:
+    """AnimationType（アニメーションタイプ）"""
+    component_animation: Optional[ComponentAnimation] = None  # ComponentAnimation, PedestrianAnimation, AnimationFile, UserDefinedAnimationのchoice
+    pedestrian_animation: Optional[PedestrianAnimation] = None  # ComponentAnimation, PedestrianAnimation, AnimationFile, UserDefinedAnimationのchoice
+    animation_file: Optional[AnimationFile] = None  # ComponentAnimation, PedestrianAnimation, AnimationFile, UserDefinedAnimationのchoice
+    user_defined_animation: Optional[UserDefinedAnimation] = None  # ComponentAnimation, PedestrianAnimation, AnimationFile, UserDefinedAnimationのchoice
+
+
+@dataclass
+class AnimationState:
+    """AnimationState（アニメーション状態）"""
+    state: Union[str, float]  # required (Double型)
 
 
 @dataclass
@@ -562,6 +758,8 @@ class TimeToCollisionCondition:
     relative_distance_type: str = "longitudinal"
     rule: str = "lessThan"
     target_entity_ref: Optional[str] = None  # TimeToCollisionConditionTarget内のEntityRef
+    target_position: Optional[Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                                     RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]] = None  # TimeToCollisionConditionTarget内のPosition
 
 
 @dataclass
@@ -1039,6 +1237,8 @@ class RoadNetwork:
     """RoadNetwork（道路ネットワーク）"""
     logic_file: Optional[str] = None  # OpenDRIVEファイルのパス
     scene_graph_file: Optional[str] = None
+    used_area: Optional[List[Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                                   RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]]] = None  # UsedArea要素（Positionのリスト、2つ以上）
 
 
 @dataclass

@@ -118,6 +118,33 @@ from osc_editor.core.model import (
     Properties,
     Property,
     Rule,
+    Color,
+    ColorRgb,
+    ColorCmyk,
+    LightType,
+    VehicleLight,
+    UserDefinedLight,
+    LightState,
+    AnimationType,
+    ComponentAnimation,
+    PedestrianAnimation,
+    AnimationFile,
+    UserDefinedAnimation,
+    VehicleComponent,
+    UserDefinedComponent,
+    PedestrianGesture,
+    AnimationState,
+    Brake,
+    BrakeInput,
+    ManualGear,
+    AutomaticGear,
+    Gear,
+    OverrideThrottleAction,
+    OverrideBrakeAction,
+    OverrideClutchAction,
+    OverrideParkingBrakeAction,
+    OverrideSteeringWheelAction,
+    OverrideGearAction,
 )
 
 
@@ -236,6 +263,12 @@ def write_road_network(parent: ET.Element, road_network: RoadNetwork):
     if road_network.scene_graph_file:
         scene_elem = _create_element("SceneGraphFile", elem)
         scene_elem.set("filepath", road_network.scene_graph_file)
+    
+    # UsedArea要素の書き出し（Positionのリスト、2つ以上）
+    if road_network.used_area and len(road_network.used_area) >= 2:
+        used_area_elem = _create_element("UsedArea", elem)
+        for position in road_network.used_area:
+            write_position(used_area_elem, position)
 
 
 def write_catalog_locations(parent: ET.Element, catalog_locs: CatalogLocations):
@@ -1015,46 +1048,112 @@ def write_assign_controller_action(parent: ET.Element, assign_controller: Assign
             elem.set("activateLighting", str(assign_controller.activate_lighting))
 
 
+def write_brake(parent: ET.Element, brake: Brake):
+    """BrakeをXMLに書き込み"""
+    elem = _create_element("Brake", parent)
+    elem.set("value", str(brake.value))
+    if brake.max_rate is not None:
+        elem.set("maxRate", str(brake.max_rate))
+
+
+def write_brake_input(parent: ET.Element, brake_input: BrakeInput):
+    """BrakeInputをXMLに書き込み"""
+    if brake_input.brake_percent is not None:
+        brake_percent_elem = _create_element("BrakePercent", parent)
+        write_brake(brake_percent_elem, brake_input.brake_percent)
+    elif brake_input.brake_force is not None:
+        brake_force_elem = _create_element("BrakeForce", parent)
+        write_brake(brake_force_elem, brake_input.brake_force)
+
+
+def write_manual_gear(parent: ET.Element, manual_gear: ManualGear):
+    """ManualGearをXMLに書き込み"""
+    elem = _create_element("ManualGear", parent)
+    elem.set("number", str(manual_gear.number))
+
+
+def write_automatic_gear(parent: ET.Element, automatic_gear: AutomaticGear):
+    """AutomaticGearをXMLに書き込み"""
+    elem = _create_element("AutomaticGear", parent)
+    elem.set("gear", automatic_gear.gear)
+
+
+def write_gear(parent: ET.Element, gear: Gear):
+    """GearをXMLに書き込み"""
+    if gear.manual_gear is not None:
+        write_manual_gear(parent, gear.manual_gear)
+    elif gear.automatic_gear is not None:
+        write_automatic_gear(parent, gear.automatic_gear)
+
+
 def write_override_controller_value_action(parent: ET.Element, override_controller: OverrideControllerValueAction):
-    """OverrideControllerValueActionをXMLに書き込み（基本的な構造のみ）"""
+    """OverrideControllerValueActionをXMLに書き込み"""
     elem = _create_element("OverrideControllerValueAction", parent)
     
-    # 将来的な拡張として辞書型で保存された値を書き込み
     if override_controller.throttle is not None:
         throttle_elem = _create_element("Throttle", elem)
-        if "active" in override_controller.throttle:
-            throttle_elem.set("active", "true" if override_controller.throttle["active"] else "false")
-        if "value" in override_controller.throttle:
-            throttle_elem.set("value", str(override_controller.throttle["value"]))
+        if isinstance(override_controller.throttle.active, bool):
+            throttle_elem.set("active", "true" if override_controller.throttle.active else "false")
+        else:
+            throttle_elem.set("active", str(override_controller.throttle.active))
+        throttle_elem.set("value", str(override_controller.throttle.value))
+        if override_controller.throttle.max_rate is not None:
+            throttle_elem.set("maxRate", str(override_controller.throttle.max_rate))
     
     if override_controller.brake is not None:
         brake_elem = _create_element("Brake", elem)
-        if "active" in override_controller.brake:
-            brake_elem.set("active", "true" if override_controller.brake["active"] else "false")
+        if isinstance(override_controller.brake.active, bool):
+            brake_elem.set("active", "true" if override_controller.brake.active else "false")
+        else:
+            brake_elem.set("active", str(override_controller.brake.active))
+        if override_controller.brake.brake_input is not None:
+            write_brake_input(brake_elem, override_controller.brake.brake_input)
+        if override_controller.brake.value is not None:  # deprecated
+            brake_elem.set("value", str(override_controller.brake.value))
     
     if override_controller.clutch is not None:
         clutch_elem = _create_element("Clutch", elem)
-        if "active" in override_controller.clutch:
-            clutch_elem.set("active", "true" if override_controller.clutch["active"] else "false")
-        if "value" in override_controller.clutch:
-            clutch_elem.set("value", str(override_controller.clutch["value"]))
+        if isinstance(override_controller.clutch.active, bool):
+            clutch_elem.set("active", "true" if override_controller.clutch.active else "false")
+        else:
+            clutch_elem.set("active", str(override_controller.clutch.active))
+        clutch_elem.set("value", str(override_controller.clutch.value))
+        if override_controller.clutch.max_rate is not None:
+            clutch_elem.set("maxRate", str(override_controller.clutch.max_rate))
     
     if override_controller.parking_brake is not None:
         parking_brake_elem = _create_element("ParkingBrake", elem)
-        if "active" in override_controller.parking_brake:
-            parking_brake_elem.set("active", "true" if override_controller.parking_brake["active"] else "false")
+        if isinstance(override_controller.parking_brake.active, bool):
+            parking_brake_elem.set("active", "true" if override_controller.parking_brake.active else "false")
+        else:
+            parking_brake_elem.set("active", str(override_controller.parking_brake.active))
+        if override_controller.parking_brake.brake_input is not None:
+            write_brake_input(parking_brake_elem, override_controller.parking_brake.brake_input)
+        if override_controller.parking_brake.value is not None:  # deprecated
+            parking_brake_elem.set("value", str(override_controller.parking_brake.value))
     
     if override_controller.steering_wheel is not None:
         steering_wheel_elem = _create_element("SteeringWheel", elem)
-        if "active" in override_controller.steering_wheel:
-            steering_wheel_elem.set("active", "true" if override_controller.steering_wheel["active"] else "false")
-        if "value" in override_controller.steering_wheel:
-            steering_wheel_elem.set("value", str(override_controller.steering_wheel["value"]))
+        if isinstance(override_controller.steering_wheel.active, bool):
+            steering_wheel_elem.set("active", "true" if override_controller.steering_wheel.active else "false")
+        else:
+            steering_wheel_elem.set("active", str(override_controller.steering_wheel.active))
+        steering_wheel_elem.set("value", str(override_controller.steering_wheel.value))
+        if override_controller.steering_wheel.max_rate is not None:
+            steering_wheel_elem.set("maxRate", str(override_controller.steering_wheel.max_rate))
+        if override_controller.steering_wheel.max_torque is not None:
+            steering_wheel_elem.set("maxTorque", str(override_controller.steering_wheel.max_torque))
     
     if override_controller.gear is not None:
         gear_elem = _create_element("Gear", elem)
-        if "active" in override_controller.gear:
-            gear_elem.set("active", "true" if override_controller.gear["active"] else "false")
+        if isinstance(override_controller.gear.active, bool):
+            gear_elem.set("active", "true" if override_controller.gear.active else "false")
+        else:
+            gear_elem.set("active", str(override_controller.gear.active))
+        if override_controller.gear.gear is not None:
+            write_gear(gear_elem, override_controller.gear.gear)
+        if override_controller.gear.number is not None:  # deprecated
+            gear_elem.set("number", str(override_controller.gear.number))
 
 
 def write_controller_action(parent: ET.Element, controller_action: ControllerAction):
@@ -1120,7 +1219,12 @@ def write_visibility_action(parent: ET.Element, visibility_action: VisibilityAct
     else:
         elem.set("traffic", str(visibility_action.traffic))
     
-    # SensorReferenceSet要素は現時点では省略
+    # SensorReferenceSet要素の書き出し
+    if visibility_action.sensor_reference_set:
+        sensor_ref_set_elem = _create_element("SensorReferenceSet", elem)
+        for sensor_name in visibility_action.sensor_reference_set:
+            sensor_ref_elem = _create_element("SensorReference", sensor_ref_set_elem)
+            sensor_ref_elem.set("name", sensor_name)
 
 
 def write_synchronize_action(parent: ET.Element, synchronize_action: SynchronizeAction):
@@ -1174,6 +1278,150 @@ def write_synchronize_action(parent: ET.Element, synchronize_action: Synchronize
                     target_time_elem.set("time", str(steady_state.get("time", "")))
 
 
+def write_color_rgb(parent: ET.Element, color_rgb: ColorRgb):
+    """ColorRgbをXMLに書き込み"""
+    elem = _create_element("ColorRgb", parent)
+    elem.set("red", str(color_rgb.red))
+    elem.set("green", str(color_rgb.green))
+    elem.set("blue", str(color_rgb.blue))
+
+
+def write_color_cmyk(parent: ET.Element, color_cmyk: ColorCmyk):
+    """ColorCmykをXMLに書き込み"""
+    elem = _create_element("ColorCmyk", parent)
+    elem.set("cyan", str(color_cmyk.cyan))
+    elem.set("magenta", str(color_cmyk.magenta))
+    elem.set("yellow", str(color_cmyk.yellow))
+    elem.set("key", str(color_cmyk.key))
+
+
+def write_color(parent: ET.Element, color: Color):
+    """ColorをXMLに書き込み"""
+    elem = _create_element("Color", parent)
+    elem.set("colorType", color.color_type)
+    
+    if color.color_rgb is not None:
+        write_color_rgb(elem, color.color_rgb)
+    elif color.color_cmyk is not None:
+        write_color_cmyk(elem, color.color_cmyk)
+
+
+def write_vehicle_light(parent: ET.Element, vehicle_light: VehicleLight):
+    """VehicleLightをXMLに書き込み"""
+    elem = _create_element("VehicleLight", parent)
+    elem.set("vehicleLightType", vehicle_light.vehicle_light_type)
+
+
+def write_user_defined_light(parent: ET.Element, user_defined_light: UserDefinedLight):
+    """UserDefinedLightをXMLに書き込み"""
+    elem = _create_element("UserDefinedLight", parent)
+    elem.set("userDefinedLightType", user_defined_light.user_defined_light_type)
+
+
+def write_light_type(parent: ET.Element, light_type: LightType):
+    """LightTypeをXMLに書き込み"""
+    elem = _create_element("LightType", parent)
+    
+    if light_type.vehicle_light is not None:
+        write_vehicle_light(elem, light_type.vehicle_light)
+    elif light_type.user_defined_light is not None:
+        write_user_defined_light(elem, light_type.user_defined_light)
+
+
+def write_light_state(parent: ET.Element, light_state: LightState):
+    """LightStateをXMLに書き込み"""
+    elem = _create_element("LightState", parent)
+    elem.set("mode", light_state.mode)
+    
+    if light_state.color is not None:
+        write_color(elem, light_state.color)
+    
+    if light_state.luminous_intensity is not None:
+        elem.set("luminousIntensity", str(light_state.luminous_intensity))
+    
+    if light_state.flashing_on_duration is not None:
+        elem.set("flashingOnDuration", str(light_state.flashing_on_duration))
+    
+    if light_state.flashing_off_duration is not None:
+        elem.set("flashingOffDuration", str(light_state.flashing_off_duration))
+
+
+def write_vehicle_component(parent: ET.Element, vehicle_component: VehicleComponent):
+    """VehicleComponentをXMLに書き込み"""
+    elem = _create_element("VehicleComponent", parent)
+    elem.set("vehicleComponentType", vehicle_component.vehicle_component_type)
+
+
+def write_user_defined_component(parent: ET.Element, user_defined_component: UserDefinedComponent):
+    """UserDefinedComponentをXMLに書き込み"""
+    elem = _create_element("UserDefinedComponent", parent)
+    elem.set("userDefinedComponentType", user_defined_component.user_defined_component_type)
+
+
+def write_component_animation(parent: ET.Element, component_animation: ComponentAnimation):
+    """ComponentAnimationをXMLに書き込み"""
+    elem = _create_element("ComponentAnimation", parent)
+    write_vehicle_component(elem, component_animation.vehicle_component)
+    write_user_defined_component(elem, component_animation.user_defined_component)
+
+
+def write_pedestrian_gesture(parent: ET.Element, pedestrian_gesture: PedestrianGesture):
+    """PedestrianGestureをXMLに書き込み"""
+    elem = _create_element("PedestrianGesture", parent)
+    elem.set("gesture", pedestrian_gesture.gesture)
+
+
+def write_pedestrian_animation(parent: ET.Element, pedestrian_animation: PedestrianAnimation):
+    """PedestrianAnimationをXMLに書き込み"""
+    elem = _create_element("PedestrianAnimation", parent)
+    
+    if pedestrian_animation.motion is not None:
+        elem.set("motion", pedestrian_animation.motion)
+    
+    if pedestrian_animation.user_defined_pedestrian_animation is not None:
+        elem.set("userDefinedPedestrianAnimation", pedestrian_animation.user_defined_pedestrian_animation)
+    
+    for gesture in pedestrian_animation.gestures:
+        write_pedestrian_gesture(elem, gesture)
+
+
+def write_animation_file(parent: ET.Element, animation_file: AnimationFile):
+    """AnimationFileをXMLに書き込み"""
+    elem = _create_element("AnimationFile", parent)
+    
+    file_elem = _create_element("File", elem)
+    file_elem.set("filepath", animation_file.filepath)
+    
+    if animation_file.time_offset is not None:
+        elem.set("timeOffset", str(animation_file.time_offset))
+
+
+def write_user_defined_animation(parent: ET.Element, user_defined_animation: UserDefinedAnimation):
+    """UserDefinedAnimationをXMLに書き込み"""
+    elem = _create_element("UserDefinedAnimation", parent)
+    elem.set("userDefinedAnimationType", user_defined_animation.user_defined_animation_type)
+
+
+def write_animation_type(parent: ET.Element, animation_type: AnimationType):
+    """AnimationTypeをXMLに書き込み"""
+    elem = _create_element("AnimationType", parent)
+    
+    if animation_type.component_animation is not None:
+        write_component_animation(elem, animation_type.component_animation)
+    elif animation_type.pedestrian_animation is not None:
+        write_pedestrian_animation(elem, animation_type.pedestrian_animation)
+    elif animation_type.animation_file is not None:
+        write_animation_file(elem, animation_type.animation_file)
+    elif animation_type.user_defined_animation is not None:
+        write_user_defined_animation(elem, animation_type.user_defined_animation)
+
+
+def write_animation_state(parent: ET.Element, animation_state: AnimationState):
+    """AnimationStateをXMLに書き込み"""
+    elem = _create_element("AnimationState", parent)
+    elem.set("state", str(animation_state.state))
+
+
 def write_appearance_action(parent: ET.Element, appearance_action: AppearanceAction):
     """AppearanceActionをXMLに書き込み"""
     elem = _create_element("AppearanceAction", parent)
@@ -1181,18 +1429,43 @@ def write_appearance_action(parent: ET.Element, appearance_action: AppearanceAct
     # LightStateAction要素（optional）
     if appearance_action.light_state_action is not None:
         light_state_elem = _create_element("LightStateAction", elem)
-        if "transitionTime" in appearance_action.light_state_action:
+        if "transitionTime" in appearance_action.light_state_action and appearance_action.light_state_action["transitionTime"] is not None:
             light_state_elem.set("transitionTime", str(appearance_action.light_state_action["transitionTime"]))
-        # LightType, LightState要素は将来対応
+        
+        # LightType要素
+        if "lightType" in appearance_action.light_state_action and appearance_action.light_state_action["lightType"] is not None:
+            light_type = appearance_action.light_state_action["lightType"]
+            if isinstance(light_type, LightType):
+                write_light_type(light_state_elem, light_type)
+        
+        # LightState要素
+        if "lightState" in appearance_action.light_state_action and appearance_action.light_state_action["lightState"] is not None:
+            light_state = appearance_action.light_state_action["lightState"]
+            if isinstance(light_state, LightState):
+                write_light_state(light_state_elem, light_state)
     
     # AnimationAction要素（optional）
     if appearance_action.animation_action is not None:
         animation_elem = _create_element("AnimationAction", elem)
-        if "loop" in appearance_action.animation_action:
-            animation_elem.set("loop", "true" if appearance_action.animation_action["loop"] else "false")
-        if "animationDuration" in appearance_action.animation_action:
+        if "loop" in appearance_action.animation_action and appearance_action.animation_action["loop"] is not None:
+            if isinstance(appearance_action.animation_action["loop"], bool):
+                animation_elem.set("loop", "true" if appearance_action.animation_action["loop"] else "false")
+            else:
+                animation_elem.set("loop", str(appearance_action.animation_action["loop"]))
+        if "animationDuration" in appearance_action.animation_action and appearance_action.animation_action["animationDuration"] is not None:
             animation_elem.set("animationDuration", str(appearance_action.animation_action["animationDuration"]))
-        # AnimationType, AnimationState要素は将来対応
+        
+        # AnimationType要素
+        if "animationType" in appearance_action.animation_action and appearance_action.animation_action["animationType"] is not None:
+            animation_type = appearance_action.animation_action["animationType"]
+            if isinstance(animation_type, AnimationType):
+                write_animation_type(animation_elem, animation_type)
+        
+        # AnimationState要素
+        if "animationState" in appearance_action.animation_action and appearance_action.animation_action["animationState"] is not None:
+            animation_state = appearance_action.animation_action["animationState"]
+            if isinstance(animation_state, AnimationState):
+                write_animation_state(animation_elem, animation_state)
 
 
 def write_private_action(parent: ET.Element, private_action: PrivateAction):
@@ -1392,10 +1665,15 @@ def write_time_to_collision_condition(parent: ET.Element, condition: TimeToColli
     elem.set("relativeDistanceType", condition.relative_distance_type)
     elem.set("rule", condition.rule)
     
-    if condition.target_entity_ref:
+    # TimeToCollisionConditionTarget要素（EntityRefまたはPositionのchoice）
+    if condition.target_entity_ref or condition.target_position:
         target_elem = _create_element("TimeToCollisionConditionTarget", elem)
-        entity_ref_elem = _create_element("EntityRef", target_elem)
-        entity_ref_elem.set("entityRef", condition.target_entity_ref)
+        if condition.target_entity_ref:
+            entity_ref_elem = _create_element("EntityRef", target_elem)
+            entity_ref_elem.set("entityRef", condition.target_entity_ref)
+        elif condition.target_position:
+            position_elem = _create_element("Position", target_elem)
+            write_position(position_elem, condition.target_position)
 
 
 def write_reach_position_condition(parent: ET.Element, condition: ReachPositionCondition):
