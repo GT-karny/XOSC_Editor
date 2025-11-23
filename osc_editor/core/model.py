@@ -273,11 +273,20 @@ class TimeReference:
 
 
 @dataclass
+class TrajectoryRef:
+    """TrajectoryRef（軌跡参照）"""
+    trajectory: Optional[Trajectory] = None
+    catalog_reference: Optional[CatalogReference] = None
+
+
+@dataclass
 class FollowTrajectoryAction:
     """FollowTrajectoryAction（軌跡追従アクション）"""
-    trajectory: Trajectory
+    trajectory: Optional[Trajectory] = None  # deprecatedだが互換性のため残す
+    trajectory_ref: Optional[TrajectoryRef] = None
     time_reference: Optional[TimeReference] = None
     following_mode: str = "follow"  # TrajectoryFollowingModeのfollowingMode属性
+    initial_distance_offset: Optional[Union[str, float]] = None
 
 
 @dataclass
@@ -618,10 +627,24 @@ class Vehicle:
 
 
 @dataclass
+class ParameterAssignment:
+    """ParameterAssignment（パラメータ割り当て）"""
+    parameter_ref: str
+    value: str
+
+
+@dataclass
+class ParameterAssignments:
+    """ParameterAssignments（パラメータ割り当てリスト）"""
+    assignments: List[ParameterAssignment]
+
+
+@dataclass
 class CatalogReference:
     """CatalogReference（カタログ参照）"""
     catalog_name: str
     entry_name: str
+    parameter_assignments: Optional[ParameterAssignments] = None
 
 
 @dataclass

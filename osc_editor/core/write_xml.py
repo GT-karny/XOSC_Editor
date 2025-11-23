@@ -14,6 +14,8 @@ from osc_editor.core.model import (
     Vehicle,
     Pedestrian,
     CatalogReference,
+    ParameterAssignment,
+    ParameterAssignments,
     Storyboard,
     Init,
     Story,
@@ -29,6 +31,7 @@ from osc_editor.core.model import (
     RoutingAction,
     FollowTrajectoryAction,
     Trajectory,
+    TrajectoryRef,
     Polyline,
     Clothoid,
     Nurbs,
@@ -287,11 +290,28 @@ def write_route_position(parent: ET.Element, route_position: RoutePosition):
     # InRoutePosition
     if route_position.in_route_position:
         in_route_elem = _create_element("InRoutePosition", elem)
-        from_lane_elem = _create_element("FromLaneCoordinates", in_route_elem)
-        if "pathS" in route_position.in_route_position:
-            from_lane_elem.set("pathS", str(route_position.in_route_position["pathS"]))
-        if "laneId" in route_position.in_route_position:
-            from_lane_elem.set("laneId", str(route_position.in_route_position["laneId"]))
+        in_route_pos = route_position.in_route_position
+        
+        # FromCurrentEntity
+        if in_route_pos.get("type") == "FromCurrentEntity":
+            from_current_entity_elem = _create_element("FromCurrentEntity", in_route_elem)
+            from_current_entity_elem.set("entityRef", in_route_pos.get("entityRef", ""))
+        # FromRoadCoordinates
+        elif in_route_pos.get("type") == "FromRoadCoordinates":
+            from_road_coords_elem = _create_element("FromRoadCoordinates", in_route_elem)
+            from_road_coords_elem.set("pathS", str(in_route_pos.get("pathS", 0.0)))
+            from_road_coords_elem.set("t", str(in_route_pos.get("t", 0.0)))
+        # FromLaneCoordinates（既存の実装と互換性のため、typeがない場合もFromLaneCoordinatesとして扱う）
+        else:
+            from_lane_elem = _create_element("FromLaneCoordinates", in_route_elem)
+            if "pathS" in in_route_pos:
+                from_lane_elem.set("pathS", str(in_route_pos["pathS"]))
+            if "laneId" in in_route_pos:
+                from_lane_elem.set("laneId", str(in_route_pos["laneId"]))
+            if "laneOffset" in in_route_pos:
+                lane_offset = in_route_pos["laneOffset"]
+                if isinstance(lane_offset, str) or lane_offset != 0.0:
+                    from_lane_elem.set("laneOffset", str(lane_offset))
 
 
 def write_relative_world_position(parent: ET.Element, position: RelativeWorldPosition):
@@ -665,11 +685,26 @@ def write_time_reference(parent: ET.Element, time_reference: TimeReference):
             timing_elem.set("scale", str(timing["scale"]))
 
 
+def write_trajectory_ref(parent: ET.Element, trajectory_ref: TrajectoryRef):
+    """TrajectoryRefをXMLに書き込み"""
+    elem = _create_element("TrajectoryRef", parent)
+    
+    if trajectory_ref.trajectory is not None:
+        write_trajectory(elem, trajectory_ref.trajectory)
+    elif trajectory_ref.catalog_reference is not None:
+        write_catalog_reference(elem, trajectory_ref.catalog_reference)
+
+
 def write_follow_trajectory_action(parent: ET.Element, follow_trajectory: FollowTrajectoryAction):
     """FollowTrajectoryActionをXMLに書き込み"""
     elem = _create_element("FollowTrajectoryAction", parent)
     
-    write_trajectory(elem, follow_trajectory.trajectory)
+    # TrajectoryRefがある場合はそれを使用（推奨）
+    if follow_trajectory.trajectory_ref is not None:
+        write_trajectory_ref(elem, follow_trajectory.trajectory_ref)
+    # 後方互換性のためTrajectoryもサポート（deprecated）
+    elif follow_trajectory.trajectory is not None:
+        write_trajectory(elem, follow_trajectory.trajectory)
     
     if follow_trajectory.time_reference:
         write_time_reference(elem, follow_trajectory.time_reference)
@@ -679,6 +714,9 @@ def write_follow_trajectory_action(parent: ET.Element, follow_trajectory: Follow
     
     following_mode_elem = _create_element("TrajectoryFollowingMode", elem)
     following_mode_elem.set("followingMode", follow_trajectory.following_mode)
+    
+    if follow_trajectory.initial_distance_offset is not None:
+        elem.set("initialDistanceOffset", str(follow_trajectory.initial_distance_offset))
 
 
 def write_waypoint(parent: ET.Element, waypoint: Waypoint):
@@ -1287,11 +1325,27 @@ def write_vehicle(parent: ET.Element, vehicle: Vehicle):
         write_properties(elem, vehicle.properties)
 
 
+def write_parameter_assignment(parent: ET.Element, assignment: ParameterAssignment):
+    """ParameterAssignmentをXMLに書き込み"""
+    elem = _create_element("ParameterAssignment", parent)
+    elem.set("parameterRef", assignment.parameter_ref)
+    elem.set("value", assignment.value)
+
+
+def write_parameter_assignments(parent: ET.Element, param_assignments: ParameterAssignments):
+    """ParameterAssignmentsをXMLに書き込み"""
+    elem = _create_element("ParameterAssignments", parent)
+    for assignment in param_assignments.assignments:
+        write_parameter_assignment(elem, assignment)
+
+
 def write_catalog_reference(parent: ET.Element, catalog_ref: CatalogReference):
     """CatalogReferenceをXMLに書き込み"""
     elem = _create_element("CatalogReference", parent)
     elem.set("catalogName", catalog_ref.catalog_name)
     elem.set("entryName", catalog_ref.entry_name)
+    if catalog_ref.parameter_assignments is not None:
+        write_parameter_assignments(elem, catalog_ref.parameter_assignments)
 
 
 def write_properties(parent: ET.Element, properties: Properties):

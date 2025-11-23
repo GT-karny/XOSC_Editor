@@ -14,6 +14,8 @@ from osc_editor.core.model import (
     Vehicle,
     Pedestrian,
     CatalogReference,
+    ParameterAssignment,
+    ParameterAssignments,
     Storyboard,
     Init,
     Story,
@@ -29,6 +31,7 @@ from osc_editor.core.model import (
     RoutingAction,
     FollowTrajectoryAction,
     Trajectory,
+    TrajectoryRef,
     Polyline,
     Clothoid,
     Nurbs,
@@ -348,12 +351,31 @@ def parse_route_position(element: ET.Element) -> Optional[RoutePosition]:
     in_route_position_elem = element.find(f"./{ns}InRoutePosition")
     in_route_position = None
     if in_route_position_elem is not None:
-        from_lane_elem = in_route_position_elem.find(f"./{ns}FromLaneCoordinates")
-        if from_lane_elem is not None:
+        # FromCurrentEntity
+        from_current_entity_elem = in_route_position_elem.find(f"./{ns}FromCurrentEntity")
+        if from_current_entity_elem is not None:
             in_route_position = {
-                "pathS": _get_attr_float(from_lane_elem, "pathS", 0.0),
-                "laneId": _get_attr(from_lane_elem, "laneId", ""),
+                "type": "FromCurrentEntity",
+                "entityRef": _get_attr(from_current_entity_elem, "entityRef", ""),
             }
+        # FromRoadCoordinates
+        elif in_route_position_elem.find(f"./{ns}FromRoadCoordinates") is not None:
+            from_road_coords_elem = in_route_position_elem.find(f"./{ns}FromRoadCoordinates")
+            in_route_position = {
+                "type": "FromRoadCoordinates",
+                "pathS": _get_attr_float(from_road_coords_elem, "pathS", 0.0),
+                "t": _get_attr_float(from_road_coords_elem, "t", 0.0),
+            }
+        # FromLaneCoordinates
+        else:
+            from_lane_elem = in_route_position_elem.find(f"./{ns}FromLaneCoordinates")
+            if from_lane_elem is not None:
+                in_route_position = {
+                    "type": "FromLaneCoordinates",
+                    "pathS": _get_attr_float(from_lane_elem, "pathS", 0.0),
+                    "laneId": _get_attr(from_lane_elem, "laneId", ""),
+                    "laneOffset": _get_attr_float(from_lane_elem, "laneOffset", 0.0),
+                }
     
     if route_ref is None and route is None and in_route_position is None:
         return None
@@ -1033,8 +1055,8 @@ def parse_time_reference(element: ET.Element) -> Optional[TimeReference]:
     return TimeReference(timing=None)
 
 
-def parse_follow_trajectory_action(element: ET.Element) -> Optional[FollowTrajectoryAction]:
-    """FollowTrajectoryActionをパース"""
+def parse_trajectory_ref(element: ET.Element) -> Optional[TrajectoryRef]:
+    """TrajectoryRefをパース"""
     if element is None:
         return None
     
@@ -1042,8 +1064,31 @@ def parse_follow_trajectory_action(element: ET.Element) -> Optional[FollowTrajec
     trajectory_elem = element.find(f"./{ns}Trajectory")
     trajectory = parse_trajectory(trajectory_elem) if trajectory_elem is not None else None
     
-    if trajectory is None:
+    catalog_ref_elem = element.find(f"./{ns}CatalogReference")
+    catalog_reference = parse_catalog_reference(catalog_ref_elem) if catalog_ref_elem is not None else None
+    
+    if trajectory is None and catalog_reference is None:
         return None
+    
+    return TrajectoryRef(trajectory=trajectory, catalog_reference=catalog_reference)
+
+
+def parse_follow_trajectory_action(element: ET.Element) -> Optional[FollowTrajectoryAction]:
+    """FollowTrajectoryActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    
+    # deprecatedだが互換性のためTrajectoryもサポート
+    trajectory_elem = element.find(f"./{ns}Trajectory")
+    trajectory = parse_trajectory(trajectory_elem) if trajectory_elem is not None else None
+    
+    # TrajectoryRef要素をパース（推奨）
+    trajectory_ref_elem = element.find(f"./{ns}TrajectoryRef")
+    trajectory_ref = parse_trajectory_ref(trajectory_ref_elem) if trajectory_ref_elem is not None else None
+    
+    # どちらもない場合はNoneを返す（後方互換性のためtrajectoryがない場合も許容）
     
     time_ref_elem = element.find(f"./{ns}TimeReference")
     time_reference = parse_time_reference(time_ref_elem) if time_ref_elem is not None else None
@@ -1051,10 +1096,16 @@ def parse_follow_trajectory_action(element: ET.Element) -> Optional[FollowTrajec
     following_mode_elem = element.find(f"./{ns}TrajectoryFollowingMode")
     following_mode = _get_attr(following_mode_elem, "followingMode", "follow") if following_mode_elem is not None else "follow"
     
+    initial_distance_offset = _get_attr_float(element, "initialDistanceOffset", None)
+    if isinstance(initial_distance_offset, str):
+        initial_distance_offset = None
+    
     return FollowTrajectoryAction(
         trajectory=trajectory,
+        trajectory_ref=trajectory_ref,
         time_reference=time_reference,
         following_mode=following_mode,
+        initial_distance_offset=initial_distance_offset,
     )
 
 
@@ -2000,6 +2051,33 @@ def parse_vehicle(element: ET.Element) -> Vehicle:
     )
 
 
+def parse_parameter_assignment(element: ET.Element) -> Optional[ParameterAssignment]:
+    """ParameterAssignmentをパース"""
+    if element is None:
+        return None
+    parameter_ref = _get_attr(element, "parameterRef", "")
+    value = _get_attr(element, "value", "")
+    if not parameter_ref or not value:
+        return None
+    return ParameterAssignment(parameter_ref=parameter_ref, value=value)
+
+
+def parse_parameter_assignments(element: ET.Element) -> Optional[ParameterAssignments]:
+    """ParameterAssignmentsをパース"""
+    if element is None:
+        return None
+    ns = _detect_namespace(element)
+    assignment_elems = element.findall(f"./{ns}ParameterAssignment")
+    assignments = []
+    for assignment_elem in assignment_elems:
+        assignment = parse_parameter_assignment(assignment_elem)
+        if assignment is not None:
+            assignments.append(assignment)
+    if not assignments:
+        return None
+    return ParameterAssignments(assignments=assignments)
+
+
 def parse_catalog_reference(element: ET.Element) -> Optional[CatalogReference]:
     """CatalogReferenceをパース"""
     if element is None:
@@ -2008,7 +2086,12 @@ def parse_catalog_reference(element: ET.Element) -> Optional[CatalogReference]:
     entry_name = _get_attr(element, "entryName", "")
     if not catalog_name or not entry_name:
         return None
-    return CatalogReference(catalog_name=catalog_name, entry_name=entry_name)
+    
+    ns = _detect_namespace(element)
+    param_assignments_elem = element.find(f"./{ns}ParameterAssignments")
+    parameter_assignments = parse_parameter_assignments(param_assignments_elem) if param_assignments_elem is not None else None
+    
+    return CatalogReference(catalog_name=catalog_name, entry_name=entry_name, parameter_assignments=parameter_assignments)
 
 
 def parse_pedestrian(element: ET.Element) -> Optional[Pedestrian]:

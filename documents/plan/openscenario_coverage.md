@@ -12,16 +12,16 @@
 
 | カテゴリ | 対応済み | 一部対応 | 未対応 | 合計 | 対応率 |
 |---------|---------|---------|--------|------|--------|
-| 基本構造要素 | 13 | 1 | 3 | 17 | 88% |
-| Position関連 | 8 | 1 | 4 | 13 | 62% |
-| Action関連 | 11 | 5 | 20 | 36 | 44% |
+| 基本構造要素 | 15 | 1 | 1 | 17 | 94% |
+| Position関連 | 11 | 0 | 2 | 13 | 85% |
+| Action関連 | 12 | 5 | 19 | 36 | 47% |
 | Condition関連 | 9 | 2 | 10 | 21 | 52% |
 | Entity関連 | 12 | 1 | 3 | 16 | 81% |
-| Trajectory関連 | 7 | 0 | 2 | 9 | 78% |
+| Trajectory関連 | 8 | 0 | 1 | 9 | 89% |
 | Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **68** | **5** | **60** | **133** | **55%** |
+| **合計** | **73** | **5** | **55** | **133** | **59%** |
 
 ## 1. 基本構造要素
 
@@ -33,9 +33,9 @@
 | ParameterDeclarations | ✅ | 完全対応 |
 | ParameterDeclaration | ✅ | 完全対応 |
 | CatalogLocations | ✅ | すべてのCatalogLocationに対応（VehicleCatalog, RouteCatalog, ControllerCatalog, PedestrianCatalog, MiscObjectCatalog, EnvironmentCatalog, ManeuverCatalog, TrajectoryCatalog） |
-| CatalogReference | ✅ | 基本属性（catalogName, entryName）に対応。ParameterAssignmentsは未対応 |
-| ParameterAssignments | ❌ | CatalogReference内のParameterAssignments未対応 |
-| ParameterAssignment | ❌ | ParameterAssignments内のParameterAssignment未対応 |
+| CatalogReference | ✅ | 基本属性（catalogName, entryName）に対応。ParameterAssignmentsに対応 |
+| ParameterAssignments | ✅ | CatalogReference内のParameterAssignmentsに対応 |
+| ParameterAssignment | ✅ | ParameterAssignments内のParameterAssignmentに対応 |
 | RoadNetwork | ⚠️ | LogicFile, SceneGraphFileのみ対応。TrafficSignals, UsedAreaは未対応 |
 | Entities | ✅ | ScenarioObjectのリストに対応 |
 | ScenarioObject | ✅ | Vehicle, Pedestrian, CatalogReference, ObjectControllerに対応 |
@@ -54,7 +54,7 @@
 |--------|---------|------|
 | WorldPosition | ✅ | 完全対応（x, y, z, h, p, r） |
 | LanePosition | ✅ | 完全対応（roadId, laneId, s, offset, Orientation） |
-| RoutePosition | ✅ | RouteRef内のCatalogReference/Route要素、InRoutePosition内のFromLaneCoordinates、Orientationに対応 |
+| RoutePosition | ✅ | RouteRef内のCatalogReference/Route要素、InRoutePosition内のFromCurrentEntity/FromRoadCoordinates/FromLaneCoordinates、Orientationに対応 |
 | RelativeWorldPosition | ✅ | 完全対応（entityRef, dx, dy, dz, Orientation） |
 | RelativeObjectPosition | ✅ | 完全対応（entityRef, dx, dy, dz, Orientation） |
 | RoadPosition | ✅ | 完全対応（roadId, s, t, Orientation） |
@@ -63,10 +63,10 @@
 | GeoPosition | ❌ | 未対応 |
 | TrajectoryPosition | ❌ | 未対応 |
 | Orientation | ✅ | 全Positionタイプで対応（type, h, p, r） |
-| InRoutePosition | ⚠️ | FromLaneCoordinatesのみ対応。FromCurrentEntity, FromRoadCoordinatesは未対応 |
-| PositionOfCurrentEntity | ❌ | 未対応 |
-| PositionInRoadCoordinates | ❌ | 未対応 |
-| PositionInLaneCoordinates | ⚠️ | FromLaneCoordinatesとして部分的に使用 |
+| InRoutePosition | ✅ | FromCurrentEntity, FromRoadCoordinates, FromLaneCoordinatesすべてに対応 |
+| PositionOfCurrentEntity | ✅ | InRoutePosition内のFromCurrentEntityに対応 |
+| PositionInRoadCoordinates | ✅ | InRoutePosition内のFromRoadCoordinatesに対応 |
+| PositionInLaneCoordinates | ✅ | InRoutePosition内のFromLaneCoordinatesに対応 |
 
 ## 3. Action関連
 
@@ -79,7 +79,7 @@
 | LaneChangeAction | ✅ | LaneChangeActionDynamics, RelativeTargetLane, AbsoluteTargetLaneに対応 |
 | LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffsetに対応 |
 | AssignRouteAction | ✅ | CatalogReferenceとRoute要素に対応 |
-| FollowTrajectoryAction | ⚠️ | Trajectory, TimeReference, TrajectoryFollowingModeに対応。TrajectoryRefは未対応 |
+| FollowTrajectoryAction | ✅ | Trajectory（deprecated）, TrajectoryRef, TimeReference, TrajectoryFollowingMode, initialDistanceOffsetに対応 |
 | RoutingAction | ✅ | AssignRouteAction, FollowTrajectoryActionに対応 |
 | ActivateControllerAction | ✅ | longitudinal, lateral属性に対応 |
 | LongitudinalAction | ⚠️ | SpeedActionのみ対応。LongitudinalDistanceAction, SpeedProfileActionは未対応 |
@@ -234,7 +234,7 @@
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
 | Trajectory | ✅ | name, closed, ParameterDeclarations, Shape（Polyline, Clothoid, Nurbs）に対応 |
-| TrajectoryRef | ❌ | FollowTrajectoryAction内のTrajectoryRef未対応 |
+| TrajectoryRef | ✅ | FollowTrajectoryAction内のTrajectoryRefに対応（TrajectoryまたはCatalogReferenceのchoice） |
 | Shape | ✅ | Polyline, Clothoid, Nurbsに対応 |
 | Polyline | ✅ | Vertexのリストに対応 |
 | Vertex | ✅ | 全Positionタイプ（WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition, RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition）とtime属性に対応 |
@@ -392,6 +392,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 12:13: 最優先未実装機能の実装完了（ParameterAssignments/ParameterAssignment, TrajectoryRef, PositionOfCurrentEntity/PositionInRoadCoordinates）
 - 2025-11-23 11:59: Catalog関連の実装完了（PedestrianCatalogLocation, MiscObjectCatalogLocation, EnvironmentCatalogLocation, ManeuverCatalogLocation, TrajectoryCatalogLocation）
 - 2025-11-23 11:30: 中優先度機能の実装完了（VisibilityAction, SynchronizeAction, AppearanceAction, EndOfRoadCondition, CollisionCondition, Clothoid, Nurbs）
 - 2025-11-23 11:06: Position関連（相対座標系）、Vehicle/Pedestrian詳細属性、Route要素の実装完了
