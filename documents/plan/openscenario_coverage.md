@@ -392,6 +392,6 @@
 
 ## 更新履歴
 
-- 2025-01-XX: Position関連（相対座標系）、Vehicle/Pedestrian詳細属性、Route要素の実装完了
+- 2025-11-23 11:06: Position関連（相対座標系）、Vehicle/Pedestrian詳細属性、Route要素の実装完了
 - 2025-11-23 10:47: 初版作成（OpenSCENARIO 1.2.0 XSDとの比較）
 
