@@ -1737,7 +1737,7 @@ def parse_maneuver_group(element: ET.Element) -> ManeuverGroup:
     
     ns = _detect_namespace(element)
     actors = []
-    select_triggering_entities = None
+    select_triggering_entities = False  # デフォルト値（XSD準拠）
     actors_elem = element.find(f"./{ns}Actors")
     if actors_elem is not None:
         select_triggering_entities_attr = actors_elem.get("selectTriggeringEntities")

@@ -141,8 +141,10 @@ def write_parameter_declarations(parent: ET.Element, param_decls: ParameterDecla
         param_elem = _create_element("ParameterDeclaration", elem)
         param_elem.set("name", param.name)
         param_elem.set("parameterType", param.parameter_type)
-        if param.value:
-            param_elem.set("value", param.value)
+        # value属性は必須（XSD準拠）
+        if not param.value:
+            raise ValueError(f"ParameterDeclaration '{param.name}' must have a value attribute")
+        param_elem.set("value", param.value)
 
 
 def write_road_network(parent: ET.Element, road_network: RoadNetwork):
@@ -654,10 +656,44 @@ def write_follow_trajectory_action(parent: ET.Element, follow_trajectory: Follow
     following_mode_elem.set("followingMode", follow_trajectory.following_mode)
 
 
+def write_waypoint(parent: ET.Element, waypoint: Waypoint):
+    """WaypointをXMLに書き込み"""
+    elem = _create_element("Waypoint", parent)
+    elem.set("routeStrategy", waypoint.route_strategy)
+    
+    position_elem = _create_element("Position", elem)
+    write_position(position_elem, waypoint.position)
+
+
+def write_route(parent: ET.Element, route: Route):
+    """RouteをXMLに書き込み"""
+    elem = _create_element("Route", parent)
+    elem.set("name", route.name)
+    elem.set("closed", "true" if route.closed else "false")
+    
+    if route.parameter_declarations and route.parameter_declarations.parameters:
+        write_parameter_declarations(elem, route.parameter_declarations)
+    
+    # Waypointは2つ以上必須（XSD準拠）
+    if len(route.waypoints) < 2:
+        raise ValueError(f"Route '{route.name}' must have at least 2 Waypoints")
+    
+    for waypoint in route.waypoints:
+        write_waypoint(elem, waypoint)
+
+
 def write_assign_route_action(parent: ET.Element, assign_route: AssignRouteAction):
     """AssignRouteActionをXMLに書き込み"""
     elem = _create_element("AssignRouteAction", parent)
-    write_catalog_reference(elem, assign_route.route_ref)
+    
+    # RouteまたはCatalogReferenceのいずれかが必須（XSD準拠）
+    if assign_route.route_ref is None and assign_route.route is None:
+        raise ValueError("AssignRouteAction must have either Route or CatalogReference element")
+    
+    if assign_route.route_ref is not None:
+        write_catalog_reference(elem, assign_route.route_ref)
+    elif assign_route.route is not None:
+        write_route(elem, assign_route.route)
 
 
 def write_routing_action(parent: ET.Element, routing_action: RoutingAction):
@@ -1028,7 +1064,15 @@ def write_event(parent: ET.Element, event: Event):
     """EventをXMLに書き込み（XSD準拠：Action要素を正しく書き込み）"""
     elem = _create_element("Event", parent)
     elem.set("name", event.name)
+    
+    # priority属性は必須（XSD準拠）
+    if event.priority is None:
+        raise ValueError(f"Event '{event.name}' must have a priority attribute")
     elem.set("priority", event.priority.value)
+    
+    # Action要素は1つ以上必須（XSD準拠）
+    if not event.actions:
+        raise ValueError(f"Event '{event.name}' must have at least one Action element")
     
     for action in event.actions:
         write_action(elem, action)
@@ -1054,13 +1098,18 @@ def write_maneuver_group(parent: ET.Element, maneuver_group: ManeuverGroup):
     # XSDではmaximumExecutionCountは必須属性として定義されている
     elem.set("maximumExecutionCount", str(maneuver_group.maximum_execution_count))
     
-    if maneuver_group.actors:
-        actors_elem = _create_element("Actors", elem)
-        if maneuver_group.select_triggering_entities is not None:
-            actors_elem.set("selectTriggeringEntities", "true" if maneuver_group.select_triggering_entities else "false")
-        for actor in maneuver_group.actors:
-            entity_ref_elem = _create_element("EntityRef", actors_elem)
-            entity_ref_elem.set("entityRef", actor)
+    # Actors要素は必須（XSD準拠）
+    if not maneuver_group.actors:
+        raise ValueError(f"ManeuverGroup '{maneuver_group.name}' must have at least one Actor")
+    
+    actors_elem = _create_element("Actors", elem)
+    # selectTriggeringEntities属性は必須（XSD準拠）、Noneの場合はデフォルト値falseを設定
+    select_triggering = maneuver_group.select_triggering_entities if maneuver_group.select_triggering_entities is not None else False
+    actors_elem.set("selectTriggeringEntities", "true" if select_triggering else "false")
+    
+    for actor in maneuver_group.actors:
+        entity_ref_elem = _create_element("EntityRef", actors_elem)
+        entity_ref_elem.set("entityRef", actor)
     
     for maneuver in maneuver_group.maneuvers:
         write_maneuver(elem, maneuver)
@@ -1071,11 +1120,17 @@ def write_act(parent: ET.Element, act: Act):
     elem = _create_element("Act", parent)
     elem.set("name", act.name)
     
+    # ManeuverGroup要素は1つ以上必須（XSD準拠）
+    if not act.maneuver_groups:
+        raise ValueError(f"Act '{act.name}' must have at least one ManeuverGroup element")
+    
     for mg in act.maneuver_groups:
         write_maneuver_group(elem, mg)
     
-    if act.start_trigger is not None:
-        write_start_trigger(elem, act.start_trigger)
+    # StartTrigger要素は必須（XSD準拠）
+    if act.start_trigger is None:
+        raise ValueError(f"Act '{act.name}' must have a StartTrigger element")
+    write_start_trigger(elem, act.start_trigger)
     
     if act.stop_trigger is not None:
         write_start_trigger(elem, act.stop_trigger, tag_name="StopTrigger")
@@ -1107,14 +1162,18 @@ def write_storyboard(parent: ET.Element, storyboard: Storyboard):
     """StoryboardをXMLに書き込み"""
     elem = _create_element("Storyboard", parent)
     
-    if storyboard.init is not None:
-        write_init(elem, storyboard.init)
+    # Init要素は必須（XSD準拠）
+    if storyboard.init is None:
+        raise ValueError("Storyboard must have an Init element")
+    write_init(elem, storyboard.init)
     
     for story in storyboard.stories:
         write_story(elem, story)
     
-    if storyboard.stop_trigger is not None:
-        write_start_trigger(elem, storyboard.stop_trigger, tag_name="StopTrigger")
+    # StopTrigger要素は必須（XSD準拠）
+    if storyboard.stop_trigger is None:
+        raise ValueError("Storyboard must have a StopTrigger element")
+    write_start_trigger(elem, storyboard.stop_trigger, tag_name="StopTrigger")
 
 
 def write_center(parent: ET.Element, center: Center):

@@ -30,6 +30,14 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
     
     if scenario.storyboard:
         # Storyboardの検証
+        # Init要素は必須（XSD準拠）
+        if scenario.storyboard.init is None:
+            errors.append(ValidationError("Storyboard must have an Init element", "OpenSCENARIO/Storyboard"))
+        
+        # StopTrigger要素は必須（XSD準拠）
+        if scenario.storyboard.stop_trigger is None:
+            errors.append(ValidationError("Storyboard must have a StopTrigger element", "OpenSCENARIO/Storyboard"))
+        
         if not scenario.storyboard.stories:
             errors.append(ValidationError("At least one Story is required", "OpenSCENARIO/Storyboard"))
         
@@ -62,6 +70,15 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                     errors.append(
                         ValidationError(
                             f"Act '{act.name}' must have at least one ManeuverGroup",
+                            f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']"
+                        )
+                    )
+                
+                # StartTrigger要素は必須（XSD準拠）
+                if act.start_trigger is None:
+                    errors.append(
+                        ValidationError(
+                            f"Act '{act.name}' must have a StartTrigger element",
                             f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']"
                         )
                     )
@@ -130,6 +147,15 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                     )
                                 )
                             
+                            # priority属性は必須（XSD準拠）
+                            if event.priority is None:
+                                errors.append(
+                                    ValidationError(
+                                        f"Event '{event.name}' must have a priority attribute",
+                                        f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']"
+                                    )
+                                )
+                            
                             if event.start_trigger is None or not event.start_trigger.condition_groups:
                                 errors.append(
                                     ValidationError(
@@ -155,6 +181,17 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                                 )
                                             )
     
+    # ParameterDeclarationのvalue属性チェック（グローバルレベル）
+    if scenario.parameter_declarations:
+        for param in scenario.parameter_declarations.parameters:
+            if not param.value:
+                errors.append(
+                    ValidationError(
+                        f"ParameterDeclaration '{param.name}' must have a value attribute",
+                        f"OpenSCENARIO/ParameterDeclarations/ParameterDeclaration[@name='{param.name}']"
+                    )
+                )
+    
     # Entity参照の検証（パラメータ参照を考慮）
     if scenario.entities and scenario.storyboard:
         entity_names = {obj.name for obj in scenario.entities.scenario_objects}
@@ -168,6 +205,15 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
             # Storyレベルのパラメータ名を取得
             story_param_names = set()
             if story.parameter_declarations:
+                # ParameterDeclarationのvalue属性チェック（Storyレベル）
+                for param in story.parameter_declarations.parameters:
+                    if not param.value:
+                        errors.append(
+                            ValidationError(
+                                f"ParameterDeclaration '{param.name}' in Story '{story.name}' must have a value attribute",
+                                f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/ParameterDeclarations/ParameterDeclaration[@name='{param.name}']"
+                            )
+                        )
                 story_param_names = {param.name for param in story.parameter_declarations.parameters}
             
             for act in story.acts:
@@ -229,6 +275,17 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                             f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Vehicle[@name='{obj.vehicle.name}']"
                         )
                     )
+                
+                # Vehicle内のParameterDeclarationのvalue属性チェック
+                if obj.vehicle.parameter_declarations:
+                    for param in obj.vehicle.parameter_declarations.parameters:
+                        if not param.value:
+                            errors.append(
+                                ValidationError(
+                                    f"ParameterDeclaration '{param.name}' in Vehicle '{obj.vehicle.name}' must have a value attribute",
+                                    f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Vehicle[@name='{obj.vehicle.name}']/ParameterDeclarations/ParameterDeclaration[@name='{param.name}']"
+                                )
+                            )
             
             if obj.pedestrian:
                 # Pedestrianの必須要素チェック（XSDではBoundingBox, Propertiesが必須）
@@ -247,6 +304,17 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                             f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Pedestrian[@name='{obj.pedestrian.name}']"
                         )
                     )
+                
+                # Pedestrian内のParameterDeclarationのvalue属性チェック
+                if obj.pedestrian.parameter_declarations:
+                    for param in obj.pedestrian.parameter_declarations.parameters:
+                        if not param.value:
+                            errors.append(
+                                ValidationError(
+                                    f"ParameterDeclaration '{param.name}' in Pedestrian '{obj.pedestrian.name}' must have a value attribute",
+                                    f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Pedestrian[@name='{obj.pedestrian.name}']/ParameterDeclarations/ParameterDeclaration[@name='{param.name}']"
+                                )
+                            )
     
     # Route要素の検証
     if scenario.storyboard:
@@ -259,7 +327,15 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                 if action.private_action and action.private_action.routing_action:
                                     if action.private_action.routing_action.assign_route_action:
                                         assign_route = action.private_action.routing_action.assign_route_action
-                                        if assign_route.route:
+                                        # RouteまたはCatalogReferenceのいずれかが必須（XSD準拠）
+                                        if assign_route.route is None and assign_route.route_ref is None:
+                                            errors.append(
+                                                ValidationError(
+                                                    f"AssignRouteAction in Action '{action.name}' must have either Route or CatalogReference element",
+                                                    f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/AssignRouteAction"
+                                                )
+                                            )
+                                        elif assign_route.route:
                                             # RouteのWaypointは2つ以上必要
                                             if len(assign_route.route.waypoints) < 2:
                                                 errors.append(
