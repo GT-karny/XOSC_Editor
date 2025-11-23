@@ -3,91 +3,121 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_x4vecn2q\scenario.xosc
-[2025-11-23 14:43:17]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_x4vecn2q\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_0kugkacu\scenario.xosc
+[2025-11-23 15:45:03]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_0kugkacu\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 2365902294
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_x4vecn2q/scenario.xosc (v1.3)
+[] [info] Generated seed 3330396565
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_0kugkacu/scenario.xosc (v1.1)
 [] [info] 0 variables
-[] [warn] No OpenDRIVE file specified, continue without
+[] [error] Unsupported geo reference attr: +no_defs
+[] [error] Unsupported object type: rail-pole - interpret as NONE
+[] [error] Unsupported object type: rail-pole - interpret as NONE
+[] [error] Unsupported object type: guide-post - interpret as NONE
+[] [error] Unsupported object type: guide-post - interpret as NONE
+[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/e6mini.xodr
 [] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
-[] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
-[] [info] Expr ${$X0 - $TrajRadius} = 1.7 - 12.0 = -10.3000000000
-[] [info] Expr ${$Y0 + $TrajRadius + 4.7} = 13.5 + 12.0 + 4.7 = 30.2000000000
-[] [warn] Info: "overwrite" priority deprecated in v1.2. Use "override" instead. Accepting it anyway.
-[] [info] Expr ${-$Speed} = -4.0 = -4.0000000000
-[] [info] Expr ${-1.0/$TrajRadius} = -1.0/12.0 = -0.0833333333
-[] [info] Expr ${0.25 * 2.0 * 3.141592 * $TrajRadius} = 0.25 * 2.0 * 3.141592 * 12.0 = 18.8495520000
-[] [info] Adding clothoid(x=0.00 y=0.00 h=0.00 curv=-0.08 curvDot=0.00 len=18.85 startTime=0.00 stopTime=0.00)
-[] [warn] Info: "overwrite" priority deprecated in v1.2. Use "override" instead. Accepting it anyway.
-[] [warn] Info: "overwrite" priority deprecated in v1.2. Use "override" instead. Accepting it anyway.
-[] [info] Expr ${-1.0/$TrajRadius} = -1.0/12.0 = -0.0833333333
-[] [info] Adding clothoid(x=0.00 y=0.00 h=0.00 curv=-0.08 curvDot=0.00 len=25.00 startTime=0.00 stopTime=0.00)
-[] [info] 4 parameters:
-[] [info]    Speed = 4.0
-[] [info]    TrajRadius = 12.0
-[] [info]    Y0 = 13.5
-[] [info]    X0 = 1.7
+[] [info] Expr ${$EgoSpeed / 3.6} = 108 / 3.6 = 30.0000000000
+[] [info] Expr ${BrakeCondition_HWT + _ + $HeadwayTime_Brake} = BrakeCondition_HWT + _ + 0.7 = BrakeCondition_HWT_0.7
+[] [info] 7 parameters:
+[] [info]    TargetSpeedFactor = 1.2
+[] [info]    EgoSpeed = 108
+[] [info]    HeadwayTime_Brake = 0.7
+[] [info]    HeadwayTime_LaneChange = 0.4
+[] [info]    EgoStartS = 50
+[] [info]    TargetVehicle = car_red
+[] [info]    HostVehicle = car_white
 [0.000] [info] Window created at 60,60 with size 800,400
-[0.000] [info] Loaded scenegraph: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/models/parking_lot.osgb
-[0.000] [info] Adjusted Trailer bounding box to model car_trailer.osgb - xyz: 0.87, 0.00, 0.61 lwh: 4.94, 2.06, 1.22
-[0.000] [info] Init Trailer TeleportAction initState -> startTransition -> runningState
+[0.000] [info] Loaded scenegraph: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/models/e6mini.osgb
+[0.000] [warn] Object ../models/railing-pole.osgb missing length, set to bounding box length 0.10
+[0.000] [warn] Object ../models/railing-pole.osgb missing width, set to bounding box width 0.10
+[0.000] [warn] Object ../models/railing-pole.osgb missing height, set to bounding box height 1.00
+[0.000] [warn] Object ../models/railing-pole.osgb missing length, set to bounding box length 0.10
+[0.000] [warn] Object ../models/railing-pole.osgb missing width, set to bounding box width 0.10
+[0.000] [warn] Object ../models/railing-pole.osgb missing height, set to bounding box height 1.00
+[0.000] [warn] Object ../models/railing.osgb missing length, set to bounding box length 4.00
+[0.000] [warn] Object ../models/railing.osgb missing width, set to bounding box width 0.10
+[0.000] [warn] Object ../models/railing.osgb missing height, set to bounding box height 0.20
+[0.000] [warn] Object ../models/railing.osgb missing length, set to bounding box length 4.00
+[0.000] [warn] Object ../models/railing.osgb missing width, set to bounding box width 0.10
+[0.000] [warn] Object ../models/railing.osgb missing height, set to bounding box height 0.20
+[0.000] [warn] Object ../models/guide-post.osgb missing length, set to bounding box length 0.08
+[0.000] [warn] Object ../models/guide-post.osgb missing width, set to bounding box width 0.13
+[0.000] [warn] Object ../models/guide-post.osgb missing height, set to bounding box height 1.25
+[0.000] [warn] Object ../models/guide-post.osgb missing length, set to bounding box length 0.08
+[0.000] [warn] Object ../models/guide-post.osgb missing width, set to bounding box width 0.13
+[0.000] [warn] Object ../models/guide-post.osgb missing height, set to bounding box height 1.25
+[0.000] [info] Adjusted OverTaker bounding box to model car_red.osgb - xyz: 1.46, 0.00, 0.77 lwh: 5.04, 2.04, 1.49
+[0.000] [info] Init Ego TeleportAction initState -> startTransition -> runningState
 [0.000] [info] Starting teleport Action
-[0.000] [info] Trailer New position:
-[0.000] [info] Pos(1.70, 13.50, 0.00) Rot(1.57, 0.00, 0.00) roadId 4294967295 laneId 0 s 0.00 offset 0.00 t 0.00
-[0.000] [info] Init Car TeleportAction initState -> startTransition -> runningState
+[0.000] [info] Ego New position:
+[0.000] [info] Pos(8.17, 49.97, -0.04) Rot(1.57, 0.00, 0.00) roadId 0 laneId -3 s 50.00 offset 0.00 t -8.00
+[0.000] [info] Init Ego LongitudinalAction initState -> startTransition -> runningState
+[0.000] [info] Init OverTaker TeleportAction initState -> startTransition -> runningState
 [0.000] [info] Starting teleport Action
-[0.000] [info] Car New position:
-[0.000] [info] Pos(-10.30, 30.20, 0.00) Rot(3.14, 0.00, 0.00) roadId 4294967295 laneId 0 s 0.00 offset 0.00 t 0.00
+[0.000] [info] OverTaker New position:
+[0.000] [info] Pos(4.51, 24.98, -0.01) Rot(1.57, 0.00, 0.00) roadId 0 laneId -2 s 25.00 offset 0.00 t -4.42
 [0.000] [info] storyBoard initState -> startTransition -> runningState
-[0.000] [info] TrailerStory initState -> startTransition -> runningState
-[0.000] [info] TrailerAct initState -> initToStandbyTransition -> standbyState
-[0.000] [info] Init Trailer TeleportAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car TeleportAction runningState -> endTransition -> completeState
-[2.002] [info] StartTrigger: true, delay: 0.00, 2.0022 >= 2.0000, edge: none
-[2.002] [info] Trigger /------------------------------------------------
-[2.002] [info] Group 0:
-[2.002] [info] StartTrigger: true
-[2.002] [info] Trigger  ------------------------------------------------/
-[2.002] [info] TrailerAct standbyState -> startTransition -> runningState
-[2.002] [info] DummyManueverGroup initState -> startTransition -> runningState
-[2.002] [info] ConnectManeuver initState -> startTransition -> runningState
-[2.002] [info] ReverseEvent initState -> initToStandbyTransition -> standbyState
-[2.002] [info] ConnectEvent initState -> initToStandbyTransition -> standbyState
-[2.002] [info] ForwardEvent initState -> initToStandbyTransition -> standbyState
-[2.002] [info] DisconnectEvent initState -> initToStandbyTransition -> standbyState
-[2.002] [info] ReverseTrigger: true, delay: 0.00, 2.0022 >= 1.0000, edge: none
-[2.002] [info] Trigger /------------------------------------------------
-[2.002] [info] Group 0:
-[2.002] [info] ReverseTrigger: true
-[2.002] [info] Trigger  ------------------------------------------------/
-[2.002] [info] ReverseEvent standbyState -> startTransition -> runningState
-[2.002] [info] ReverseSpeedAction initState -> startTransition -> runningState
-[2.002] [info] ReverseAction initState -> startTransition -> runningState
-[2.002] [info] ReverseSpeedAction runningState -> endTransition -> completeState
-[6.712] [info] ReverseAction runningState -> endTransition -> completeState
-[6.712] [info] ReverseEvent complete after 1 execution
-[6.712] [info] ReverseEvent runningState -> endTransition -> completeState
-[6.718] [info] ConnectTrigger: true, delay: 2.00, ReverseEvent, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
-[6.725] [info] ConnectTrigger: false, delay: 2.00, ReverseEvent, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
-[8.718] [info] Trigger /------------------------------------------------
-[8.718] [info] Group 0:
-[8.718] [info] ConnectTrigger: true
-[8.718] [info] Trigger  ------------------------------------------------/
-[8.718] [info] ConnectEvent standbyState -> startTransition -> runningState
-[8.718] [info] ConnectEvent complete after 1 execution
-[8.718] [info] ConnectEvent runningState -> endTransition -> completeState
-[8.718] [info] ForwardEvent: true, delay: 2.00, ConnectEvent, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
-[8.724] [info] ForwardEvent: false, delay: 2.00, ConnectEvent, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
-[10.725] [info] Trigger /------------------------------------------------
-[10.725] [info] Group 0:
-[10.725] [info] ForwardEvent: true
-[10.725] [info] Trigger  ------------------------------------------------/
-[10.725] [info] ForwardEvent standbyState -> startTransition -> runningState
-[10.725] [info] ForwardSpeed initState -> startTransition -> runningState
-[10.725] [info] ForwardAction initState -> startTransition -> runningState
-[10.725] [info] DisconnectEvent: true, delay: 4.00, ForwardEvent, RUNNING / START_TRANSITION == START_TRANSITION, edge: rising
-[10.725] [info] ForwardSpeed runningState -> endTransition -> completeState
-[10.732] [info] DisconnectEvent: false, delay: 4.00, ForwardEvent, RUNNING / UNDEFINED_TRANSITION == START_TRANSITION, edge: rising
-[12.338] [info] Closing
+[0.000] [info] CutInAndBrakeStory initState -> startTransition -> runningState
+[0.000] [info] CutInAndBrakeAct initState -> initToStandbyTransition -> standbyState
+[0.000] [info] Init Ego TeleportAction runningState -> endTransition -> completeState
+[0.000] [info] Init Ego LongitudinalAction runningState -> endTransition -> completeState
+[0.000] [info] Init OverTaker TeleportAction runningState -> endTransition -> completeState
+[0.001] [info] CutInActStart: true, delay: 0.00, 0.0010 > 0.0000, edge: none
+[0.001] [info] Trigger /------------------------------------------------
+[0.001] [info] Group 0:
+[0.001] [info] CutInActStart: true
+[0.001] [info] Trigger  ------------------------------------------------/
+[0.001] [info] CutInAndBrakeAct standbyState -> startTransition -> runningState
+[0.001] [info] CutInAndBrakeSequence initState -> startTransition -> runningState
+[0.001] [info] CutInManeuver initState -> startTransition -> runningState
+[0.001] [info] OverTakerStartSpeedEvent initState -> initToStandbyTransition -> standbyState
+[0.001] [info] CutInEvent initState -> initToStandbyTransition -> standbyState
+[0.001] [info] OvertakerBrakeEvent initState -> initToStandbyTransition -> standbyState
+[0.001] [info] OverTakerStartSpeedCondition: true, delay: 0.00, CutInAndBrakeAct, RUNNING / START_TRANSITION == START_TRANSITION, edge: none
+[0.001] [info] Trigger /------------------------------------------------
+[0.001] [info] Group 0:
+[0.001] [info] OverTakerStartSpeedCondition: true
+[0.001] [info] Trigger  ------------------------------------------------/
+[0.001] [info] OverTakerStartSpeedEvent standbyState -> startTransition -> runningState
+[0.001] [info] OverTakerStartSpeedAction initState -> startTransition -> runningState
+[6.180] [info] CutInStartCondition: true, delay: 0.00, HWT: 0.40 > 0.40, edge rising
+[6.180] [info] Trigger /------------------------------------------------
+[6.180] [info] Group 0:
+[6.180] [info] CutInStartCondition: true
+[6.180] [info] Triggering entity 0: Ego
+[6.180] [info] Trigger  ------------------------------------------------/
+[6.180] [info] OverTakerStartSpeedAction runningState -> endTransition -> completeState
+[6.180] [info] OverTakerStartSpeedEvent complete after 1 execution
+[6.180] [info] OverTakerStartSpeedEvent runningState -> endTransition -> completeState
+[6.180] [info] Event OverTakerStartSpeedEvent ended, overwritten by event CutInEvent
+[6.180] [info] CutInEvent standbyState -> startTransition -> runningState
+[6.180] [info] CutInAction initState -> startTransition -> runningState
+[7.686] [info] BrakeCondition_HWT_0.7: true, delay: 0.00, HWT: 0.70 > 0.70, edge rising
+[7.686] [info] Trigger /------------------------------------------------
+[7.686] [info] Group 0:
+[7.686] [info] BrakeCondition_HWT_0.7: true
+[7.686] [info] Triggering entity 0: Ego
+[7.686] [info] Trigger  ------------------------------------------------/
+[7.686] [info] Other events ongoing, OvertakerBrakeEvent will run in parallel
+[7.686] [info] OvertakerBrakeEvent standbyState -> startTransition -> runningState
+[7.686] [info] OvertakerBrakeAction initState -> startTransition -> runningState
+[9.172] [info] CutInAction runningState -> endTransition -> completeState
+[9.172] [info] CutInEvent complete after 1 execution
+[9.172] [info] CutInEvent runningState -> endTransition -> completeState
+[16.680] [info] OvertakerBrakeAction runningState -> endTransition -> completeState
+[16.680] [info] OvertakerBrakeEvent complete after 1 execution
+[16.680] [info] OvertakerBrakeEvent runningState -> endTransition -> completeState
+[16.680] [info] CutInManeuver runningState -> endTransition -> completeState
+[16.680] [info] CutInAndBrakeSequence complete after 1 execution
+[16.680] [info] CutInAndBrakeSequence runningState -> endTransition -> completeState
+[16.680] [info] CutInAndBrakeAct runningState -> endTransition -> completeState
+[16.680] [info] CutInAndBrakeStory runningState -> endTransition -> completeState
+[16.687] [info] StopCondition: true, delay: 5.00, CutInManeuver, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
+[16.694] [info] StopCondition: false, delay: 5.00, CutInManeuver, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
+[21.687] [info] Trigger /------------------------------------------------
+[21.687] [info] Group 0:
+[21.687] [info] StopCondition: true
+[21.687] [info] Trigger  ------------------------------------------------/
+[21.687] [info] storyBoard runningState -> stopTransition -> completeState
+[21.687] [info] Closing

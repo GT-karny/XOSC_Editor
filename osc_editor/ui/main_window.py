@@ -172,6 +172,9 @@ class MainWindow(QMainWindow):
         if self.scenario_tree:
             self.scenario_tree.set_scenario(scenario)
         
+        if self.properties_panel:
+            self.properties_panel.set_scenario(scenario)
+        
         # ウィンドウタイトルを更新
         file_path = self.menu_actions.current_file_path
         if file_path:

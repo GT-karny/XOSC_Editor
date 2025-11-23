@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QButtonGroup,
     QCheckBox,
+    QListWidget,
+    QAbstractItemView,
 )
 from PySide6.QtCore import Signal, Qt
 from typing import Optional
@@ -33,6 +35,13 @@ from osc_editor.core.model import (
     SimulationTimeCondition,
     Rule,
     RelativeTargetSpeed,
+    Story,
+    Act,
+    ManeuverGroup,
+    Maneuver,
+    Action,
+    Private,
+    ScenarioDefinition,
 )
 
 
@@ -45,7 +54,12 @@ class PropertiesPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._current_node = None
+        self._scenario: Optional[ScenarioDefinition] = None
         self._setup_ui()
+    
+    def set_scenario(self, scenario: Optional[ScenarioDefinition]):
+        """シナリオを設定（エンティティ一覧取得用）"""
+        self._scenario = scenario
     
     def _setup_ui(self):
         """UIのセットアップ"""
@@ -81,6 +95,18 @@ class PropertiesPanel(QWidget):
             self._build_event_form(node)
         elif isinstance(node, StartTrigger):
             self._build_start_trigger_form(node)
+        elif isinstance(node, Story):
+            self._build_story_form(node)
+        elif isinstance(node, Act):
+            self._build_act_form(node)
+        elif isinstance(node, ManeuverGroup):
+            self._build_maneuver_group_form(node)
+        elif isinstance(node, Maneuver):
+            self._build_maneuver_form(node)
+        elif isinstance(node, Action):
+            self._build_action_form(node)
+        elif isinstance(node, Private):
+            self._build_private_form(node)
         else:
             # その他のノードタイプ
             label = QLabel(f"編集未対応: {type(node).__name__}")
@@ -420,4 +446,96 @@ class PropertiesPanel(QWidget):
                     
                     group.setLayout(form)
                     self._form_layout.addRow(group)
+    
+    def _build_story_form(self, story: Story):
+        """Story用フォーム"""
+        name_edit = QLineEdit(story.name)
+        name_edit.textChanged.connect(lambda text: setattr(story, "name", text) or self.property_changed.emit())
+        self._form_layout.addRow("名前:", name_edit)
+    
+    def _build_act_form(self, act: Act):
+        """Act用フォーム"""
+        name_edit = QLineEdit(act.name)
+        name_edit.textChanged.connect(lambda text: setattr(act, "name", text) or self.property_changed.emit())
+        self._form_layout.addRow("名前:", name_edit)
+    
+    def _build_maneuver_form(self, maneuver: Maneuver):
+        """Maneuver用フォーム"""
+        name_edit = QLineEdit(maneuver.name)
+        name_edit.textChanged.connect(lambda text: setattr(maneuver, "name", text) or self.property_changed.emit())
+        self._form_layout.addRow("名前:", name_edit)
+    
+    def _build_action_form(self, action: Action):
+        """Action用フォーム"""
+        name_edit = QLineEdit(action.name)
+        name_edit.textChanged.connect(lambda text: setattr(action, "name", text) or self.property_changed.emit())
+        self._form_layout.addRow("名前:", name_edit)
+    
+    def _build_private_form(self, private: Private):
+        """Private用フォーム"""
+        entity_ref_edit = QLineEdit(private.entity_ref)
+        entity_ref_edit.textChanged.connect(lambda text: setattr(private, "entity_ref", text) or self.property_changed.emit())
+        self._form_layout.addRow("Entity Ref:", entity_ref_edit)
+    
+    def _build_maneuver_group_form(self, mg: ManeuverGroup):
+        """ManeuverGroup用フォーム"""
+        # name属性
+        name_edit = QLineEdit(mg.name)
+        name_edit.textChanged.connect(lambda text: setattr(mg, "name", text) or self.property_changed.emit())
+        self._form_layout.addRow("名前:", name_edit)
+        
+        # maximumExecutionCount属性
+        max_exec_spin = QSpinBox()
+        max_exec_spin.setRange(0, 4294967295)  # UnsignedIntの最大値
+        max_exec_spin.setValue(mg.maximum_execution_count)
+        max_exec_spin.valueChanged.connect(
+            lambda v: setattr(mg, "maximum_execution_count", v) or self.property_changed.emit()
+        )
+        self._form_layout.addRow("最大実行回数:", max_exec_spin)
+        
+        # selectTriggeringEntities属性
+        select_triggering_check = QCheckBox()
+        if mg.select_triggering_entities is not None:
+            select_triggering_check.setChecked(mg.select_triggering_entities)
+        else:
+            select_triggering_check.setChecked(False)
+        select_triggering_check.stateChanged.connect(
+            lambda state: setattr(mg, "select_triggering_entities", state == Qt.CheckState.Checked) or self.property_changed.emit()
+        )
+        self._form_layout.addRow("トリガーエンティティを選択:", select_triggering_check)
+        
+        # actors（エンティティ一覧から複数選択）
+        actors_label = QLabel("Actors:")
+        actors_list = QListWidget()
+        actors_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        
+        # シナリオ内のエンティティ一覧を取得
+        entity_names = []
+        if self._scenario and self._scenario.entities:
+            for scenario_obj in self._scenario.entities.scenario_objects:
+                entity_names.append(scenario_obj.name)
+        
+        # エンティティ名をリストに追加
+        for entity_name in sorted(entity_names):
+            actors_list.addItem(entity_name)
+        
+        # 現在選択されているactorsを設定
+        for i in range(actors_list.count()):
+            item = actors_list.item(i)
+            if item.text() in mg.actors:
+                item.setSelected(True)
+        
+        # 選択変更時にactorsリストを更新
+        def update_actors():
+            selected_actors = [actors_list.item(i).text() for i in range(actors_list.count()) if actors_list.item(i).isSelected()]
+            mg.actors = selected_actors
+            self.property_changed.emit()
+        
+        actors_list.itemSelectionChanged.connect(update_actors)
+        
+        actors_layout = QVBoxLayout()
+        actors_layout.addWidget(actors_list)
+        actors_widget = QWidget()
+        actors_widget.setLayout(actors_layout)
+        self._form_layout.addRow(actors_label, actors_widget)
 
