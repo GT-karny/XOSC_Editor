@@ -451,9 +451,49 @@ class ParameterAction:
 
 
 @dataclass
+class VariableSetAction:
+    """VariableSetAction（変数設定アクション）"""
+    value: str  # required
+
+
+@dataclass
+class VariableAddValueRule:
+    """VariableAddValueRule（変数加算値ルール）"""
+    value: Union[str, float]  # required
+
+
+@dataclass
+class VariableMultiplyByValueRule:
+    """VariableMultiplyByValueRule（変数乗算値ルール）"""
+    value: Union[str, float]  # required
+
+
+@dataclass
+class VariableModifyRule:
+    """VariableModifyRule（変数変更ルール）"""
+    add_value_rule: Optional[VariableAddValueRule] = None
+    multiply_by_value_rule: Optional[VariableMultiplyByValueRule] = None
+
+
+@dataclass
+class VariableModifyAction:
+    """VariableModifyAction（変数変更アクション）"""
+    modify_rule: Optional[VariableModifyRule] = None
+
+
+@dataclass
+class VariableAction:
+    """VariableAction（変数アクション）"""
+    variable_ref: str  # required
+    set_action: Optional[VariableSetAction] = None
+    modify_action: Optional[VariableModifyAction] = None
+
+
+@dataclass
 class GlobalAction:
     """GlobalAction（グローバルアクション）"""
     parameter_action: Optional[ParameterAction] = None
+    variable_action: Optional[VariableAction] = None
 
 
 @dataclass
@@ -955,6 +995,20 @@ class ParameterDeclarations:
 
 
 @dataclass
+class VariableDeclaration:
+    """VariableDeclaration（変数宣言）"""
+    name: str
+    variable_type: str  # ParameterTypeと同じ型を使用: boolean, dateTime, double, integer, string, unsignedInt, unsignedShort, int
+    value: str = ""
+
+
+@dataclass
+class VariableDeclarations:
+    """VariableDeclarations（変数宣言集合）"""
+    variables: List[VariableDeclaration] = field(default_factory=list)
+
+
+@dataclass
 class RoadNetwork:
     """RoadNetwork（道路ネットワーク）"""
     logic_file: Optional[str] = None  # OpenDRIVEファイルのパス
@@ -1057,6 +1111,7 @@ class ScenarioDefinition:
     """ScenarioDefinition（シナリオ定義）"""
     file_header: Optional[FileHeader] = None
     parameter_declarations: Optional[ParameterDeclarations] = None
+    variable_declarations: Optional[VariableDeclarations] = None
     catalog_locations: Optional[CatalogLocations] = None
     road_network: Optional[RoadNetwork] = None
     entities: Optional[Entities] = None

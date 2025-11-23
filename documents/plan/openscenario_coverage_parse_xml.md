@@ -321,15 +321,15 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| VariableDeclarations | ❌ | 未対応 |
-| VariableDeclaration | ❌ | 未対応 |
-| VariableAction | ❌ | 未対応 |
-| VariableSetAction | ❌ | 未対応 |
-| VariableModifyAction | ❌ | 未対応 |
-| VariableModifyRule | ❌ | 未対応 |
-| VariableAddValueRule | ❌ | 未対応 |
-| VariableMultiplyByValueRule | ❌ | 未対応 |
-| VariableCondition | ❌ | 未対応 |
+| VariableDeclarations | ✅ | 対応済み |
+| VariableDeclaration | ✅ | 対応済み |
+| VariableAction | ✅ | 対応済み |
+| VariableSetAction | ✅ | 対応済み |
+| VariableModifyAction | ✅ | 対応済み |
+| VariableModifyRule | ✅ | 対応済み |
+| VariableAddValueRule | ✅ | 対応済み |
+| VariableMultiplyByValueRule | ✅ | 対応済み |
+| VariableCondition | ✅ | 対応済み（既に実装済み） |
 
 ## 13. ParameterValueDistribution関連
 

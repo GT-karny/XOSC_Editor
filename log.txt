@@ -3,17 +3,109 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_xffgom_i\scenario.xosc
-[2025-11-23 13:52:20]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_xffgom_i\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_hvfpx1rl\scenario.xosc
+[2025-11-23 14:07:16]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_hvfpx1rl\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 985554904
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_xffgom_i/scenario.xosc (v1.1)
+[] [info] Generated seed 4010561592
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_hvfpx1rl/scenario.xosc (v1.3)
 [] [info] 0 variables
-[] [error] Unsupported geo reference attr: +no_defs
-[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/straight_500m.xodr
+[] [warn] No OpenDRIVE file specified, continue without
 [] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
-[] [error] Missing EntityObject
-[] [warn] displacement attribute missing, setting default trailingReferencedEntity
-[] [error] Failed to find object Box
-[] [error] Exception: Failed to find object: Box
+[] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
+[] [info] Expr ${$X0 - $TrajRadius} = 1.7 - 12.0 = -10.3000000000
+[] [info] Expr ${$Y0 + $TrajRadius + 4.7} = 13.5 + 12.0 + 4.7 = 30.2000000000
+[] [warn] Info: "overwrite" priority deprecated in v1.2. Use "override" instead. Accepting it anyway.
+[] [info] Expr ${-$Speed} = -4.0 = -4.0000000000
+[] [info] Expr ${-1.0/$TrajRadius} = -1.0/12.0 = -0.0833333333
+[] [info] Expr ${0.25 * 2.0 * 3.141592 * $TrajRadius} = 0.25 * 2.0 * 3.141592 * 12.0 = 18.8495520000
+[] [info] Adding clothoid(x=0.00 y=0.00 h=0.00 curv=-0.08 curvDot=0.00 len=18.85 startTime=0.00 stopTime=0.00)
+[] [warn] Info: "overwrite" priority deprecated in v1.2. Use "override" instead. Accepting it anyway.
+[] [warn] Info: "overwrite" priority deprecated in v1.2. Use "override" instead. Accepting it anyway.
+[] [info] Expr ${-1.0/$TrajRadius} = -1.0/12.0 = -0.0833333333
+[] [info] Adding clothoid(x=0.00 y=0.00 h=0.00 curv=-0.08 curvDot=0.00 len=25.00 startTime=0.00 stopTime=0.00)
+[] [info] 4 parameters:
+[] [info]    Speed = 4.0
+[] [info]    TrajRadius = 12.0
+[] [info]    Y0 = 13.5
+[] [info]    X0 = 1.7
+[0.000] [info] Window created at 60,60 with size 800,400
+[0.000] [info] Loaded scenegraph: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/models/parking_lot.osgb
+[0.000] [info] Adjusted Trailer bounding box to model car_trailer.osgb - xyz: 0.87, 0.00, 0.61 lwh: 4.94, 2.06, 1.22
+[0.000] [info] Init Trailer TeleportAction initState -> startTransition -> runningState
+[0.000] [info] Starting teleport Action
+[0.000] [info] Trailer New position:
+[0.000] [info] Pos(1.70, 13.50, 0.00) Rot(1.57, 0.00, 0.00) roadId 4294967295 laneId 0 s 0.00 offset 0.00 t 0.00
+[0.000] [info] Init Car TeleportAction initState -> startTransition -> runningState
+[0.000] [info] Starting teleport Action
+[0.000] [info] Car New position:
+[0.000] [info] Pos(-10.30, 30.20, 0.00) Rot(3.14, 0.00, 0.00) roadId 4294967295 laneId 0 s 0.00 offset 0.00 t 0.00
+[0.000] [info] storyBoard initState -> startTransition -> runningState
+[0.000] [info] TrailerStory initState -> startTransition -> runningState
+[0.000] [info] TrailerAct initState -> initToStandbyTransition -> standbyState
+[0.000] [info] Init Trailer TeleportAction runningState -> endTransition -> completeState
+[0.000] [info] Init Car TeleportAction runningState -> endTransition -> completeState
+[2.006] [info] StartTrigger: true, delay: 0.00, 2.0056 >= 2.0000, edge: none
+[2.006] [info] Trigger /------------------------------------------------
+[2.006] [info] Group 0:
+[2.006] [info] StartTrigger: true
+[2.006] [info] Trigger  ------------------------------------------------/
+[2.006] [info] TrailerAct standbyState -> startTransition -> runningState
+[2.006] [info] DummyManueverGroup initState -> startTransition -> runningState
+[2.006] [info] ConnectManeuver initState -> startTransition -> runningState
+[2.006] [info] ReverseEvent initState -> initToStandbyTransition -> standbyState
+[2.006] [info] ConnectEvent initState -> initToStandbyTransition -> standbyState
+[2.006] [info] ForwardEvent initState -> initToStandbyTransition -> standbyState
+[2.006] [info] DisconnectEvent initState -> initToStandbyTransition -> standbyState
+[2.006] [info] ReverseTrigger: true, delay: 0.00, 2.0056 >= 1.0000, edge: none
+[2.006] [info] Trigger /------------------------------------------------
+[2.006] [info] Group 0:
+[2.006] [info] ReverseTrigger: true
+[2.006] [info] Trigger  ------------------------------------------------/
+[2.006] [info] ReverseEvent standbyState -> startTransition -> runningState
+[2.006] [info] ReverseSpeedAction initState -> startTransition -> runningState
+[2.006] [info] ReverseAction initState -> startTransition -> runningState
+[2.006] [info] ReverseSpeedAction runningState -> endTransition -> completeState
+[6.715] [info] ReverseAction runningState -> endTransition -> completeState
+[6.715] [info] ReverseEvent complete after 1 execution
+[6.715] [info] ReverseEvent runningState -> endTransition -> completeState
+[6.723] [info] ConnectTrigger: true, delay: 2.00, ReverseEvent, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
+[6.728] [info] ConnectTrigger: false, delay: 2.00, ReverseEvent, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
+[8.729] [info] Trigger /------------------------------------------------
+[8.729] [info] Group 0:
+[8.729] [info] ConnectTrigger: true
+[8.729] [info] Trigger  ------------------------------------------------/
+[8.729] [info] ConnectEvent standbyState -> startTransition -> runningState
+[8.729] [info] ConnectEvent complete after 1 execution
+[8.729] [info] ConnectEvent runningState -> endTransition -> completeState
+[8.729] [info] ForwardEvent: true, delay: 2.00, ConnectEvent, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
+[8.735] [info] ForwardEvent: false, delay: 2.00, ConnectEvent, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
+[10.735] [info] Trigger /------------------------------------------------
+[10.735] [info] Group 0:
+[10.735] [info] ForwardEvent: true
+[10.735] [info] Trigger  ------------------------------------------------/
+[10.735] [info] ForwardEvent standbyState -> startTransition -> runningState
+[10.735] [info] ForwardSpeed initState -> startTransition -> runningState
+[10.735] [info] ForwardAction initState -> startTransition -> runningState
+[10.735] [info] DisconnectEvent: true, delay: 4.00, ForwardEvent, RUNNING / START_TRANSITION == START_TRANSITION, edge: rising
+[10.735] [info] ForwardSpeed runningState -> endTransition -> completeState
+[10.742] [info] DisconnectEvent: false, delay: 4.00, ForwardEvent, RUNNING / UNDEFINED_TRANSITION == START_TRANSITION, edge: rising
+[14.743] [info] Trigger /------------------------------------------------
+[14.743] [info] Group 0:
+[14.743] [info] DisconnectEvent: true
+[14.743] [info] Trigger  ------------------------------------------------/
+[14.743] [info] Other events ongoing, DisconnectEvent will run in parallel
+[14.743] [info] DisconnectEvent standbyState -> startTransition -> runningState
+[14.743] [info] DisconnectEvent complete after 1 execution
+[14.743] [info] DisconnectEvent runningState -> endTransition -> completeState
+[16.985] [info] ForwardAction runningState -> endTransition -> completeState
+[16.985] [info] ForwardEvent complete after 1 execution
+[16.985] [info] ForwardEvent runningState -> endTransition -> completeState
+[16.985] [info] ConnectManeuver runningState -> endTransition -> completeState
+[16.985] [info] DummyManueverGroup complete after 1 execution
+[16.985] [info] DummyManueverGroup runningState -> endTransition -> completeState
+[16.985] [info] TrailerAct runningState -> endTransition -> completeState
+[16.985] [info] TrailerStory runningState -> endTransition -> completeState
+[16.992] [info] DisconnectEvent: true, delay: 2.00, ForwardEvent, COMPLETE / END_TRANSITION == END_TRANSITION, edge: rising
+[16.999] [info] DisconnectEvent: false, delay: 2.00, ForwardEvent, COMPLETE / UNDEFINED_TRANSITION == END_TRANSITION, edge: rising
+[18.550] [info] Closing

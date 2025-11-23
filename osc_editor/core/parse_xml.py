@@ -7,6 +7,8 @@ from osc_editor.core.model import (
     FileHeader,
     ParameterDeclarations,
     ParameterDeclaration,
+    VariableDeclarations,
+    VariableDeclaration,
     RoadNetwork,
     CatalogLocations,
     Entities,
@@ -97,6 +99,12 @@ from osc_editor.core.model import (
     RelativeLaneRange,
     GlobalAction,
     ParameterAction,
+    VariableAction,
+    VariableSetAction,
+    VariableModifyAction,
+    VariableModifyRule,
+    VariableAddValueRule,
+    VariableMultiplyByValueRule,
     ObjectController,
     Controller,
     Properties,
@@ -248,6 +256,23 @@ def parse_parameter_declarations(element: ET.Element) -> ParameterDeclarations:
             )
         )
     return ParameterDeclarations(parameters=params)
+
+
+def parse_variable_declarations(element: ET.Element) -> VariableDeclarations:
+    """VariableDeclarationsをパース"""
+    if element is None:
+        return VariableDeclarations(variables=[])
+    ns = _detect_namespace(element)
+    variables = []
+    for var_elem in element.findall(f"./{ns}VariableDeclaration"):
+        variables.append(
+            VariableDeclaration(
+                name=var_elem.get("name", ""),
+                variable_type=var_elem.get("variableType", "double"),
+                value=var_elem.get("value", ""),
+            )
+        )
+    return VariableDeclarations(variables=variables)
 
 
 def parse_road_network(element: ET.Element) -> RoadNetwork:
@@ -1678,6 +1703,93 @@ def parse_parameter_action(element: ET.Element) -> Optional[ParameterAction]:
     )
 
 
+def parse_variable_add_value_rule(element: ET.Element) -> Optional[VariableAddValueRule]:
+    """VariableAddValueRuleをパース"""
+    if element is None:
+        return None
+    value = _get_attr_float(element, "value", 0.0)
+    return VariableAddValueRule(value=value)
+
+
+def parse_variable_multiply_by_value_rule(element: ET.Element) -> Optional[VariableMultiplyByValueRule]:
+    """VariableMultiplyByValueRuleをパース"""
+    if element is None:
+        return None
+    value = _get_attr_float(element, "value", 0.0)
+    return VariableMultiplyByValueRule(value=value)
+
+
+def parse_variable_modify_rule(element: ET.Element) -> Optional[VariableModifyRule]:
+    """VariableModifyRuleをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    add_value_elem = element.find(f"./{ns}AddValue")
+    multiply_by_value_elem = element.find(f"./{ns}MultiplyByValue")
+    
+    add_value_rule = parse_variable_add_value_rule(add_value_elem) if add_value_elem is not None else None
+    multiply_by_value_rule = parse_variable_multiply_by_value_rule(multiply_by_value_elem) if multiply_by_value_elem is not None else None
+    
+    if add_value_rule is None and multiply_by_value_rule is None:
+        return None
+    
+    return VariableModifyRule(
+        add_value_rule=add_value_rule,
+        multiply_by_value_rule=multiply_by_value_rule
+    )
+
+
+def parse_variable_modify_action(element: ET.Element) -> Optional[VariableModifyAction]:
+    """VariableModifyActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    rule_elem = element.find(f"./{ns}Rule")
+    modify_rule = parse_variable_modify_rule(rule_elem) if rule_elem is not None else None
+    
+    if modify_rule is None:
+        return None
+    
+    return VariableModifyAction(modify_rule=modify_rule)
+
+
+def parse_variable_set_action(element: ET.Element) -> Optional[VariableSetAction]:
+    """VariableSetActionをパース"""
+    if element is None:
+        return None
+    value = _get_attr(element, "value", "")
+    if not value:
+        return None
+    return VariableSetAction(value=value)
+
+
+def parse_variable_action(element: ET.Element) -> Optional[VariableAction]:
+    """VariableActionをパース"""
+    if element is None:
+        return None
+    variable_ref = _get_attr(element, "variableRef", "")
+    if not variable_ref:
+        return None
+    
+    ns = _detect_namespace(element)
+    set_action_elem = element.find(f"./{ns}SetAction")
+    modify_action_elem = element.find(f"./{ns}ModifyAction")
+    
+    set_action = parse_variable_set_action(set_action_elem) if set_action_elem is not None else None
+    modify_action = parse_variable_modify_action(modify_action_elem) if modify_action_elem is not None else None
+    
+    if set_action is None and modify_action is None:
+        return None
+    
+    return VariableAction(
+        variable_ref=variable_ref,
+        set_action=set_action,
+        modify_action=modify_action
+    )
+
+
 def parse_global_action(element: ET.Element) -> Optional[GlobalAction]:
     """GlobalActionをパース"""
     if element is None:
@@ -1687,10 +1799,16 @@ def parse_global_action(element: ET.Element) -> Optional[GlobalAction]:
     parameter_action_elem = element.find(f"./{ns}ParameterAction")
     parameter_action = parse_parameter_action(parameter_action_elem) if parameter_action_elem is not None else None
     
-    if parameter_action is None:
+    variable_action_elem = element.find(f"./{ns}VariableAction")
+    variable_action = parse_variable_action(variable_action_elem) if variable_action_elem is not None else None
+    
+    if parameter_action is None and variable_action is None:
         return None
     
-    return GlobalAction(parameter_action=parameter_action)
+    return GlobalAction(
+        parameter_action=parameter_action,
+        variable_action=variable_action
+    )
 
 
 def parse_action(element: ET.Element) -> Optional[Action]:
@@ -2810,6 +2928,9 @@ def parse_xml(file_path: str) -> ScenarioDefinition:
     param_decls_elem = root.find(f"./{local_osc_ns}ParameterDeclarations")
     param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
     
+    variable_decls_elem = root.find(f"./{local_osc_ns}VariableDeclarations")
+    variable_decls = parse_variable_declarations(variable_decls_elem) if variable_decls_elem is not None else None
+    
     catalog_locs_elem = root.find(f"./{local_osc_ns}CatalogLocations")
     catalog_locs = parse_catalog_locations(catalog_locs_elem) if catalog_locs_elem is not None else None
     
@@ -2828,6 +2949,7 @@ def parse_xml(file_path: str) -> ScenarioDefinition:
     return ScenarioDefinition(
         file_header=file_header,
         parameter_declarations=param_decls,
+        variable_declarations=variable_decls,
         catalog_locations=catalog_locs,
         road_network=road_network,
         entities=entities,

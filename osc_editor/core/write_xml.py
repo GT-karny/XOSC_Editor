@@ -7,6 +7,8 @@ from osc_editor.core.model import (
     FileHeader,
     ParameterDeclarations,
     ParameterDeclaration,
+    VariableDeclarations,
+    VariableDeclaration,
     RoadNetwork,
     CatalogLocations,
     Entities,
@@ -104,6 +106,12 @@ from osc_editor.core.model import (
     RelativeLaneRange,
     GlobalAction,
     ParameterAction,
+    VariableAction,
+    VariableSetAction,
+    VariableModifyAction,
+    VariableModifyRule,
+    VariableAddValueRule,
+    VariableMultiplyByValueRule,
     ObjectController,
     Controller,
     Properties,
@@ -199,6 +207,21 @@ def write_parameter_declarations(parent: ET.Element, param_decls: ParameterDecla
             if not param.value:
                 raise ValueError(f"ParameterDeclaration '{param.name}' must have a value attribute")
             param_elem.set("value", param.value)
+
+
+def write_variable_declarations(parent: ET.Element, variable_decls: VariableDeclarations):
+    """VariableDeclarationsをXMLに書き込み"""
+    # 空の場合でも要素を作成（元ファイルとの互換性のため）
+    elem = _create_element("VariableDeclarations", parent)
+    if variable_decls.variables:
+        for var in variable_decls.variables:
+            var_elem = _create_element("VariableDeclaration", elem)
+            var_elem.set("name", var.name)
+            var_elem.set("variableType", var.variable_type)
+            # value属性は必須（XSD準拠）
+            if not var.value:
+                raise ValueError(f"VariableDeclaration '{var.name}' must have a value attribute")
+            var_elem.set("value", var.value)
 
 
 def write_road_network(parent: ET.Element, road_network: RoadNetwork):
@@ -1200,12 +1223,60 @@ def write_parameter_action(parent: ET.Element, parameter_action: ParameterAction
     set_action_elem.set("value", str(parameter_action.set_action_value))
 
 
+def write_variable_add_value_rule(parent: ET.Element, add_value_rule: VariableAddValueRule):
+    """VariableAddValueRuleをXMLに書き込み"""
+    elem = _create_element("AddValue", parent)
+    elem.set("value", str(add_value_rule.value))
+
+
+def write_variable_multiply_by_value_rule(parent: ET.Element, multiply_by_value_rule: VariableMultiplyByValueRule):
+    """VariableMultiplyByValueRuleをXMLに書き込み"""
+    elem = _create_element("MultiplyByValue", parent)
+    elem.set("value", str(multiply_by_value_rule.value))
+
+
+def write_variable_modify_rule(parent: ET.Element, modify_rule: VariableModifyRule):
+    """VariableModifyRuleをXMLに書き込み"""
+    if modify_rule.add_value_rule is not None:
+        write_variable_add_value_rule(parent, modify_rule.add_value_rule)
+    elif modify_rule.multiply_by_value_rule is not None:
+        write_variable_multiply_by_value_rule(parent, modify_rule.multiply_by_value_rule)
+
+
+def write_variable_modify_action(parent: ET.Element, modify_action: VariableModifyAction):
+    """VariableModifyActionをXMLに書き込み"""
+    elem = _create_element("ModifyAction", parent)
+    if modify_action.modify_rule is not None:
+        rule_elem = _create_element("Rule", elem)
+        write_variable_modify_rule(rule_elem, modify_action.modify_rule)
+
+
+def write_variable_set_action(parent: ET.Element, set_action: VariableSetAction):
+    """VariableSetActionをXMLに書き込み"""
+    elem = _create_element("SetAction", parent)
+    elem.set("value", set_action.value)
+
+
+def write_variable_action(parent: ET.Element, variable_action: VariableAction):
+    """VariableActionをXMLに書き込み"""
+    elem = _create_element("VariableAction", parent)
+    elem.set("variableRef", variable_action.variable_ref)
+    
+    if variable_action.set_action is not None:
+        write_variable_set_action(elem, variable_action.set_action)
+    elif variable_action.modify_action is not None:
+        write_variable_modify_action(elem, variable_action.modify_action)
+
+
 def write_global_action(parent: ET.Element, global_action: GlobalAction):
     """GlobalActionをXMLに書き込み"""
     elem = _create_element("GlobalAction", parent)
     
     if global_action.parameter_action is not None:
         write_parameter_action(elem, global_action.parameter_action)
+    
+    if global_action.variable_action is not None:
+        write_variable_action(elem, global_action.variable_action)
 
 
 def write_action(parent: ET.Element, action: Action):
@@ -1948,6 +2019,9 @@ def write_xml(scenario: ScenarioDefinition, file_path: str, pretty_print: bool =
     
     if scenario.parameter_declarations is not None:
         write_parameter_declarations(root, scenario.parameter_declarations)
+    
+    if scenario.variable_declarations is not None:
+        write_variable_declarations(root, scenario.variable_declarations)
     
     if scenario.catalog_locations is not None:
         write_catalog_locations(root, scenario.catalog_locations)
