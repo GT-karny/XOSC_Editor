@@ -39,7 +39,7 @@
 | ParameterAssignment | ✅ | ParameterAssignments内のParameterAssignmentに対応 |
 | RoadNetwork | ⚠️ | LogicFile, SceneGraphFileのみ対応。TrafficSignals, UsedAreaは未対応 |
 | Entities | ✅ | ScenarioObjectのリストに対応 |
-| ScenarioObject | ✅ | Vehicle, Pedestrian, CatalogReference, ObjectControllerに対応 |
+| ScenarioObject | ✅ | Vehicle, Pedestrian, MiscObject, CatalogReference, ObjectControllerに対応 |
 | Storyboard | ✅ | Init, Story, StopTriggerに対応 |
 | Init | ✅ | Actions内のPrivate要素に対応 |
 | InitActions | ✅ | Private要素のリストに対応 |
@@ -207,7 +207,9 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| MiscObject | ❌ | 未対応 |
+| MiscObject | ✅ | name, miscObjectCategory（必須）, mass（必須）, model3d属性、ParameterDeclarations, BoundingBox, Propertiesに対応 |
+| BoundingBox | ✅ | MiscObject内のBoundingBoxに対応（Center, Dimensions） |
+| Properties | ✅ | Propertyのリストに対応 |
 
 ### 5.4 Controller
 
@@ -410,6 +412,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 14:34: MiscObjectの実装完了（name, miscObjectCategory, mass, model3d属性、ParameterDeclarations, BoundingBox, Propertiesに対応）
 - 2025-11-23 14:24: Action関連補助要素の実装完了（AbsoluteTargetLaneのString型対応、RelativeTargetLaneOffset、FinalSpeed内のSteadyState対応：TargetDistanceSteadyState/TargetTimeSteadyState）
 - 2025-11-23 14:00: PrivateAction関連の実装完了（AcquirePositionAction, SpeedProfileAction, LongitudinalDistanceAction, LateralDistanceAction, ControllerAction, DynamicConstraints）
 - 2025-11-23 13:45: SpeedActionDynamicsのvalue属性パラメータ式対応修正（パラメータ式を文字列として保存できるように変更）

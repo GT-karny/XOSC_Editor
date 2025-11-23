@@ -15,6 +15,7 @@ from osc_editor.core.model import (
     ScenarioObject,
     Vehicle,
     Pedestrian,
+    MiscObject,
     CatalogReference,
     ParameterAssignment,
     ParameterAssignments,
@@ -2006,6 +2007,26 @@ def write_pedestrian(parent: ET.Element, pedestrian: Pedestrian):
         write_properties(elem, pedestrian.properties)
 
 
+def write_misc_object(parent: ET.Element, misc_object: MiscObject):
+    """MiscObjectをXMLに書き込み"""
+    elem = _create_element("MiscObject", parent)
+    elem.set("name", misc_object.name)
+    elem.set("miscObjectCategory", misc_object.misc_object_category)  # 必須
+    elem.set("mass", str(misc_object.mass))  # massは必須
+    if misc_object.model3d:
+        elem.set("model3d", misc_object.model3d)
+    
+    if misc_object.parameter_declarations:
+        write_parameter_declarations(elem, misc_object.parameter_declarations)
+    
+    if misc_object.bounding_box:
+        write_bounding_box(elem, misc_object.bounding_box)
+    
+    # Propertiesは必須要素（XSDでは必須だが、空でもOK）
+    if misc_object.properties is not None:
+        write_properties(elem, misc_object.properties)
+
+
 def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
     """ScenarioObjectをXMLに書き込み"""
     elem = _create_element("ScenarioObject", parent)
@@ -2017,6 +2038,8 @@ def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):
         write_vehicle(elem, scenario_object.vehicle)
     elif scenario_object.pedestrian is not None:
         write_pedestrian(elem, scenario_object.pedestrian)
+    elif scenario_object.misc_object is not None:
+        write_misc_object(elem, scenario_object.misc_object)
     
     if scenario_object.object_controller is not None:
         write_object_controller(elem, scenario_object.object_controller)

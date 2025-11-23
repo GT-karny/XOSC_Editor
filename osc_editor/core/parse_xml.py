@@ -15,6 +15,7 @@ from osc_editor.core.model import (
     ScenarioObject,
     Vehicle,
     Pedestrian,
+    MiscObject,
     CatalogReference,
     ParameterAssignment,
     ParameterAssignments,
@@ -2872,6 +2873,49 @@ def parse_pedestrian(element: ET.Element) -> Optional[Pedestrian]:
     )
 
 
+def parse_misc_object(element: ET.Element) -> Optional[MiscObject]:
+    """MiscObjectをパース"""
+    if element is None:
+        return None
+    name = _get_attr(element, "name", "")
+    if not name:
+        return None
+    
+    misc_object_category = _get_attr(element, "miscObjectCategory", "")
+    if not misc_object_category:
+        return None  # miscObjectCategoryは必須属性
+    
+    mass_attr = element.get("mass")
+    if mass_attr is None:
+        return None  # massは必須属性
+    try:
+        mass = float(mass_attr)
+    except (ValueError, TypeError):
+        mass = mass_attr  # パラメータ参照の場合は文字列として保持
+    
+    model3d = _get_attr(element, "model3d", None)
+    
+    ns = _detect_namespace(element)
+    param_decls_elem = element.find(f"./{ns}ParameterDeclarations")
+    param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
+    
+    bounding_box_elem = element.find(f"./{ns}BoundingBox")
+    bounding_box = parse_bounding_box(bounding_box_elem) if bounding_box_elem is not None else None
+    
+    properties_elem = element.find(f"./{ns}Properties")
+    properties = parse_properties(properties_elem) if properties_elem is not None else None
+    
+    return MiscObject(
+        name=name,
+        misc_object_category=misc_object_category,
+        mass=mass,
+        model3d=model3d,
+        parameter_declarations=param_decls,
+        bounding_box=bounding_box,
+        properties=properties,
+    )
+
+
 def parse_properties(element: ET.Element) -> Optional[Properties]:
     """Propertiesをパース"""
     if element is None:
@@ -2936,6 +2980,9 @@ def parse_scenario_object(element: ET.Element) -> ScenarioObject:
     pedestrian_elem = element.find(f"./{ns}Pedestrian")
     pedestrian = parse_pedestrian(pedestrian_elem) if pedestrian_elem is not None else None
     
+    misc_object_elem = element.find(f"./{ns}MiscObject")
+    misc_object = parse_misc_object(misc_object_elem) if misc_object_elem is not None else None
+    
     catalog_ref_elem = element.find(f"./{ns}CatalogReference")
     catalog_reference = parse_catalog_reference(catalog_ref_elem) if catalog_ref_elem is not None else None
     
@@ -2946,6 +2993,7 @@ def parse_scenario_object(element: ET.Element) -> ScenarioObject:
         name=name,
         vehicle=vehicle,
         pedestrian=pedestrian,
+        misc_object=misc_object,
         catalog_reference=catalog_reference,
         object_controller=object_controller
     )

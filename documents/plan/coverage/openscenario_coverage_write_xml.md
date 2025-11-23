@@ -43,7 +43,7 @@
 | ParameterAssignment | ✅ | parameterRef, value属性に対応 |
 | RoadNetwork | ⚠️ | LogicFile, SceneGraphFileのみ対応。TrafficSignals, UsedAreaは未対応 |
 | Entities | ✅ | ScenarioObjectのリストに対応 |
-| ScenarioObject | ✅ | Vehicle, Pedestrian, CatalogReference, ObjectControllerに対応 |
+| ScenarioObject | ✅ | Vehicle, Pedestrian, MiscObject, CatalogReference, ObjectControllerに対応 |
 | Storyboard | ✅ | Init, Story, StopTriggerに対応 |
 
 ## 2. Storyboard関連
@@ -220,7 +220,9 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| MiscObject | ❌ | 未対応 |
+| MiscObject | ✅ | name, miscObjectCategory（必須）, mass（必須）, model3d属性、ParameterDeclarations, BoundingBox, Propertiesに対応 |
+| BoundingBox | ✅ | MiscObject内のBoundingBoxに対応（Center, Dimensions） |
+| Properties | ✅ | Propertyのリストに対応 |
 
 ### 6.4 Controller
 
@@ -325,7 +327,6 @@
 | UserDefinedAction | ❌ | CustomCommandActionに対応する必要あり |
 | GeoPosition | ❌ | 地理座標系の位置指定に対応する必要あり |
 | TrajectoryPosition | ❌ | 軌跡上の位置指定に対応する必要あり |
-| MiscObject | ❌ | その他オブジェクトの定義に対応する必要あり |
 | EntitySelection | ❌ | エンティティ選択機能に対応する必要あり |
 | LightStateAction詳細 | ❌ | LightType, LightStateの詳細実装が必要 |
 | AnimationAction詳細 | ❌ | AnimationType, AnimationStateの詳細実装が必要 |
@@ -334,6 +335,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 14:34: MiscObjectの書き出し機能実装完了（name, miscObjectCategory, mass, model3d属性、ParameterDeclarations, BoundingBox, Propertiesに対応）
 - 2025-11-23 14:24: Action関連補助要素の実装完了（AbsoluteTargetLaneのString型対応、RelativeTargetLaneOffset、FinalSpeed内のSteadyState対応：TargetDistanceSteadyState/TargetTimeSteadyState）
 - 2025-11-23 14:00: Variable関連の実装完了（VariableDeclarations, VariableDeclaration, VariableAction, VariableSetAction, VariableModifyAction, VariableModifyRule, VariableAddValueRule, VariableMultiplyByValueRule, VariableCondition）
 

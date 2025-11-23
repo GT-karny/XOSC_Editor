@@ -937,6 +937,18 @@ class Pedestrian:
 
 
 @dataclass
+class MiscObject:
+    """MiscObject（その他オブジェクト）"""
+    name: str
+    misc_object_category: str  # XSDでは必須
+    mass: Union[str, float]  # XSDでは必須
+    model3d: Optional[str] = None
+    parameter_declarations: Optional[ParameterDeclarations] = None
+    bounding_box: Optional[BoundingBox] = None
+    properties: Optional[Properties] = None
+
+
+@dataclass
 class Property:
     """Property（プロパティ）"""
     name: str
@@ -969,9 +981,9 @@ class ScenarioObject:
     name: str
     vehicle: Optional[Vehicle] = None
     pedestrian: Optional[Pedestrian] = None
+    misc_object: Optional[MiscObject] = None
     catalog_reference: Optional[CatalogReference] = None
     object_controller: Optional[ObjectController] = None
-    # 将来の拡張: misc_object
 
 
 @dataclass
