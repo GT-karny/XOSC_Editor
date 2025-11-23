@@ -20,8 +20,9 @@
 | Trajectory関連 | 8 | 0 | 1 | 9 | 89% |
 | Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
+| ParameterValueDistribution関連 | 10 | 0 | 0 | 10 | 100% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **85** | **4** | **45** | **134** | **66%** |
+| **合計** | **95** | **4** | **45** | **144** | **69%** |
 
 ## 1. 基本構造要素
 
@@ -330,7 +331,23 @@
 | VariableMultiplyByValueRule | ❌ | 未対応 |
 | VariableCondition | ❌ | 未対応 |
 
-## 13. その他の要素
+## 13. ParameterValueDistribution関連
+
+| 要素名 | 対応状況 | 備考 |
+|--------|---------|------|
+| ParameterValueDistribution | ✅ | ScenarioFile, Deterministicに対応 |
+| ScenarioFile | ✅ | filepath属性に対応 |
+| Deterministic | ✅ | DeterministicMultiParameterDistribution, DeterministicSingleParameterDistributionに対応 |
+| DeterministicMultiParameterDistribution | ✅ | ValueSetDistributionに対応 |
+| ValueSetDistribution | ✅ | ParameterValueSetのリストに対応 |
+| ParameterValueSet | ✅ | ParameterAssignmentのリストに対応 |
+| DeterministicSingleParameterDistribution | ✅ | parameterName属性、DistributionSet、DistributionRangeに対応 |
+| DistributionSet | ✅ | Elementのリスト（value属性）に対応 |
+| DistributionRange | ✅ | stepWidth属性、Range要素に対応 |
+| Range | ✅ | lowerLimit、upperLimit属性に対応 |
+| Element | ✅ | value属性に対応 |
+
+## 14. その他の要素
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
@@ -393,6 +410,7 @@
 
 ## 更新履歴
 
+- 2025-11-23 13:00: ParameterValueDistribution関連の実装完了（ScenarioFile, Deterministic, DeterministicMultiParameterDistribution, ValueSetDistribution, ParameterValueSet, DeterministicSingleParameterDistribution, DistributionSet, DistributionRange, Range, Element）
 - 2025-11-23 12:33: Condition要素の実装完了（TimeOfDayCondition, UserDefinedValueCondition, TrafficSignalCondition, TrafficSignalControllerCondition, VariableCondition, AccelerationCondition, StandStillCondition, SpeedCondition, RelativeSpeedCondition, DistanceCondition, RelativeDistanceCondition, RelativeClearanceCondition, RelativeLaneRange）
 - 2025-11-23 12:13: 最優先未実装機能の実装完了（ParameterAssignments/ParameterAssignment, TrajectoryRef, PositionOfCurrentEntity/PositionInRoadCoordinates）
 - 2025-11-23 11:59: Catalog関連の実装完了（PedestrianCatalogLocation, MiscObjectCatalogLocation, EnvironmentCatalogLocation, ManeuverCatalogLocation, TrajectoryCatalogLocation）

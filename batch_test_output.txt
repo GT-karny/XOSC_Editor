@@ -1,0 +1,609 @@
+esminiパス: thirdparty\esmini\bin\esmini.exe
+
+================================================================================
+バッチ処理開始: 40個のファイル
+入力ディレクトリ: thirdparty\esmini-demo_Windows\esmini-demo\resources\xosc
+出力ディレクトリ: out\xosc
+================================================================================
+
+
+[1/40] acc-test.xosc
+--------------------------------------------------------------------------------
+読み込み中: acc-test.xosc
+  [OK] 読み込み成功
+書き出し中: acc-test.xosc
+  [OK] 書き出し成功
+esmini実行中: acc-test.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[2/40] alks-test.xosc
+--------------------------------------------------------------------------------
+読み込み中: alks-test.xosc
+  [OK] 読み込み成功
+書き出し中: alks-test.xosc
+  [OK] 書き出し成功
+esmini実行中: alks-test.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[3/40] alks_r157_cut_in_quick_brake.xosc
+--------------------------------------------------------------------------------
+読み込み中: alks_r157_cut_in_quick_brake.xosc
+  [OK] 読み込み成功
+書き出し中: alks_r157_cut_in_quick_brake.xosc
+  [OK] 書き出し成功
+esmini実行中: alks_r157_cut_in_quick_brake.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[4/40] bicycle_fall_over.xosc
+--------------------------------------------------------------------------------
+読み込み中: bicycle_fall_over.xosc
+  [OK] 読み込み成功
+書き出し中: bicycle_fall_over.xosc
+  [OK] 書き出し成功
+esmini実行中: bicycle_fall_over.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[5/40] controller_test.xosc
+--------------------------------------------------------------------------------
+読み込み中: controller_test.xosc
+  [OK] 読み込み成功
+書き出し中: controller_test.xosc
+  [OK] 書き出し成功
+esmini実行中: controller_test.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[6/40] cut-in.xosc
+--------------------------------------------------------------------------------
+読み込み中: cut-in.xosc
+  [OK] 読み込み成功
+書き出し中: cut-in.xosc
+  [OK] 書き出し成功
+esmini実行中: cut-in.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[7/40] cut-in_interactive.xosc
+--------------------------------------------------------------------------------
+読み込み中: cut-in_interactive.xosc
+  [OK] 読み込み成功
+書き出し中: cut-in_interactive.xosc
+  [OK] 書き出し成功
+esmini実行中: cut-in_interactive.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[8/40] cut-in_parameter_set.xosc
+--------------------------------------------------------------------------------
+読み込み中: cut-in_parameter_set.xosc
+  [OK] 読み込み成功
+書き出し中: cut-in_parameter_set.xosc
+  [OK] 書き出し成功
+esmini実行中: cut-in_parameter_set.xosc
+    [WARN]       Continuous screen capture. Warning: Many jpeg files will be created
+    [WARN]       Log level debug, info, warn, error
+    [WARN]       Return number of permutations without executing the scenario (-1 = error)
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[9/40] cut-in_simple.xosc
+--------------------------------------------------------------------------------
+読み込み中: cut-in_simple.xosc
+  [OK] 読み込み成功
+書き出し中: cut-in_simple.xosc
+  [OK] 書き出し成功
+esmini実行中: cut-in_simple.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[10/40] cut-in_sumo.xosc
+--------------------------------------------------------------------------------
+読み込み中: cut-in_sumo.xosc
+  [OK] 読み込み成功
+書き出し中: cut-in_sumo.xosc
+  [OK] 書き出し成功
+esmini実行中: cut-in_sumo.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Exception: invalid stof argument
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[11/40] cut-in_visibility.xosc
+--------------------------------------------------------------------------------
+読み込み中: cut-in_visibility.xosc
+  [OK] 読み込み成功
+書き出し中: cut-in_visibility.xosc
+  [OK] 書き出し成功
+esmini実行中: cut-in_visibility.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[12/40] distance_test.xosc
+--------------------------------------------------------------------------------
+読み込み中: distance_test.xosc
+  [OK] 読み込み成功
+書き出し中: distance_test.xosc
+  [ERROR] 書き出しエラー: Act 'Act_DistTest' must have a StartTrigger element
+
+[13/40] drop-bike.xosc
+--------------------------------------------------------------------------------
+読み込み中: drop-bike.xosc
+  [OK] 読み込み成功
+書き出し中: drop-bike.xosc
+  [OK] 書き出し成功
+esmini実行中: drop-bike.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[14/40] follow_ghost.xosc
+--------------------------------------------------------------------------------
+読み込み中: follow_ghost.xosc
+  [OK] 読み込み成功
+書き出し中: follow_ghost.xosc
+  [OK] 書き出し成功
+esmini実行中: follow_ghost.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[15/40] follow_reference.xosc
+--------------------------------------------------------------------------------
+読み込み中: follow_reference.xosc
+  [OK] 読み込み成功
+書き出し中: follow_reference.xosc
+  [OK] 書き出し成功
+esmini実行中: follow_reference.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[16/40] highway_merge.xosc
+--------------------------------------------------------------------------------
+読み込み中: highway_merge.xosc
+  [OK] 読み込み成功
+書き出し中: highway_merge.xosc
+  [OK] 書き出し成功
+esmini実行中: highway_merge.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[17/40] highway_merge_advanced.xosc
+--------------------------------------------------------------------------------
+読み込み中: highway_merge_advanced.xosc
+  [OK] 読み込み成功
+書き出し中: highway_merge_advanced.xosc
+  [OK] 書き出し成功
+esmini実行中: highway_merge_advanced.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[18/40] lane-change_clothoid_based_trajectory.xosc
+--------------------------------------------------------------------------------
+読み込み中: lane-change_clothoid_based_trajectory.xosc
+  [OK] 読み込み成功
+書き出し中: lane-change_clothoid_based_trajectory.xosc
+  [OK] 書き出し成功
+esmini実行中: lane-change_clothoid_based_trajectory.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[19/40] lane_change.xosc
+--------------------------------------------------------------------------------
+読み込み中: lane_change.xosc
+  [OK] 読み込み成功
+書き出し中: lane_change.xosc
+  [OK] 書き出し成功
+esmini実行中: lane_change.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[20/40] lane_change_crest.xosc
+--------------------------------------------------------------------------------
+読み込み中: lane_change_crest.xosc
+  [OK] 読み込み成功
+書き出し中: lane_change_crest.xosc
+  [OK] 書き出し成功
+esmini実行中: lane_change_crest.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[21/40] lane_change_simple.xosc
+--------------------------------------------------------------------------------
+読み込み中: lane_change_simple.xosc
+  [OK] 読み込み成功
+書き出し中: lane_change_simple.xosc
+  [OK] 書き出し成功
+esmini実行中: lane_change_simple.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[22/40] left-hand-traffic_by_heading.xosc
+--------------------------------------------------------------------------------
+読み込み中: left-hand-traffic_by_heading.xosc
+  [OK] 読み込み成功
+書き出し中: left-hand-traffic_by_heading.xosc
+  [OK] 書き出し成功
+esmini実行中: left-hand-traffic_by_heading.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[23/40] left-hand-traffic_using_road_rule.xosc
+--------------------------------------------------------------------------------
+読み込み中: left-hand-traffic_using_road_rule.xosc
+  [OK] 読み込み成功
+書き出し中: left-hand-traffic_using_road_rule.xosc
+  [OK] 書き出し成功
+esmini実行中: left-hand-traffic_using_road_rule.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[24/40] ltap-od.xosc
+--------------------------------------------------------------------------------
+読み込み中: ltap-od.xosc
+  [OK] 読み込み成功
+書き出し中: ltap-od.xosc
+  [OK] 書き出し成功
+esmini実行中: ltap-od.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[25/40] parking_lot.xosc
+--------------------------------------------------------------------------------
+読み込み中: parking_lot.xosc
+  [OK] 読み込み成功
+書き出し中: parking_lot.xosc
+  [ERROR] 書き出しエラー: ManeuverGroup 'DummyManueverGroup' must have at least one Actor
+
+[26/40] pedestrian.xosc
+--------------------------------------------------------------------------------
+読み込み中: pedestrian.xosc
+  [OK] 読み込み成功
+書き出し中: pedestrian.xosc
+  [OK] 書き出し成功
+esmini実行中: pedestrian.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[27/40] pedestrian_collision.xosc
+--------------------------------------------------------------------------------
+読み込み中: pedestrian_collision.xosc
+  [OK] 読み込み成功
+書き出し中: pedestrian_collision.xosc
+  [OK] 書き出し成功
+esmini実行中: pedestrian_collision.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[28/40] routing-test.xosc
+--------------------------------------------------------------------------------
+読み込み中: routing-test.xosc
+  [OK] 読み込み成功
+書き出し中: routing-test.xosc
+  [OK] 書き出し成功
+esmini実行中: routing-test.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[29/40] slow-lead-vehicle.xosc
+--------------------------------------------------------------------------------
+読み込み中: slow-lead-vehicle.xosc
+  [OK] 読み込み成功
+書き出し中: slow-lead-vehicle.xosc
+  [OK] 書き出し成功
+esmini実行中: slow-lead-vehicle.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[30/40] speed-profile.xosc
+--------------------------------------------------------------------------------
+読み込み中: speed-profile.xosc
+  [OK] 読み込み成功
+書き出し中: speed-profile.xosc
+  [ERROR] 書き出しエラー: Act 'SpeedProfileAct' must have a StartTrigger element
+
+[31/40] sumo-test.xosc
+--------------------------------------------------------------------------------
+読み込み中: sumo-test.xosc
+  [OK] 読み込み成功
+書き出し中: sumo-test.xosc
+  [OK] 書き出し成功
+esmini実行中: sumo-test.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[32/40] swarm.xosc
+--------------------------------------------------------------------------------
+読み込み中: swarm.xosc
+  [OK] 読み込み成功
+書き出し中: swarm.xosc
+  [ERROR] 書き出しエラー: Act 'act' must have a StartTrigger element
+
+[33/40] synchronize.xosc
+--------------------------------------------------------------------------------
+読み込み中: synchronize.xosc
+  [OK] 読み込み成功
+書き出し中: synchronize.xosc
+  [OK] 書き出し成功
+esmini実行中: synchronize.xosc
+    [WARN] [] [error] Unsupported geo reference attr: +no_defs
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: rail-pole - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Unsupported object type: guide-post - interpret as NONE
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[34/40] synch_with_steady_state.xosc
+--------------------------------------------------------------------------------
+読み込み中: synch_with_steady_state.xosc
+  [OK] 読み込み成功
+書き出し中: synch_with_steady_state.xosc
+  [OK] 書き出し成功
+esmini実行中: synch_with_steady_state.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[35/40] trailers.xosc
+--------------------------------------------------------------------------------
+読み込み中: trailers.xosc
+  [OK] 読み込み成功
+書き出し中: trailers.xosc
+  [ERROR] 書き出しエラー: ManeuverGroup 'empty' must have at least one Actor
+
+[36/40] trailer_connect.xosc
+--------------------------------------------------------------------------------
+読み込み中: trailer_connect.xosc
+  [OK] 読み込み成功
+書き出し中: trailer_connect.xosc
+  [OK] 書き出し成功
+esmini実行中: trailer_connect.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[37/40] trajectory-test.xosc
+--------------------------------------------------------------------------------
+読み込み中: trajectory-test.xosc
+  [OK] 読み込み成功
+書き出し中: trajectory-test.xosc
+  [OK] 書き出し成功
+esmini実行中: trajectory-test.xosc
+    [WARN] [] [error] Exception: invalid stof argument
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[38/40] truck_with_rotating_axle.xosc
+--------------------------------------------------------------------------------
+読み込み中: truck_with_rotating_axle.xosc
+  [OK] 読み込み成功
+書き出し中: truck_with_rotating_axle.xosc
+  [ERROR] 書き出しエラー: ManeuverGroup 'DummyManueverGroup' must have at least one Actor
+
+[39/40] tunnels.xosc
+--------------------------------------------------------------------------------
+読み込み中: tunnels.xosc
+  [OK] 読み込み成功
+書き出し中: tunnels.xosc
+  [OK] 書き出し成功
+esmini実行中: tunnels.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+[40/40] two_plus_one_road.xosc
+--------------------------------------------------------------------------------
+読み込み中: two_plus_one_road.xosc
+  [OK] 読み込み成功
+書き出し中: two_plus_one_road.xosc
+  [OK] 書き出し成功
+esmini実行中: two_plus_one_road.xosc
+    [WARN] [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+    [WARN] [] [error] Exception: [] [error] Couldn't locate OpenSCENARIO file VehicleCatalog
+  [ERROR] esmini実行エラー (終了コード: 4294967295)
+
+================================================================================
+処理結果サマリー
+================================================================================
+総ファイル数: 40
+成功: 0
+エラー: 40
+成功率: 0.0%
+================================================================================
+
+エラー詳細:
+
+[1] acc-test.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[2] alks-test.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[3] alks_r157_cut_in_quick_brake.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[4] bicycle_fall_over.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[5] controller_test.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[6] cut-in.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[7] cut-in_interactive.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[8] cut-in_parameter_set.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[9] cut-in_simple.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[10] cut-in_sumo.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[11] cut-in_visibility.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[12] distance_test.xosc
+  書き出しエラー: ValueError: Act 'Act_DistTest' must have a StartTrigger element
+
+[13] drop-bike.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[14] follow_ghost.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[15] follow_reference.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[16] highway_merge.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[17] highway_merge_advanced.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[18] lane-change_clothoid_based_trajectory.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[19] lane_change.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[20] lane_change_crest.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[21] lane_change_simple.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[22] left-hand-traffic_by_heading.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[23] left-hand-traffic_using_road_rule.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[24] ltap-od.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[25] parking_lot.xosc
+  書き出しエラー: ValueError: ManeuverGroup 'DummyManueverGroup' must have at least one Actor
+
+[26] pedestrian.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[27] pedestrian_collision.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[28] routing-test.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[29] slow-lead-vehicle.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[30] speed-profile.xosc
+  書き出しエラー: ValueError: Act 'SpeedProfileAct' must have a StartTrigger element
+
+[31] sumo-test.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[32] swarm.xosc
+  書き出しエラー: ValueError: Act 'act' must have a StartTrigger element
+
+[33] synchronize.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[34] synch_with_steady_state.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[35] trailers.xosc
+  書き出しエラー: ValueError: ManeuverGroup 'empty' must have at least one Actor
+
+[36] trailer_connect.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[37] trajectory-test.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[38] truck_with_rotating_axle.xosc
+  書き出しエラー: ValueError: ManeuverGroup 'DummyManueverGroup' must have at least one Actor
+
+[39] tunnels.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+[40] two_plus_one_road.xosc
+  esmini実行エラー: 終了コード 4294967295
+
+エラーレポートを保存しました: out\xosc\error_report_20251123_125009.txt

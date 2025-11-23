@@ -881,6 +881,80 @@ class CatalogLocations:
 # ルート要素
 # ============================================================================
 
+# ============================================================================
+# ParameterValueDistribution関連
+# ============================================================================
+
+@dataclass
+class ScenarioFile:
+    """ScenarioFile（シナリオファイル参照）"""
+    filepath: str
+
+
+@dataclass
+class ParameterValueSet:
+    """ParameterValueSet（パラメータ値セット）"""
+    parameter_assignments: List[ParameterAssignment] = field(default_factory=list)
+
+
+@dataclass
+class ValueSetDistribution:
+    """ValueSetDistribution（値セット分布）"""
+    parameter_value_sets: List[ParameterValueSet] = field(default_factory=list)
+
+
+@dataclass
+class DeterministicMultiParameterDistribution:
+    """DeterministicMultiParameterDistribution（決定論的多パラメータ分布）"""
+    value_set_distribution: Optional[ValueSetDistribution] = None
+
+
+@dataclass
+class DistributionSet:
+    """DistributionSet（分布セット）"""
+    elements: List[dict] = field(default_factory=list)  # Element要素（value属性）
+
+
+@dataclass
+class Range:
+    """Range（範囲）"""
+    lower_limit: Union[str, float]
+    upper_limit: Union[str, float]
+
+
+@dataclass
+class DistributionRange:
+    """DistributionRange（分布範囲）"""
+    step_width: Union[str, float]
+    range: Optional[Range] = None
+
+
+@dataclass
+class DeterministicSingleParameterDistribution:
+    """DeterministicSingleParameterDistribution（決定論的単一パラメータ分布）"""
+    parameter_name: str
+    distribution_set: Optional[DistributionSet] = None
+    distribution_range: Optional[DistributionRange] = None
+
+
+@dataclass
+class Deterministic:
+    """Deterministic（決定論的分布）"""
+    deterministic_multi_parameter_distribution: Optional[DeterministicMultiParameterDistribution] = None
+    deterministic_single_parameter_distributions: List[DeterministicSingleParameterDistribution] = field(default_factory=list)
+
+
+@dataclass
+class ParameterValueDistribution:
+    """ParameterValueDistribution（パラメータ値分布）"""
+    scenario_file: Optional[ScenarioFile] = None
+    deterministic: Optional[Deterministic] = None
+
+
+# ============================================================================
+# ScenarioDefinition
+# ============================================================================
+
 @dataclass
 class ScenarioDefinition:
     """ScenarioDefinition（シナリオ定義）"""
@@ -890,5 +964,6 @@ class ScenarioDefinition:
     road_network: Optional[RoadNetwork] = None
     entities: Optional[Entities] = None
     storyboard: Optional[Storyboard] = None
+    parameter_value_distribution: Optional[ParameterValueDistribution] = None
 
 

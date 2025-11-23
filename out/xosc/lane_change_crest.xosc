@@ -1,2 +1,160 @@
 <?xml version='1.0' encoding='utf-8'?>
-<OpenSCENARIO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../Schema/OpenSCENARIO.xsd"><FileHeader revMajor="1" revMinor="0" author="esmini-team" date="2021-02-22T10:00:00" description="Critical situation at crest" /><ParameterDeclarations><ParameterDeclaration name="EgoVehicle" parameterType="string" value="car_white" /><ParameterDeclaration name="EgoStartS" parameterType="double" value="165" /><ParameterDeclaration name="TargetVehicle1" parameterType="string" value="car_blue" /><ParameterDeclaration name="TargetVehicle2" parameterType="string" value="car_red" /></ParameterDeclarations><CatalogLocations><VehicleCatalog><Directory path="../xosc/Catalogs/Vehicles" /></VehicleCatalog></CatalogLocations><RoadNetwork><LogicFile filepath="../xodr/crest-curve.xodr" /></RoadNetwork><Entities><ScenarioObject name="Ego"><CatalogReference catalogName="VehicleCatalog" entryName="$EgoVehicle" /></ScenarioObject><ScenarioObject name="Target1"><CatalogReference catalogName="VehicleCatalog" entryName="$TargetVehicle1" /></ScenarioObject><ScenarioObject name="Target2"><CatalogReference catalogName="VehicleCatalog" entryName="$TargetVehicle2" /></ScenarioObject></Entities><Storyboard><Init><Actions><Private entityRef="Ego"><PrivateAction><TeleportAction><Position><LanePosition roadId="0" laneId="-1" s="$EgoStartS" offset="0.0" /></Position></TeleportAction></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="15.0" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private><Private entityRef="Target1"><PrivateAction><TeleportAction><Position><LanePosition roadId="0" laneId="1" s="350.0" offset="0.0" /></Position></TeleportAction></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="15.0" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private><Private entityRef="Target2"><PrivateAction><TeleportAction><Position><LanePosition roadId="0" laneId="-1" s="370.0" offset="0.0"><Orientation type="relative" h="3.1415" /></LanePosition></Position></TeleportAction></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><RelativeTargetSpeed entityRef="Target1" value="1.3" speedTargetValueType="factor" continuous="true" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private></Actions></Init><Story name="Lane change story"><Act name="Lane change act"><ManeuverGroup name="Lane change" maximumExecutionCount="1"><Actors selectTriggeringEntities="false"><EntityRef entityRef="Target2" /></Actors><Maneuver name="LaneChangeManeuver"><Event name="LaneChangeEvent" priority="overwrite"><Action name="LaneChangeAction"><PrivateAction><LateralAction><LaneChangeAction><LaneChangeTarget><RelativeTargetLane value="0" entityRef="Target1" /></LaneChangeTarget><LaneChangeActionDynamics dynamicsDimension="time" dynamicsShape="cubic" value="2.0" /></LaneChangeAction></LateralAction></PrivateAction></Action><StartTrigger><ConditionGroup><Condition name="CutInStartCondition" delay="0.0" conditionEdge="rising"><ByEntityCondition><TriggeringEntities triggeringEntitiesRule="any"><EntityRef entityRef="Target1" /></TriggeringEntities><EntityCondition><TimeHeadwayCondition entityRef="Target2" value="0.25" freespace="false" coordinateSystem="entity" relativeDistanceType="longitudinal" rule="greaterThan" /></EntityCondition></ByEntityCondition></Condition></ConditionGroup></StartTrigger></Event></Maneuver></ManeuverGroup><StartTrigger><ConditionGroup><Condition name="CutInActStart" delay="0.0" conditionEdge="risingOrFalling"><ByValueCondition><SimulationTimeCondition rule="greaterThan" value="0.0" /></ByValueCondition></Condition></ConditionGroup></StartTrigger></Act></Story><StopTrigger><ConditionGroup><Condition name="StopTrigger" delay="0.0" conditionEdge="none"><ByEntityCondition><TriggeringEntities triggeringEntitiesRule="any"><EntityRef entityRef="Ego" /></TriggeringEntities><EntityCondition><ReachPositionCondition tolerance="1.0"><Position><LanePosition roadId="0" laneId="-1" s="350.0" offset="0.0" /></Position></ReachPositionCondition></EntityCondition></ByEntityCondition></Condition></ConditionGroup></StopTrigger></Storyboard></OpenSCENARIO>
+<OpenSCENARIO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../Schema/OpenSCENARIO.xsd">
+  <FileHeader revMajor="1" revMinor="0" author="esmini-team" date="2021-02-22T10:00:00" description="Critical situation at crest" />
+  <ParameterDeclarations>
+    <ParameterDeclaration name="EgoVehicle" parameterType="string" value="car_white" />
+    <ParameterDeclaration name="EgoStartS" parameterType="double" value="165" />
+    <ParameterDeclaration name="TargetVehicle1" parameterType="string" value="car_blue" />
+    <ParameterDeclaration name="TargetVehicle2" parameterType="string" value="car_red" />
+  </ParameterDeclarations>
+  <CatalogLocations>
+    <VehicleCatalog>
+      <Directory path="../xosc/Catalogs/Vehicles" />
+    </VehicleCatalog>
+  </CatalogLocations>
+  <RoadNetwork>
+    <LogicFile filepath="../xodr/crest-curve.xodr" />
+  </RoadNetwork>
+  <Entities>
+    <ScenarioObject name="Ego">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$EgoVehicle" />
+    </ScenarioObject>
+    <ScenarioObject name="Target1">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$TargetVehicle1" />
+    </ScenarioObject>
+    <ScenarioObject name="Target2">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$TargetVehicle2" />
+    </ScenarioObject>
+  </Entities>
+  <Storyboard>
+    <Init>
+      <Actions>
+        <Private entityRef="Ego">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="0" laneId="-1" s="$EgoStartS" offset="0.0" />
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="15.0" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="Target1">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="0" laneId="1" s="350.0" offset="0.0" />
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="15.0" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="Target2">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="0" laneId="-1" s="370.0" offset="0.0">
+                  <Orientation type="relative" h="3.1415" />
+                </LanePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <RelativeTargetSpeed entityRef="Target1" value="1.3" speedTargetValueType="factor" continuous="true" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+      </Actions>
+    </Init>
+    <Story name="Lane change story">
+      <Act name="Lane change act">
+        <ManeuverGroup name="Lane change" maximumExecutionCount="1">
+          <Actors selectTriggeringEntities="false">
+            <EntityRef entityRef="Target2" />
+          </Actors>
+          <Maneuver name="LaneChangeManeuver">
+            <Event name="LaneChangeEvent" priority="overwrite">
+              <Action name="LaneChangeAction">
+                <PrivateAction>
+                  <LateralAction>
+                    <LaneChangeAction>
+                      <LaneChangeTarget>
+                        <RelativeTargetLane value="0" entityRef="Target1" />
+                      </LaneChangeTarget>
+                      <LaneChangeActionDynamics dynamicsDimension="time" dynamicsShape="cubic" value="2.0" />
+                    </LaneChangeAction>
+                  </LateralAction>
+                </PrivateAction>
+              </Action>
+              <StartTrigger>
+                <ConditionGroup>
+                  <Condition name="CutInStartCondition" delay="0.0" conditionEdge="rising">
+                    <ByEntityCondition>
+                      <TriggeringEntities triggeringEntitiesRule="any">
+                        <EntityRef entityRef="Target1" />
+                      </TriggeringEntities>
+                      <EntityCondition>
+                        <TimeHeadwayCondition entityRef="Target2" value="0.25" freespace="false" coordinateSystem="entity" relativeDistanceType="longitudinal" rule="greaterThan" />
+                      </EntityCondition>
+                    </ByEntityCondition>
+                  </Condition>
+                </ConditionGroup>
+              </StartTrigger>
+            </Event>
+          </Maneuver>
+        </ManeuverGroup>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="CutInActStart" delay="0.0" conditionEdge="risingOrFalling">
+              <ByValueCondition>
+                <SimulationTimeCondition rule="greaterThan" value="0.0" />
+              </ByValueCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Act>
+    </Story>
+    <StopTrigger>
+      <ConditionGroup>
+        <Condition name="StopTrigger" delay="0.0" conditionEdge="none">
+          <ByEntityCondition>
+            <TriggeringEntities triggeringEntitiesRule="any">
+              <EntityRef entityRef="Ego" />
+            </TriggeringEntities>
+            <EntityCondition>
+              <ReachPositionCondition tolerance="1.0">
+                <Position>
+                  <LanePosition roadId="0" laneId="-1" s="350.0" offset="0.0" />
+                </Position>
+              </ReachPositionCondition>
+            </EntityCondition>
+          </ByEntityCondition>
+        </Condition>
+      </ConditionGroup>
+    </StopTrigger>
+  </Storyboard>
+</OpenSCENARIO>

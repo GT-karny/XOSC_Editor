@@ -1,2 +1,198 @@
 <?xml version='1.0' encoding='utf-8'?>
-<OpenSCENARIO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../Schema/OpenSCENARIO.xsd"><FileHeader revMajor="1" revMinor="1" author="esmini-team" date="2020-12-11T10:00:00" description="Synchronize with SteadyState provocing critical situation incl car and bike" /><ParameterDeclarations><ParameterDeclaration name="HostVehicle" parameterType="string" value="car_white" /><ParameterDeclaration name="HostStartS" parameterType="string" value="0" /><ParameterDeclaration name="HostSpeed" parameterType="double" value="10" /><ParameterDeclaration name="TargetVehicle" parameterType="string" value="bicycle" /><ParameterDeclaration name="TTC" parameterType="double" value="10" /><ParameterDeclaration name="TargetStartS" parameterType="double" value="50" /><ParameterDeclaration name="TargetFinalSpeed" parameterType="double" value="5" /></ParameterDeclarations><CatalogLocations><VehicleCatalog><Directory path="../xosc/Catalogs/Vehicles" /></VehicleCatalog><RouteCatalog><Directory path="../xosc/Catalogs/Routes" /></RouteCatalog></CatalogLocations><RoadNetwork><LogicFile filepath="../xodr/multi_intersections.xodr" /><SceneGraphFile filepath="../models/multi_intersections.osgb" /></RoadNetwork><Entities><ScenarioObject name="Ego"><CatalogReference catalogName="VehicleCatalog" entryName="$HostVehicle" /></ScenarioObject><ScenarioObject name="Target"><CatalogReference catalogName="VehicleCatalog" entryName="$TargetVehicle" /></ScenarioObject></Entities><Storyboard><Init><Actions><Private entityRef="Ego"><PrivateAction><RoutingAction><AssignRouteAction><CatalogReference catalogName="RoutesAtMultiIntersections" entryName="HostStraightRoute" /></AssignRouteAction></RoutingAction></PrivateAction><PrivateAction><TeleportAction><Position><RoutePosition><RouteRef><CatalogReference catalogName="RoutesAtMultiIntersections" entryName="HostStraightRoute" /></RouteRef><InRoutePosition><FromLaneCoordinates pathS="$HostStartS" laneId="1" /></InRoutePosition></RoutePosition></Position></TeleportAction></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="$HostSpeed" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private><Private entityRef="Target"><PrivateAction><RoutingAction><AssignRouteAction><CatalogReference catalogName="RoutesAtMultiIntersections" entryName="TargetStraightLeftToRight" /></AssignRouteAction></RoutingAction></PrivateAction><PrivateAction><TeleportAction><Position><RoutePosition><RouteRef><CatalogReference catalogName="RoutesAtMultiIntersections" entryName="TargetStraightLeftToRight" /></RouteRef><InRoutePosition><FromLaneCoordinates pathS="$TargetStartS" laneId="1" laneOffset="-1.0" /></InRoutePosition></RoutePosition></Position></TeleportAction></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="0.0" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private></Actions></Init><Story name="Story"><Act name="TargetAct"><ManeuverGroup name="ManeuverGroup" maximumExecutionCount="1"><Actors selectTriggeringEntities="false"><EntityRef entityRef="Target" /></Actors><Maneuver name="Maneuver"><Event name="SetTargetSpeedEvent" priority="overwrite"><Action name="SetTargetSpeedAction"><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="$TargetFinalSpeed" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Action><StartTrigger><ConditionGroup><Condition name="SyncConditionTarget" delay="0.0" conditionEdge="none"><ByEntityCondition><TriggeringEntities triggeringEntitiesRule="any"><EntityRef entityRef="Ego" /></TriggeringEntities><EntityCondition><TimeToCollisionCondition value="$TTC" freespace="true" coordinateSystem="entity" relativeDistanceType="longitudinal" rule="lessThan" /></EntityCondition></ByEntityCondition></Condition></ConditionGroup></StartTrigger></Event><Event name="SyncEvent" priority="overwrite"><Action name="SyncActionTarget"><PrivateAction><SynchronizeAction masterEntityRef="Ego"><TargetPositionMaster><LanePosition roadId="240" laneId="-1" s="6.0" offset="1.5" /></TargetPositionMaster><TargetPosition><LanePosition roadId="236" laneId="-1" s="12.5" offset="1.5" /></TargetPosition><FinalSpeed><AbsoluteSpeed value="$TargetFinalSpeed" /></FinalSpeed></SynchronizeAction></PrivateAction></Action><StartTrigger><ConditionGroup><Condition name="SyncConditionTarget" delay="0.0" conditionEdge="none"><ByValueCondition><StoryboardElementStateCondition storyboardElementType="event" storyboardElementRef="SetTargetSpeedEvent" state="endTransition" /></ByValueCondition></Condition></ConditionGroup></StartTrigger></Event></Maneuver></ManeuverGroup><StartTrigger><ConditionGroup><Condition name="LtapActStartConditionTarget" delay="0.0" conditionEdge="rising"><ByValueCondition><SimulationTimeCondition rule="greaterThan" value="0.0" /></ByValueCondition></Condition></ConditionGroup></StartTrigger></Act></Story><StopTrigger><ConditionGroup><Condition name="QuitCondition" delay="0.0" conditionEdge="rising"><ByEntityCondition><TriggeringEntities triggeringEntitiesRule="any"><EntityRef entityRef="Ego" /></TriggeringEntities><EntityCondition><ReachPositionCondition tolerance="5.0"><Position><LanePosition roadId="235" laneId="-1" s="30.0" offset="0.0" /></Position></ReachPositionCondition></EntityCondition></ByEntityCondition></Condition></ConditionGroup></StopTrigger></Storyboard></OpenSCENARIO>
+<OpenSCENARIO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../Schema/OpenSCENARIO.xsd">
+  <FileHeader revMajor="1" revMinor="1" author="esmini-team" date="2020-12-11T10:00:00" description="Synchronize with SteadyState provocing critical situation incl car and bike" />
+  <ParameterDeclarations>
+    <ParameterDeclaration name="HostVehicle" parameterType="string" value="car_white" />
+    <ParameterDeclaration name="HostStartS" parameterType="string" value="0" />
+    <ParameterDeclaration name="HostSpeed" parameterType="double" value="10" />
+    <ParameterDeclaration name="TargetVehicle" parameterType="string" value="bicycle" />
+    <ParameterDeclaration name="TTC" parameterType="double" value="10" />
+    <ParameterDeclaration name="TargetStartS" parameterType="double" value="50" />
+    <ParameterDeclaration name="TargetFinalSpeed" parameterType="double" value="5" />
+  </ParameterDeclarations>
+  <CatalogLocations>
+    <VehicleCatalog>
+      <Directory path="../xosc/Catalogs/Vehicles" />
+    </VehicleCatalog>
+    <RouteCatalog>
+      <Directory path="../xosc/Catalogs/Routes" />
+    </RouteCatalog>
+  </CatalogLocations>
+  <RoadNetwork>
+    <LogicFile filepath="../xodr/multi_intersections.xodr" />
+    <SceneGraphFile filepath="../models/multi_intersections.osgb" />
+  </RoadNetwork>
+  <Entities>
+    <ScenarioObject name="Ego">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$HostVehicle" />
+    </ScenarioObject>
+    <ScenarioObject name="Target">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$TargetVehicle" />
+    </ScenarioObject>
+  </Entities>
+  <Storyboard>
+    <Init>
+      <Actions>
+        <Private entityRef="Ego">
+          <PrivateAction>
+            <RoutingAction>
+              <AssignRouteAction>
+                <CatalogReference catalogName="RoutesAtMultiIntersections" entryName="HostStraightRoute" />
+              </AssignRouteAction>
+            </RoutingAction>
+          </PrivateAction>
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <RoutePosition>
+                  <RouteRef>
+                    <CatalogReference catalogName="RoutesAtMultiIntersections" entryName="HostStraightRoute" />
+                  </RouteRef>
+                  <InRoutePosition>
+                    <FromLaneCoordinates pathS="$HostStartS" laneId="1" />
+                  </InRoutePosition>
+                </RoutePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="$HostSpeed" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="Target">
+          <PrivateAction>
+            <RoutingAction>
+              <AssignRouteAction>
+                <CatalogReference catalogName="RoutesAtMultiIntersections" entryName="TargetStraightLeftToRight" />
+              </AssignRouteAction>
+            </RoutingAction>
+          </PrivateAction>
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <RoutePosition>
+                  <RouteRef>
+                    <CatalogReference catalogName="RoutesAtMultiIntersections" entryName="TargetStraightLeftToRight" />
+                  </RouteRef>
+                  <InRoutePosition>
+                    <FromLaneCoordinates pathS="$TargetStartS" laneId="1" laneOffset="-1.0" />
+                  </InRoutePosition>
+                </RoutePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="0.0" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+      </Actions>
+    </Init>
+    <Story name="Story">
+      <ParameterDeclarations />
+      <Act name="TargetAct">
+        <ManeuverGroup name="ManeuverGroup" maximumExecutionCount="1">
+          <Actors selectTriggeringEntities="false">
+            <EntityRef entityRef="Target" />
+          </Actors>
+          <Maneuver name="Maneuver">
+            <Event name="SetTargetSpeedEvent" priority="overwrite">
+              <Action name="SetTargetSpeedAction">
+                <PrivateAction>
+                  <LongitudinalAction>
+                    <SpeedAction>
+                      <SpeedActionTarget>
+                        <AbsoluteTargetSpeed value="$TargetFinalSpeed" />
+                      </SpeedActionTarget>
+                      <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+                    </SpeedAction>
+                  </LongitudinalAction>
+                </PrivateAction>
+              </Action>
+              <StartTrigger>
+                <ConditionGroup>
+                  <Condition name="SyncConditionTarget" delay="0.0" conditionEdge="none">
+                    <ByEntityCondition>
+                      <TriggeringEntities triggeringEntitiesRule="any">
+                        <EntityRef entityRef="Ego" />
+                      </TriggeringEntities>
+                      <EntityCondition>
+                        <TimeToCollisionCondition value="$TTC" freespace="true" coordinateSystem="entity" relativeDistanceType="longitudinal" rule="lessThan" />
+                      </EntityCondition>
+                    </ByEntityCondition>
+                  </Condition>
+                </ConditionGroup>
+              </StartTrigger>
+            </Event>
+            <Event name="SyncEvent" priority="overwrite">
+              <Action name="SyncActionTarget">
+                <PrivateAction>
+                  <SynchronizeAction masterEntityRef="Ego">
+                    <TargetPositionMaster>
+                      <LanePosition roadId="240" laneId="-1" s="6.0" offset="1.5" />
+                    </TargetPositionMaster>
+                    <TargetPosition>
+                      <LanePosition roadId="236" laneId="-1" s="12.5" offset="1.5" />
+                    </TargetPosition>
+                    <FinalSpeed>
+                      <AbsoluteSpeed value="$TargetFinalSpeed" />
+                    </FinalSpeed>
+                  </SynchronizeAction>
+                </PrivateAction>
+              </Action>
+              <StartTrigger>
+                <ConditionGroup>
+                  <Condition name="SyncConditionTarget" delay="0.0" conditionEdge="none">
+                    <ByValueCondition>
+                      <StoryboardElementStateCondition storyboardElementType="event" storyboardElementRef="SetTargetSpeedEvent" state="endTransition" />
+                    </ByValueCondition>
+                  </Condition>
+                </ConditionGroup>
+              </StartTrigger>
+            </Event>
+          </Maneuver>
+        </ManeuverGroup>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="LtapActStartConditionTarget" delay="0.0" conditionEdge="rising">
+              <ByValueCondition>
+                <SimulationTimeCondition rule="greaterThan" value="0.0" />
+              </ByValueCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Act>
+    </Story>
+    <StopTrigger>
+      <ConditionGroup>
+        <Condition name="QuitCondition" delay="0.0" conditionEdge="rising">
+          <ByEntityCondition>
+            <TriggeringEntities triggeringEntitiesRule="any">
+              <EntityRef entityRef="Ego" />
+            </TriggeringEntities>
+            <EntityCondition>
+              <ReachPositionCondition tolerance="5.0">
+                <Position>
+                  <LanePosition roadId="235" laneId="-1" s="30.0" offset="0.0" />
+                </Position>
+              </ReachPositionCondition>
+            </EntityCondition>
+          </ByEntityCondition>
+        </Condition>
+      </ConditionGroup>
+    </StopTrigger>
+  </Storyboard>
+</OpenSCENARIO>

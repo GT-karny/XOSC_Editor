@@ -132,6 +132,35 @@ def _set_int(elem: ET.Element, tag: str, value: int):
     _set_text(elem, tag, value)
 
 
+def _indent_xml(elem: ET.Element, level: int = 0, space: str = "  "):
+    """XML要素にインデントを追加（Python 3.8対応）"""
+    # 子要素がある場合のみインデントを追加
+    if len(elem) > 0:
+        # 現在の要素のテキストを処理
+        if elem.text and not elem.text.strip():
+            elem.text = None
+        if elem.text is None:
+            elem.text = "\n" + space * (level + 1)
+        elif elem.text.strip():
+            # テキストがある場合は、その後に改行とインデントを追加
+            elem.text = elem.text.rstrip() + "\n" + space * (level + 1)
+        
+        # 各子要素を処理
+        for i, child in enumerate(elem):
+            _indent_xml(child, level + 1, space)
+            # 子要素の後に改行とインデントを追加
+            if i < len(elem) - 1:
+                child.tail = "\n" + space * (level + 1)
+            else:
+                child.tail = "\n" + space * level
+    else:
+        # 子要素がない場合、テキストがない場合は改行を追加
+        if elem.text is None or not elem.text.strip():
+            elem.text = None
+            if level > 0:
+                elem.tail = "\n" + space * level
+
+
 def write_file_header(parent: ET.Element, file_header: FileHeader):
     """FileHeaderをXMLに書き込み"""
     elem = _create_element("FileHeader", parent)
@@ -149,18 +178,17 @@ def write_file_header(parent: ET.Element, file_header: FileHeader):
 
 def write_parameter_declarations(parent: ET.Element, param_decls: ParameterDeclarations):
     """ParameterDeclarationsをXMLに書き込み"""
-    if not param_decls.parameters:
-        return
-    
+    # 空の場合でも要素を作成（元ファイルとの互換性のため）
     elem = _create_element("ParameterDeclarations", parent)
-    for param in param_decls.parameters:
-        param_elem = _create_element("ParameterDeclaration", elem)
-        param_elem.set("name", param.name)
-        param_elem.set("parameterType", param.parameter_type)
-        # value属性は必須（XSD準拠）
-        if not param.value:
-            raise ValueError(f"ParameterDeclaration '{param.name}' must have a value attribute")
-        param_elem.set("value", param.value)
+    if param_decls.parameters:
+        for param in param_decls.parameters:
+            param_elem = _create_element("ParameterDeclaration", elem)
+            param_elem.set("name", param.name)
+            param_elem.set("parameterType", param.parameter_type)
+            # value属性は必須（XSD準拠）
+            if not param.value:
+                raise ValueError(f"ParameterDeclaration '{param.name}' must have a value attribute")
+            param_elem.set("value", param.value)
 
 
 def write_road_network(parent: ET.Element, road_network: RoadNetwork):
@@ -1353,17 +1381,17 @@ def write_maneuver_group(parent: ET.Element, maneuver_group: ManeuverGroup):
     elem.set("maximumExecutionCount", str(maneuver_group.maximum_execution_count))
     
     # Actors要素は必須（XSD準拠）
-    if not maneuver_group.actors:
-        raise ValueError(f"ManeuverGroup '{maneuver_group.name}' must have at least one Actor")
-    
+    # 空の場合でもActors要素を作成（元ファイルとの互換性のため）
     actors_elem = _create_element("Actors", elem)
     # selectTriggeringEntities属性は必須（XSD準拠）、Noneの場合はデフォルト値falseを設定
     select_triggering = maneuver_group.select_triggering_entities if maneuver_group.select_triggering_entities is not None else False
     actors_elem.set("selectTriggeringEntities", "true" if select_triggering else "false")
     
-    for actor in maneuver_group.actors:
-        entity_ref_elem = _create_element("EntityRef", actors_elem)
-        entity_ref_elem.set("entityRef", actor)
+    # EntityRefが存在する場合のみ追加
+    if maneuver_group.actors:
+        for actor in maneuver_group.actors:
+            entity_ref_elem = _create_element("EntityRef", actors_elem)
+            entity_ref_elem.set("entityRef", actor)
     
     for maneuver in maneuver_group.maneuvers:
         write_maneuver(elem, maneuver)
@@ -1382,9 +1410,29 @@ def write_act(parent: ET.Element, act: Act):
         write_maneuver_group(elem, mg)
     
     # StartTrigger要素は必須（XSD準拠）
+    # Noneの場合はデフォルト値を生成（SimulationTimeConditionで0.0秒から開始）
     if act.start_trigger is None:
-        raise ValueError(f"Act '{act.name}' must have a StartTrigger element")
-    write_start_trigger(elem, act.start_trigger)
+        from osc_editor.core.model import (
+            StartTrigger,
+            ConditionGroup,
+            Condition,
+            SimulationTimeCondition
+        )
+        # デフォルトのStartTriggerを生成
+        default_condition = Condition(
+            name="DefaultStartCondition",
+            delay=0.0,
+            condition_edge="none",
+            simulation_time_condition=SimulationTimeCondition(
+                rule="greaterThan",
+                value=0.0
+            )
+        )
+        default_condition_group = ConditionGroup(conditions=[default_condition])
+        default_start_trigger = StartTrigger(condition_groups=[default_condition_group])
+        write_start_trigger(elem, default_start_trigger)
+    else:
+        write_start_trigger(elem, act.start_trigger)
     
     if act.stop_trigger is not None:
         write_start_trigger(elem, act.stop_trigger, tag_name="StopTrigger")
@@ -1646,16 +1694,88 @@ def write_xml(scenario: ScenarioDefinition, file_path: str, pretty_print: bool =
     if scenario.storyboard is not None:
         write_storyboard(root, scenario.storyboard)
     
+    if scenario.parameter_value_distribution is not None:
+        write_parameter_value_distribution(root, scenario.parameter_value_distribution)
+    
     tree = ET.ElementTree(root)
     
     if pretty_print:
-        # インデントを追加（Python 3.9+）
-        try:
-            ET.indent(tree, space="  ")
-        except AttributeError:
-            # Python < 3.9 の場合、インデントはスキップ
-            pass
+        # インデントを追加（カスタム実装、Python 3.8対応）
+        _indent_xml(root, level=0, space="  ")
     
     tree.write(file_path, encoding="utf-8", xml_declaration=True)
+
+
+def write_scenario_file(parent: ET.Element, scenario_file: 'ScenarioFile'):
+    """ScenarioFileをXMLに書き込み"""
+    elem = _create_element("ScenarioFile", parent)
+    elem.set("filepath", scenario_file.filepath)
+
+
+def write_parameter_value_set(parent: ET.Element, param_value_set: 'ParameterValueSet'):
+    """ParameterValueSetをXMLに書き込み"""
+    elem = _create_element("ParameterValueSet", parent)
+    for assignment in param_value_set.parameter_assignments:
+        write_parameter_assignment(elem, assignment)
+
+
+def write_value_set_distribution(parent: ET.Element, value_set_dist: 'ValueSetDistribution'):
+    """ValueSetDistributionをXMLに書き込み"""
+    elem = _create_element("ValueSetDistribution", parent)
+    for param_value_set in value_set_dist.parameter_value_sets:
+        write_parameter_value_set(elem, param_value_set)
+
+
+def write_deterministic_multi_parameter_distribution(parent: ET.Element, multi_dist: 'DeterministicMultiParameterDistribution'):
+    """DeterministicMultiParameterDistributionをXMLに書き込み"""
+    elem = _create_element("DeterministicMultiParameterDistribution", parent)
+    if multi_dist.value_set_distribution is not None:
+        write_value_set_distribution(elem, multi_dist.value_set_distribution)
+
+
+def write_distribution_set(parent: ET.Element, dist_set: 'DistributionSet'):
+    """DistributionSetをXMLに書き込み"""
+    elem = _create_element("DistributionSet", parent)
+    for element_dict in dist_set.elements:
+        element_elem = _create_element("Element", elem)
+        element_elem.set("value", str(element_dict.get("value", "")))
+
+
+def write_distribution_range(parent: ET.Element, dist_range: 'DistributionRange'):
+    """DistributionRangeをXMLに書き込み"""
+    elem = _create_element("DistributionRange", parent)
+    elem.set("stepWidth", str(dist_range.step_width))
+    if dist_range.range is not None:
+        range_elem = _create_element("Range", elem)
+        range_elem.set("lowerLimit", str(dist_range.range.lower_limit))
+        range_elem.set("upperLimit", str(dist_range.range.upper_limit))
+
+
+def write_deterministic_single_parameter_distribution(parent: ET.Element, single_dist: 'DeterministicSingleParameterDistribution'):
+    """DeterministicSingleParameterDistributionをXMLに書き込み"""
+    elem = _create_element("DeterministicSingleParameterDistribution", parent)
+    elem.set("parameterName", single_dist.parameter_name)
+    if single_dist.distribution_set is not None:
+        write_distribution_set(elem, single_dist.distribution_set)
+    if single_dist.distribution_range is not None:
+        write_distribution_range(elem, single_dist.distribution_range)
+
+
+def write_deterministic(parent: ET.Element, deterministic: 'Deterministic'):
+    """DeterministicをXMLに書き込み"""
+    elem = _create_element("Deterministic", parent)
+    if deterministic.deterministic_multi_parameter_distribution is not None:
+        write_deterministic_multi_parameter_distribution(elem, deterministic.deterministic_multi_parameter_distribution)
+    for single_dist in deterministic.deterministic_single_parameter_distributions:
+        write_deterministic_single_parameter_distribution(elem, single_dist)
+
+
+def write_parameter_value_distribution(parent: ET.Element, param_value_dist: 'ParameterValueDistribution'):
+    """ParameterValueDistributionをXMLに書き込み"""
+    elem = _create_element("ParameterValueDistribution", parent)
+    if param_value_dist.scenario_file is not None:
+        write_scenario_file(elem, param_value_dist.scenario_file)
+    if param_value_dist.deterministic is not None:
+        write_deterministic(elem, param_value_dist.deterministic)
 
 

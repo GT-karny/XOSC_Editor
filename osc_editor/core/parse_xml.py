@@ -2550,6 +2550,9 @@ def parse_xml(file_path: str) -> ScenarioDefinition:
     storyboard_elem = root.find(f"./{local_osc_ns}Storyboard")
     storyboard = parse_storyboard(storyboard_elem) if storyboard_elem is not None else None
     
+    param_value_dist_elem = root.find(f"./{local_osc_ns}ParameterValueDistribution")
+    param_value_dist = parse_parameter_value_distribution(param_value_dist_elem) if param_value_dist_elem is not None else None
+    
     return ScenarioDefinition(
         file_header=file_header,
         parameter_declarations=param_decls,
@@ -2557,6 +2560,139 @@ def parse_xml(file_path: str) -> ScenarioDefinition:
         road_network=road_network,
         entities=entities,
         storyboard=storyboard,
+        parameter_value_distribution=param_value_dist,
+    )
+
+
+def parse_scenario_file(element: ET.Element) -> Optional['ScenarioFile']:
+    """ScenarioFileをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import ScenarioFile
+    filepath = _get_attr(element, "filepath", "")
+    if not filepath:
+        return None
+    return ScenarioFile(filepath=filepath)
+
+
+def parse_parameter_value_set(element: ET.Element) -> Optional['ParameterValueSet']:
+    """ParameterValueSetをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import ParameterValueSet, ParameterAssignment
+    ns = _detect_namespace(element)
+    param_assignments = []
+    for assignment_elem in element.findall(f"./{ns}ParameterAssignment"):
+        param_assignments.append(parse_parameter_assignment(assignment_elem))
+    return ParameterValueSet(parameter_assignments=param_assignments)
+
+
+def parse_value_set_distribution(element: ET.Element) -> Optional['ValueSetDistribution']:
+    """ValueSetDistributionをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import ValueSetDistribution
+    ns = _detect_namespace(element)
+    param_value_sets = []
+    for value_set_elem in element.findall(f"./{ns}ParameterValueSet"):
+        value_set = parse_parameter_value_set(value_set_elem)
+        if value_set:
+            param_value_sets.append(value_set)
+    return ValueSetDistribution(parameter_value_sets=param_value_sets)
+
+
+def parse_deterministic_multi_parameter_distribution(element: ET.Element) -> Optional['DeterministicMultiParameterDistribution']:
+    """DeterministicMultiParameterDistributionをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import DeterministicMultiParameterDistribution
+    ns = _detect_namespace(element)
+    value_set_dist_elem = element.find(f"./{ns}ValueSetDistribution")
+    value_set_dist = parse_value_set_distribution(value_set_dist_elem) if value_set_dist_elem is not None else None
+    return DeterministicMultiParameterDistribution(value_set_distribution=value_set_dist)
+
+
+def parse_distribution_set(element: ET.Element) -> Optional['DistributionSet']:
+    """DistributionSetをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import DistributionSet
+    ns = _detect_namespace(element)
+    elements = []
+    for elem in element.findall(f"./{ns}Element"):
+        value = _get_attr(elem, "value", "")
+        if value:
+            elements.append({"value": value})
+    return DistributionSet(elements=elements)
+
+
+def parse_distribution_range(element: ET.Element) -> Optional['DistributionRange']:
+    """DistributionRangeをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import DistributionRange, Range
+    step_width = _get_attr_float(element, "stepWidth", 0.0)
+    range_elem = element.find(f"./{_detect_namespace(element)}Range")
+    range_obj = None
+    if range_elem is not None:
+        lower_limit = _get_attr_float(range_elem, "lowerLimit", 0.0)
+        upper_limit = _get_attr_float(range_elem, "upperLimit", 0.0)
+        range_obj = Range(lower_limit=lower_limit, upper_limit=upper_limit)
+    return DistributionRange(step_width=step_width, range=range_obj)
+
+
+def parse_deterministic_single_parameter_distribution(element: ET.Element) -> Optional['DeterministicSingleParameterDistribution']:
+    """DeterministicSingleParameterDistributionをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import DeterministicSingleParameterDistribution
+    parameter_name = _get_attr(element, "parameterName", "")
+    if not parameter_name:
+        return None
+    ns = _detect_namespace(element)
+    dist_set_elem = element.find(f"./{ns}DistributionSet")
+    dist_set = parse_distribution_set(dist_set_elem) if dist_set_elem is not None else None
+    dist_range_elem = element.find(f"./{ns}DistributionRange")
+    dist_range = parse_distribution_range(dist_range_elem) if dist_range_elem is not None else None
+    return DeterministicSingleParameterDistribution(
+        parameter_name=parameter_name,
+        distribution_set=dist_set,
+        distribution_range=dist_range
+    )
+
+
+def parse_deterministic(element: ET.Element) -> Optional['Deterministic']:
+    """Deterministicをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import Deterministic
+    ns = _detect_namespace(element)
+    multi_dist_elem = element.find(f"./{ns}DeterministicMultiParameterDistribution")
+    multi_dist = parse_deterministic_multi_parameter_distribution(multi_dist_elem) if multi_dist_elem is not None else None
+    single_dists = []
+    for single_dist_elem in element.findall(f"./{ns}DeterministicSingleParameterDistribution"):
+        single_dist = parse_deterministic_single_parameter_distribution(single_dist_elem)
+        if single_dist:
+            single_dists.append(single_dist)
+    return Deterministic(
+        deterministic_multi_parameter_distribution=multi_dist,
+        deterministic_single_parameter_distributions=single_dists
+    )
+
+
+def parse_parameter_value_distribution(element: ET.Element) -> Optional['ParameterValueDistribution']:
+    """ParameterValueDistributionをパース"""
+    if element is None:
+        return None
+    from osc_editor.core.model import ParameterValueDistribution
+    ns = _detect_namespace(element)
+    scenario_file_elem = element.find(f"./{ns}ScenarioFile")
+    scenario_file = parse_scenario_file(scenario_file_elem) if scenario_file_elem is not None else None
+    deterministic_elem = element.find(f"./{ns}Deterministic")
+    deterministic = parse_deterministic(deterministic_elem) if deterministic_elem is not None else None
+    return ParameterValueDistribution(
+        scenario_file=scenario_file,
+        deterministic=deterministic
     )
 
 

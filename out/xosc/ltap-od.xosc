@@ -1,2 +1,197 @@
 <?xml version='1.0' encoding='utf-8'?>
-<OpenSCENARIO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../Schema/OpenSCENARIO.xsd"><FileHeader revMajor="1" revMinor="1" author="Fredrik Persson, Emil Knabe" date="2017-06-09T10:00:00" description="LTAP-OD variant where target vehicle intercepts Ego path" /><ParameterDeclarations><ParameterDeclaration name="HostVehicle" parameterType="string" value="car_white" /><ParameterDeclaration name="NPCVehicle" parameterType="string" value="car_red" /><ParameterDeclaration name="HostSpeed" parameterType="double" value="10" /><ParameterDeclaration name="NPCInitialSpeed" parameterType="double" value="10" /><ParameterDeclaration name="NPCFinalSpeed" parameterType="double" value="7" /><ParameterDeclaration name="NPCStartPointS" parameterType="double" value="150" /><ParameterDeclaration name="NPCSyncPointS" parameterType="double" value="455" /><ParameterDeclaration name="EgoSyncPoint1S" parameterType="double" value="7" /></ParameterDeclarations><CatalogLocations><VehicleCatalog><Directory path="../xosc/Catalogs/Vehicles" /></VehicleCatalog><RouteCatalog><Directory path="../xosc/Catalogs/Routes" /></RouteCatalog><ControllerCatalog><Directory path="../xosc/Catalogs/Controllers" /></ControllerCatalog></CatalogLocations><RoadNetwork><LogicFile filepath="../xodr/fabriksgatan.xodr" /><SceneGraphFile filepath="../models/fabriksgatan.osgb" /></RoadNetwork><Entities><ScenarioObject name="Ego"><CatalogReference catalogName="VehicleCatalog" entryName="$HostVehicle" /><ObjectController><CatalogReference catalogName="ControllerCatalog" entryName="interactiveDriver" /></ObjectController></ScenarioObject><ScenarioObject name="NPC"><CatalogReference catalogName="VehicleCatalog" entryName="$NPCVehicle" /></ScenarioObject></Entities><Storyboard><Init><Actions><Private entityRef="Ego"><PrivateAction><RoutingAction><AssignRouteAction><CatalogReference catalogName="RoutesAtFabriksgatan" entryName="HostStraightRoute" /></AssignRouteAction></RoutingAction></PrivateAction><PrivateAction><TeleportAction><Position><RoutePosition><RouteRef><CatalogReference catalogName="RoutesAtFabriksgatan" entryName="HostStraightRoute" /></RouteRef><InRoutePosition><FromLaneCoordinates pathS="0.0" laneId="1" /></InRoutePosition></RoutePosition></Position></TeleportAction></PrivateAction><PrivateAction><ActivateControllerAction longitudinal="true" lateral="true" /></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="$HostSpeed" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private><Private entityRef="NPC"><PrivateAction><RoutingAction><AssignRouteAction><CatalogReference catalogName="RoutesAtFabriksgatan" entryName="TargetLeftTurnRoute" /></AssignRouteAction></RoutingAction></PrivateAction><PrivateAction><TeleportAction><Position><RoutePosition><RouteRef><CatalogReference catalogName="RoutesAtFabriksgatan" entryName="TargetLeftTurnRoute" /></RouteRef><InRoutePosition><FromLaneCoordinates pathS="$NPCStartPointS" laneId="-1" /></InRoutePosition></RoutePosition></Position></TeleportAction></PrivateAction><PrivateAction><LongitudinalAction><SpeedAction><SpeedActionTarget><AbsoluteTargetSpeed value="$NPCInitialSpeed" /></SpeedActionTarget><SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" /></SpeedAction></LongitudinalAction></PrivateAction></Private></Actions></Init><Story name="LTAPStory"><ParameterDeclarations><ParameterDeclaration name="owner" parameterType="string" value="NPC" /></ParameterDeclarations><Act name="LTAPActNPC"><ManeuverGroup name="LTAPSequence" maximumExecutionCount="1"><Actors selectTriggeringEntities="false"><EntityRef entityRef="NPC" /></Actors><Maneuver name="ManeuverNPC"><Event name="SyncEvent" priority="overwrite"><Action name="SyncActionNPC"><PrivateAction><SynchronizeAction masterEntityRef="Ego" targetToleranceMaster="1.0" targetTolerance="1.0"><TargetPositionMaster><LanePosition roadId="0" laneId="1" s="$EgoSyncPoint1S" offset="0.0" /></TargetPositionMaster><TargetPosition><RoutePosition><RouteRef><CatalogReference catalogName="RoutesAtFabriksgatan" entryName="TargetLeftTurnRoute" /></RouteRef><InRoutePosition><FromLaneCoordinates pathS="203.0" laneId="-1" /></InRoutePosition></RoutePosition></TargetPosition><FinalSpeed><AbsoluteSpeed value="$NPCFinalSpeed" /></FinalSpeed></SynchronizeAction></PrivateAction></Action><StartTrigger><ConditionGroup><Condition name="SyncConditionNPC" delay="0.0" conditionEdge="none"><ByValueCondition><StoryboardElementStateCondition storyboardElementType="act" storyboardElementRef="LTAPActNPC" state="startTransition" /></ByValueCondition></Condition></ConditionGroup></StartTrigger></Event></Maneuver></ManeuverGroup><StartTrigger><ConditionGroup><Condition name="LtapActStartConditionNPC" delay="0.0" conditionEdge="none"><ByValueCondition><SimulationTimeCondition rule="greaterThan" value="0.0" /></ByValueCondition></Condition></ConditionGroup></StartTrigger></Act></Story><StopTrigger><ConditionGroup><Condition name="DoneCondition" delay="0.0" conditionEdge="none"><ByValueCondition><StoryboardElementStateCondition storyboardElementType="event" storyboardElementRef="SyncEvent" state="completeState" /></ByValueCondition></Condition><Condition name="QuitCondition" delay="4.0" conditionEdge="rising"><ByEntityCondition><TriggeringEntities triggeringEntitiesRule="any"><EntityRef entityRef="NPC" /></TriggeringEntities><EntityCondition><SpeedCondition value="$NPCFinalSpeed" rule="equalTo" /></EntityCondition></ByEntityCondition></Condition></ConditionGroup><ConditionGroup><Condition name="StopSimulationCondition" delay="0.0" conditionEdge="rising"><ByValueCondition><SimulationTimeCondition rule="greaterThan" value="1200.0" /></ByValueCondition></Condition></ConditionGroup></StopTrigger></Storyboard></OpenSCENARIO>
+<OpenSCENARIO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../Schema/OpenSCENARIO.xsd">
+  <FileHeader revMajor="1" revMinor="1" author="Fredrik Persson, Emil Knabe" date="2017-06-09T10:00:00" description="LTAP-OD variant where target vehicle intercepts Ego path" />
+  <ParameterDeclarations>
+    <ParameterDeclaration name="HostVehicle" parameterType="string" value="car_white" />
+    <ParameterDeclaration name="NPCVehicle" parameterType="string" value="car_red" />
+    <ParameterDeclaration name="HostSpeed" parameterType="double" value="10" />
+    <ParameterDeclaration name="NPCInitialSpeed" parameterType="double" value="10" />
+    <ParameterDeclaration name="NPCFinalSpeed" parameterType="double" value="7" />
+    <ParameterDeclaration name="NPCStartPointS" parameterType="double" value="150" />
+    <ParameterDeclaration name="NPCSyncPointS" parameterType="double" value="455" />
+    <ParameterDeclaration name="EgoSyncPoint1S" parameterType="double" value="7" />
+  </ParameterDeclarations>
+  <CatalogLocations>
+    <VehicleCatalog>
+      <Directory path="../xosc/Catalogs/Vehicles" />
+    </VehicleCatalog>
+    <RouteCatalog>
+      <Directory path="../xosc/Catalogs/Routes" />
+    </RouteCatalog>
+    <ControllerCatalog>
+      <Directory path="../xosc/Catalogs/Controllers" />
+    </ControllerCatalog>
+  </CatalogLocations>
+  <RoadNetwork>
+    <LogicFile filepath="../xodr/fabriksgatan.xodr" />
+    <SceneGraphFile filepath="../models/fabriksgatan.osgb" />
+  </RoadNetwork>
+  <Entities>
+    <ScenarioObject name="Ego">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$HostVehicle" />
+      <ObjectController>
+        <CatalogReference catalogName="ControllerCatalog" entryName="interactiveDriver" />
+      </ObjectController>
+    </ScenarioObject>
+    <ScenarioObject name="NPC">
+      <CatalogReference catalogName="VehicleCatalog" entryName="$NPCVehicle" />
+    </ScenarioObject>
+  </Entities>
+  <Storyboard>
+    <Init>
+      <Actions>
+        <Private entityRef="Ego">
+          <PrivateAction>
+            <RoutingAction>
+              <AssignRouteAction>
+                <CatalogReference catalogName="RoutesAtFabriksgatan" entryName="HostStraightRoute" />
+              </AssignRouteAction>
+            </RoutingAction>
+          </PrivateAction>
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <RoutePosition>
+                  <RouteRef>
+                    <CatalogReference catalogName="RoutesAtFabriksgatan" entryName="HostStraightRoute" />
+                  </RouteRef>
+                  <InRoutePosition>
+                    <FromLaneCoordinates pathS="0.0" laneId="1" />
+                  </InRoutePosition>
+                </RoutePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <ActivateControllerAction longitudinal="true" lateral="true" />
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="$HostSpeed" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="NPC">
+          <PrivateAction>
+            <RoutingAction>
+              <AssignRouteAction>
+                <CatalogReference catalogName="RoutesAtFabriksgatan" entryName="TargetLeftTurnRoute" />
+              </AssignRouteAction>
+            </RoutingAction>
+          </PrivateAction>
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <RoutePosition>
+                  <RouteRef>
+                    <CatalogReference catalogName="RoutesAtFabriksgatan" entryName="TargetLeftTurnRoute" />
+                  </RouteRef>
+                  <InRoutePosition>
+                    <FromLaneCoordinates pathS="$NPCStartPointS" laneId="-1" />
+                  </InRoutePosition>
+                </RoutePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="$NPCInitialSpeed" />
+                </SpeedActionTarget>
+                <SpeedActionDynamics dynamicsDimension="time" dynamicsShape="step" value="0.0" />
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+      </Actions>
+    </Init>
+    <Story name="LTAPStory">
+      <ParameterDeclarations>
+        <ParameterDeclaration name="owner" parameterType="string" value="NPC" />
+      </ParameterDeclarations>
+      <Act name="LTAPActNPC">
+        <ManeuverGroup name="LTAPSequence" maximumExecutionCount="1">
+          <Actors selectTriggeringEntities="false">
+            <EntityRef entityRef="NPC" />
+          </Actors>
+          <Maneuver name="ManeuverNPC">
+            <Event name="SyncEvent" priority="overwrite">
+              <Action name="SyncActionNPC">
+                <PrivateAction>
+                  <SynchronizeAction masterEntityRef="Ego" targetToleranceMaster="1.0" targetTolerance="1.0">
+                    <TargetPositionMaster>
+                      <LanePosition roadId="0" laneId="1" s="$EgoSyncPoint1S" offset="0.0" />
+                    </TargetPositionMaster>
+                    <TargetPosition>
+                      <RoutePosition>
+                        <RouteRef>
+                          <CatalogReference catalogName="RoutesAtFabriksgatan" entryName="TargetLeftTurnRoute" />
+                        </RouteRef>
+                        <InRoutePosition>
+                          <FromLaneCoordinates pathS="203.0" laneId="-1" />
+                        </InRoutePosition>
+                      </RoutePosition>
+                    </TargetPosition>
+                    <FinalSpeed>
+                      <AbsoluteSpeed value="$NPCFinalSpeed" />
+                    </FinalSpeed>
+                  </SynchronizeAction>
+                </PrivateAction>
+              </Action>
+              <StartTrigger>
+                <ConditionGroup>
+                  <Condition name="SyncConditionNPC" delay="0.0" conditionEdge="none">
+                    <ByValueCondition>
+                      <StoryboardElementStateCondition storyboardElementType="act" storyboardElementRef="LTAPActNPC" state="startTransition" />
+                    </ByValueCondition>
+                  </Condition>
+                </ConditionGroup>
+              </StartTrigger>
+            </Event>
+          </Maneuver>
+        </ManeuverGroup>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="LtapActStartConditionNPC" delay="0.0" conditionEdge="none">
+              <ByValueCondition>
+                <SimulationTimeCondition rule="greaterThan" value="0.0" />
+              </ByValueCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Act>
+    </Story>
+    <StopTrigger>
+      <ConditionGroup>
+        <Condition name="DoneCondition" delay="0.0" conditionEdge="none">
+          <ByValueCondition>
+            <StoryboardElementStateCondition storyboardElementType="event" storyboardElementRef="SyncEvent" state="completeState" />
+          </ByValueCondition>
+        </Condition>
+        <Condition name="QuitCondition" delay="4.0" conditionEdge="rising">
+          <ByEntityCondition>
+            <TriggeringEntities triggeringEntitiesRule="any">
+              <EntityRef entityRef="NPC" />
+            </TriggeringEntities>
+            <EntityCondition>
+              <SpeedCondition value="$NPCFinalSpeed" rule="equalTo" />
+            </EntityCondition>
+          </ByEntityCondition>
+        </Condition>
+      </ConditionGroup>
+      <ConditionGroup>
+        <Condition name="StopSimulationCondition" delay="0.0" conditionEdge="rising">
+          <ByValueCondition>
+            <SimulationTimeCondition rule="greaterThan" value="1200.0" />
+          </ByValueCondition>
+        </Condition>
+      </ConditionGroup>
+    </StopTrigger>
+  </Storyboard>
+</OpenSCENARIO>
