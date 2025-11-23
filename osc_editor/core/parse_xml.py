@@ -30,7 +30,10 @@ from osc_editor.core.model import (
     FollowTrajectoryAction,
     Trajectory,
     Polyline,
+    Clothoid,
+    Nurbs,
     Vertex,
+    ControlPoint,
     TimeReference,
     ActivateControllerAction,
     SpeedAction,
@@ -38,6 +41,9 @@ from osc_editor.core.model import (
     LaneChangeAction,
     LaneOffsetAction,
     LaneOffsetActionDynamics,
+    VisibilityAction,
+    SynchronizeAction,
+    AppearanceAction,
     WorldPosition,
     LanePosition,
     RoutePosition,
@@ -59,6 +65,8 @@ from osc_editor.core.model import (
     TraveledDistanceCondition,
     TimeToCollisionCondition,
     ReachPositionCondition,
+    EndOfRoadCondition,
+    CollisionCondition,
     ParameterCondition,
     StoryboardElementStateCondition,
     GlobalAction,
@@ -133,13 +141,16 @@ def _get_attr_int(element: ET.Element, attr_name: str, default: int = 0) -> int:
         return default
 
 
-def _get_attr_bool(element: ET.Element, attr_name: str, default: bool = False) -> bool:
-    """要素の属性から真偽値を取得"""
+def _get_attr_bool(element: ET.Element, attr_name: str, default: bool = False) -> Union[str, bool]:
+    """要素の属性から真偽値を取得（パラメータ参照の場合は文字列を返す）"""
     if element is None:
         return default
     attr_value = element.get(attr_name)
     if attr_value is None:
         return default
+    # パラメータ参照（$で始まる）または式（${...}を含む）の場合は文字列として返す
+    if isinstance(attr_value, str) and (attr_value.startswith('$') or '${' in attr_value):
+        return attr_value
     if isinstance(attr_value, bool):
         return attr_value
     if isinstance(attr_value, str):
@@ -809,6 +820,31 @@ def parse_vertex(element: ET.Element) -> Optional[Vertex]:
     return Vertex(position=position, time=time)
 
 
+def parse_control_point(element: ET.Element) -> Optional[ControlPoint]:
+    """ControlPointをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    position_elem = element.find(f"./{ns}Position")
+    if position_elem is None:
+        return None
+    
+    position = parse_position(position_elem)
+    if position is None:
+        return None
+    
+    time = _get_attr_float(element, "time", None)
+    if isinstance(time, str):
+        time = None
+    
+    weight = _get_attr_float(element, "weight", None)
+    if isinstance(weight, str):
+        weight = None
+    
+    return ControlPoint(position=position, time=time, weight=weight)
+
+
 def parse_polyline(element: ET.Element) -> Optional[Polyline]:
     """Polylineをパース"""
     if element is None:
@@ -827,6 +863,93 @@ def parse_polyline(element: ET.Element) -> Optional[Polyline]:
     return Polyline(vertices=vertices)
 
 
+def parse_clothoid(element: ET.Element) -> Optional[Clothoid]:
+    """Clothoidをパース"""
+    if element is None:
+        return None
+    
+    curvature = _get_attr_float(element, "curvature", None)
+    if curvature is None:
+        return None
+    
+    length = _get_attr_float(element, "length", None)
+    if length is None:
+        return None
+    
+    curvature_prime = _get_attr_float(element, "curvaturePrime", None)
+    if isinstance(curvature_prime, str):
+        curvature_prime = None
+    
+    start_time = _get_attr_float(element, "startTime", None)
+    if isinstance(start_time, str):
+        start_time = None
+    
+    stop_time = _get_attr_float(element, "stopTime", None)
+    if isinstance(stop_time, str):
+        stop_time = None
+    
+    ns = _detect_namespace(element)
+    position_elem = element.find(f"./{ns}Position")
+    if position_elem is None:
+        return None
+    
+    position = parse_position(position_elem)
+    if position is None:
+        return None
+    
+    return Clothoid(
+        curvature=curvature,
+        length=length,
+        position=position,
+        curvature_prime=curvature_prime,
+        start_time=start_time,
+        stop_time=stop_time,
+    )
+
+
+def parse_nurbs(element: ET.Element) -> Optional[Nurbs]:
+    """Nurbsをパース"""
+    if element is None:
+        return None
+    
+    order_attr = _get_attr(element, "order", None)
+    if order_attr is None:
+        return None
+    
+    try:
+        order = int(order_attr)
+    except (ValueError, TypeError):
+        return None
+    
+    ns = _detect_namespace(element)
+    
+    # ControlPointリスト（2以上）
+    control_points = []
+    for cp_elem in element.findall(f"./{ns}ControlPoint"):
+        cp = parse_control_point(cp_elem)
+        if cp is not None:
+            control_points.append(cp)
+    
+    if len(control_points) < 2:
+        return None
+    
+    # Knotリスト（2以上）
+    knots = []
+    for knot_elem in element.findall(f"./{ns}Knot"):
+        value = _get_attr_float(knot_elem, "value", None)
+        if value is not None:
+            knots.append({"value": value})
+    
+    if len(knots) < 2:
+        return None
+    
+    return Nurbs(
+        order=order,
+        control_points=control_points,
+        knots=knots,
+    )
+
+
 def parse_trajectory(element: ET.Element) -> Optional[Trajectory]:
     """Trajectoryをパース"""
     if element is None:
@@ -837,18 +960,33 @@ def parse_trajectory(element: ET.Element) -> Optional[Trajectory]:
         return None
     
     closed = _get_attr_bool(element, "closed", False)
+    if isinstance(closed, str):
+        closed = False  # パラメータ参照の場合はデフォルト値を使用
     
     ns = _detect_namespace(element)
     param_decls_elem = element.find(f"./{ns}ParameterDeclarations")
     param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
     
-    shape_elem = element.find(f"./{ns}Shape/{ns}Polyline")
-    polyline = parse_polyline(shape_elem) if shape_elem is not None else None
+    # Shape内のPolyline, Clothoid, Nurbsをチェック（choice）
+    shape_elem = element.find(f"./{ns}Shape")
+    shape = None
+    if shape_elem is not None:
+        polyline_elem = shape_elem.find(f"./{ns}Polyline")
+        if polyline_elem is not None:
+            shape = parse_polyline(polyline_elem)
+        else:
+            clothoid_elem = shape_elem.find(f"./{ns}Clothoid")
+            if clothoid_elem is not None:
+                shape = parse_clothoid(clothoid_elem)
+            else:
+                nurbs_elem = shape_elem.find(f"./{ns}Nurbs")
+                if nurbs_elem is not None:
+                    shape = parse_nurbs(nurbs_elem)
     
     return Trajectory(
         name=name,
-        closed=closed,
-        shape=Polyline(vertices=[]) if polyline is None else polyline,
+        closed=closed if isinstance(closed, bool) else False,
+        shape=shape,
         parameter_declarations=param_decls,
     )
 
@@ -1001,6 +1139,125 @@ def parse_activate_controller_action(element: ET.Element) -> Optional[ActivateCo
     return ActivateControllerAction(longitudinal=longitudinal, lateral=lateral)
 
 
+def parse_visibility_action(element: ET.Element) -> Optional[VisibilityAction]:
+    """VisibilityActionをパース"""
+    if element is None:
+        return None
+    
+    graphics = _get_attr_bool(element, "graphics", True)
+    sensors = _get_attr_bool(element, "sensors", True)
+    traffic = _get_attr_bool(element, "traffic", True)
+    
+    # SensorReferenceSet要素は将来対応（現時点では省略）
+    
+    return VisibilityAction(
+        graphics=graphics,
+        sensors=sensors,
+        traffic=traffic,
+    )
+
+
+def parse_synchronize_action(element: ET.Element) -> Optional[SynchronizeAction]:
+    """SynchronizeActionをパース"""
+    if element is None:
+        return None
+    
+    master_entity_ref = _get_attr(element, "masterEntityRef", "")
+    if not master_entity_ref:
+        return None
+    
+    ns = _detect_namespace(element)
+    
+    # TargetPositionMaster要素（required）
+    target_position_master_elem = element.find(f"./{ns}TargetPositionMaster")
+    if target_position_master_elem is None:
+        return None
+    target_position_master = parse_position(target_position_master_elem)
+    if target_position_master is None:
+        return None
+    
+    # TargetPosition要素（required）
+    target_position_elem = element.find(f"./{ns}TargetPosition")
+    if target_position_elem is None:
+        return None
+    target_position = parse_position(target_position_elem)
+    if target_position is None:
+        return None
+    
+    # targetToleranceMaster, targetTolerance属性（optional）
+    target_tolerance_master = _get_attr_float(element, "targetToleranceMaster", None)
+    if isinstance(target_tolerance_master, str):
+        target_tolerance_master = None
+    
+    target_tolerance = _get_attr_float(element, "targetTolerance", None)
+    if isinstance(target_tolerance, str):
+        target_tolerance = None
+    
+    # FinalSpeed要素（optional）
+    final_speed_elem = element.find(f"./{ns}FinalSpeed")
+    final_speed = None
+    if final_speed_elem is not None:
+        # AbsoluteSpeedまたはRelativeSpeedToMaster（choice）
+        abs_speed_elem = final_speed_elem.find(f"./{ns}AbsoluteSpeed")
+        if abs_speed_elem is not None:
+            abs_speed_value = _get_attr_float(abs_speed_elem, "value", None)
+            final_speed = {"type": "AbsoluteSpeed", "value": abs_speed_value}
+        else:
+            rel_speed_elem = final_speed_elem.find(f"./{ns}RelativeSpeedToMaster")
+            if rel_speed_elem is not None:
+                speed_target_value_type = _get_attr(rel_speed_elem, "speedTargetValueType", "delta")
+                value = _get_attr_float(rel_speed_elem, "value", None)
+                final_speed = {
+                    "type": "RelativeSpeedToMaster",
+                    "speedTargetValueType": speed_target_value_type,
+                    "value": value,
+                }
+    
+    return SynchronizeAction(
+        master_entity_ref=master_entity_ref,
+        target_position_master=target_position_master,
+        target_position=target_position,
+        target_tolerance_master=target_tolerance_master,
+        target_tolerance=target_tolerance,
+        final_speed=final_speed,
+    )
+
+
+def parse_appearance_action(element: ET.Element) -> Optional[AppearanceAction]:
+    """AppearanceActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    
+    # LightStateAction要素（optional）
+    light_state_elem = element.find(f"./{ns}LightStateAction")
+    light_state_action = None
+    if light_state_elem is not None:
+        # 簡易実装：dictとして保存（将来の拡張用）
+        transition_time = _get_attr_float(light_state_elem, "transitionTime", None)
+        light_state_action = {"transitionTime": transition_time}
+        # LightType, LightState要素は将来対応
+    
+    # AnimationAction要素（optional）
+    animation_elem = element.find(f"./{ns}AnimationAction")
+    animation_action = None
+    if animation_elem is not None:
+        # 簡易実装：dictとして保存（将来の拡張用）
+        loop = _get_attr_bool(animation_elem, "loop", False)
+        animation_duration = _get_attr_float(animation_elem, "animationDuration", None)
+        animation_action = {"loop": loop, "animationDuration": animation_duration}
+        # AnimationType, AnimationState要素は将来対応
+    
+    if light_state_action is None and animation_action is None:
+        return None
+    
+    return AppearanceAction(
+        light_state_action=light_state_action,
+        animation_action=animation_action,
+    )
+
+
 def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
     """PrivateActionをパース"""
     if element is None:
@@ -1012,6 +1269,9 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
     lane_offset_elem = element.find(f"./{ns}LateralAction/{ns}LaneOffsetAction")
     routing_elem = element.find(f"./{ns}RoutingAction")
     activate_controller_elem = element.find(f"./{ns}ActivateControllerAction")
+    visibility_elem = element.find(f"./{ns}VisibilityAction")
+    synchronize_elem = element.find(f"./{ns}SynchronizeAction")
+    appearance_elem = element.find(f"./{ns}AppearanceAction")
     
     teleport_action = parse_teleport_action(teleport_elem) if teleport_elem is not None else None
     speed_action = parse_speed_action(speed_elem) if speed_elem is not None else None
@@ -1019,9 +1279,13 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
     lane_offset_action = parse_lane_offset_action(lane_offset_elem) if lane_offset_elem is not None else None
     routing_action = parse_routing_action(routing_elem) if routing_elem is not None else None
     activate_controller_action = parse_activate_controller_action(activate_controller_elem) if activate_controller_elem is not None else None
+    visibility_action = parse_visibility_action(visibility_elem) if visibility_elem is not None else None
+    synchronize_action = parse_synchronize_action(synchronize_elem) if synchronize_elem is not None else None
+    appearance_action = parse_appearance_action(appearance_elem) if appearance_elem is not None else None
     
     if (teleport_action is None and speed_action is None and lane_change_action is None and 
-        lane_offset_action is None and routing_action is None and activate_controller_action is None):
+        lane_offset_action is None and routing_action is None and activate_controller_action is None and
+        visibility_action is None and synchronize_action is None and appearance_action is None):
         return None
     
     return PrivateAction(
@@ -1031,6 +1295,9 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
         lane_offset_action=lane_offset_action,
         routing_action=routing_action,
         activate_controller_action=activate_controller_action,
+        visibility_action=visibility_action,
+        synchronize_action=synchronize_action,
+        appearance_action=appearance_action,
     )
 
 
@@ -1191,6 +1458,47 @@ def parse_time_to_collision_condition(element: ET.Element) -> Optional[TimeToCol
     )
 
 
+def parse_end_of_road_condition(element: ET.Element) -> Optional[EndOfRoadCondition]:
+    """EndOfRoadConditionをパース"""
+    if element is None:
+        return None
+    
+    duration = _get_attr_float(element, "duration", 0.0)
+    return EndOfRoadCondition(duration=duration)
+
+
+def parse_collision_condition(element: ET.Element) -> Optional[CollisionCondition]:
+    """CollisionConditionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    
+    # EntityRef要素またはByType要素（choice）
+    entity_ref = None
+    by_object_type = None
+    
+    entity_ref_elem = element.find(f"./{ns}EntityRef")
+    if entity_ref_elem is not None:
+        entity_ref = _get_attr(entity_ref_elem, "entityRef", "")
+        if not entity_ref:
+            entity_ref = None
+    
+    by_type_elem = element.find(f"./{ns}ByType")
+    if by_type_elem is not None:
+        obj_type = _get_attr(by_type_elem, "type", "")
+        if obj_type:
+            by_object_type = {"type": obj_type}
+    
+    if entity_ref is None and by_object_type is None:
+        return None
+    
+    return CollisionCondition(
+        entity_ref=entity_ref,
+        by_object_type=by_object_type,
+    )
+
+
 def parse_reach_position_condition(element: ET.Element) -> Optional[ReachPositionCondition]:
     """ReachPositionConditionをパース"""
     if element is None:
@@ -1258,6 +1566,8 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
     traveled_distance_condition = None
     time_to_collision_condition = None
     reach_position_condition = None
+    end_of_road_condition = None
+    collision_condition = None
     
     entity_condition_elem = element.find(f"./{ns}EntityCondition")
     if entity_condition_elem is not None:
@@ -1280,10 +1590,19 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
                         reach_elem = entity_condition_elem.find(f"./{ns}ReachPositionCondition")
                         if reach_elem is not None:
                             reach_position_condition = parse_reach_position_condition(reach_elem)
+                        else:
+                            end_of_road_elem = entity_condition_elem.find(f"./{ns}EndOfRoadCondition")
+                            if end_of_road_elem is not None:
+                                end_of_road_condition = parse_end_of_road_condition(end_of_road_elem)
+                            else:
+                                collision_elem = entity_condition_elem.find(f"./{ns}CollisionCondition")
+                                if collision_elem is not None:
+                                    collision_condition = parse_collision_condition(collision_elem)
     
     if (not triggering_entities and entity_condition is None and offroad_condition is None and
         traveled_distance_condition is None and time_to_collision_condition is None and
-        reach_position_condition is None):
+        reach_position_condition is None and end_of_road_condition is None and
+        collision_condition is None):
         return None
     
     return ByEntityCondition(
@@ -1294,6 +1613,8 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
         traveled_distance_condition=traveled_distance_condition,
         time_to_collision_condition=time_to_collision_condition,
         reach_position_condition=reach_position_condition,
+        end_of_road_condition=end_of_road_condition,
+        collision_condition=collision_condition,
     )
 
 

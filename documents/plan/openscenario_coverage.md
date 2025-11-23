@@ -14,14 +14,14 @@
 |---------|---------|---------|--------|------|--------|
 | 基本構造要素 | 12 | 2 | 3 | 17 | 82% |
 | Position関連 | 8 | 1 | 4 | 13 | 62% |
-| Action関連 | 8 | 3 | 25 | 36 | 31% |
-| Condition関連 | 7 | 2 | 12 | 21 | 43% |
+| Action関連 | 11 | 5 | 20 | 36 | 44% |
+| Condition関連 | 9 | 2 | 10 | 21 | 52% |
 | Entity関連 | 12 | 1 | 3 | 16 | 81% |
-| Trajectory関連 | 4 | 0 | 5 | 9 | 44% |
+| Trajectory関連 | 7 | 0 | 2 | 9 | 78% |
 | Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
 | Route関連 | 2 | 0 | 1 | 3 | 67% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **57** | **10** | **66** | **133** | **50%** |
+| **合計** | **63** | **10** | **60** | **133** | **55%** |
 
 ## 1. 基本構造要素
 
@@ -87,12 +87,12 @@
 | LongitudinalDistanceAction | ❌ | 未対応 |
 | SpeedProfileAction | ❌ | 未対応 |
 | LateralDistanceAction | ❌ | 未対応 |
-| VisibilityAction | ❌ | 未対応 |
-| SynchronizeAction | ❌ | 未対応 |
-| ControllerAction | ❌ | AssignControllerAction, OverrideControllerValueAction, ActivateControllerActionは未対応 |
-| AppearanceAction | ❌ | LightStateAction, AnimationActionは未対応 |
-| LightStateAction | ❌ | 未対応 |
-| AnimationAction | ❌ | 未対応 |
+| VisibilityAction | ✅ | graphics, sensors, traffic属性に対応。SensorReferenceSetは未対応 |
+| SynchronizeAction | ✅ | masterEntityRef, TargetPositionMaster, TargetPosition, targetToleranceMaster, targetTolerance, FinalSpeedに対応 |
+| ControllerAction | ⚠️ | ActivateControllerActionのみ対応。AssignControllerAction, OverrideControllerValueActionは未対応 |
+| AppearanceAction | ⚠️ | LightStateAction, AnimationActionの基本属性に対応。LightType/LightState, AnimationType/AnimationStateは未対応 |
+| LightStateAction | ⚠️ | transitionTime属性のみ対応。LightType, LightStateは未対応 |
+| AnimationAction | ⚠️ | loop, animationDuration属性のみ対応。AnimationType, AnimationStateは未対応 |
 | AcquirePositionAction | ❌ | 未対応 |
 
 ### 3.2 GlobalAction
@@ -127,9 +127,9 @@
 | LaneOffsetTarget | ⚠️ | AbsoluteTargetLaneOffsetのみ対応 |
 | AbsoluteTargetLaneOffset | ✅ | value属性に対応 |
 | RelativeTargetLaneOffset | ❌ | 未対応 |
-| FinalSpeed | ❌ | AbsoluteSpeed, RelativeSpeedToMasterは未対応 |
-| AbsoluteSpeed | ❌ | 未対応 |
-| RelativeSpeedToMaster | ❌ | 未対応 |
+| FinalSpeed | ⚠️ | SynchronizeAction内でAbsoluteSpeed, RelativeSpeedToMasterに対応 |
+| AbsoluteSpeed | ✅ | SynchronizeAction内でvalue属性に対応 |
+| RelativeSpeedToMaster | ✅ | SynchronizeAction内でspeedTargetValueType, value属性に対応 |
 
 ## 4. Condition関連
 
@@ -153,14 +153,14 @@
 |--------|---------|------|
 | ByEntityCondition | ⚠️ | TriggeringEntities, EntityConditionの一部のみ対応 |
 | TriggeringEntities | ⚠️ | EntityRefのみ対応。triggeringEntitiesRuleは対応 |
-| EntityCondition | ⚠️ | TimeHeadwayCondition, OffroadCondition, TraveledDistanceCondition, TimeToCollisionCondition, ReachPositionConditionのみ対応 |
+| EntityCondition | ⚠️ | TimeHeadwayCondition, OffroadCondition, TraveledDistanceCondition, TimeToCollisionCondition, ReachPositionCondition, EndOfRoadCondition, CollisionConditionに対応 |
 | TimeHeadwayCondition | ✅ | entityRef, value, freespace, coordinateSystem, relativeDistanceType, ruleに対応 |
 | OffroadCondition | ✅ | duration属性に対応 |
 | TraveledDistanceCondition | ✅ | value属性に対応 |
 | TimeToCollisionCondition | ✅ | value, freespace, coordinateSystem, relativeDistanceType, rule, target_entity_refに対応 |
 | ReachPositionCondition | ✅ | tolerance, position（全Positionタイプ）に対応（deprecatedだが実装済み） |
-| EndOfRoadCondition | ❌ | 未対応 |
-| CollisionCondition | ❌ | 未対応 |
+| EndOfRoadCondition | ✅ | duration属性に対応 |
+| CollisionCondition | ✅ | EntityRef, ByType（ByObjectType）に対応 |
 | AccelerationCondition | ❌ | 未対応 |
 | StandStillCondition | ❌ | 未対応 |
 | SpeedCondition | ❌ | 未対応 |
@@ -226,22 +226,22 @@
 | EntitySelection | ❌ | 未対応 |
 | SelectedEntities | ❌ | 未対応 |
 | ByType | ❌ | SelectedEntities内のByType未対応 |
-| ByObjectType | ❌ | CollisionCondition内のByObjectType未対応 |
+| ByObjectType | ✅ | CollisionCondition内のByObjectType（type属性）に対応 |
 | ExternalObjectReference | ❌ | 未対応 |
 
 ## 6. Trajectory関連
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| Trajectory | ⚠️ | name, closed, ParameterDeclarations, Shape/Polylineのみ対応 |
+| Trajectory | ✅ | name, closed, ParameterDeclarations, Shape（Polyline, Clothoid, Nurbs）に対応 |
 | TrajectoryRef | ❌ | FollowTrajectoryAction内のTrajectoryRef未対応 |
-| Shape | ⚠️ | Polylineのみ対応 |
+| Shape | ✅ | Polyline, Clothoid, Nurbsに対応 |
 | Polyline | ✅ | Vertexのリストに対応 |
 | Vertex | ✅ | 全Positionタイプ（WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition, RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition）とtime属性に対応 |
-| Clothoid | ❌ | 未対応 |
-| Nurbs | ❌ | 未対応 |
-| ControlPoint | ❌ | Nurbs内のControlPoint未対応 |
-| Knot | ❌ | Nurbs内のKnot未対応 |
+| Clothoid | ✅ | curvature, length, curvaturePrime, startTime, stopTime属性、Positionに対応 |
+| Nurbs | ✅ | order属性、ControlPoint（2以上）、Knot（2以上）に対応 |
+| ControlPoint | ✅ | Position, time, weight属性に対応 |
+| Knot | ✅ | value属性に対応 |
 | TimeReference | ⚠️ | None, Timingに対応 |
 | Timing | ⚠️ | domainAbsoluteRelative, offset, scale属性に対応 |
 | None | ✅ | TimeReference内のNoneに対応 |
@@ -379,10 +379,10 @@
    - ~~Vehicle/Pedestrianの詳細属性（BoundingBox, Performance, Axles等）~~ ✅
    - ~~Route要素の完全対応~~ ✅
 
-2. **中優先度**
-   - 高度なAction（VisibilityAction, SynchronizeAction, AppearanceAction等）
-   - 追加のCondition（EndOfRoadCondition, CollisionCondition等）
-   - Trajectoryの高度な形状（Clothoid, Nurbs等）
+2. **中優先度** ✅ 実装済み
+   - ~~高度なAction（VisibilityAction, SynchronizeAction, AppearanceAction等）~~ ✅
+   - ~~追加のCondition（EndOfRoadCondition, CollisionCondition等）~~ ✅
+   - ~~Trajectoryの高度な形状（Clothoid, Nurbs等）~~ ✅
 
 3. **低優先度**
    - Environment関連（Weather, TimeOfDay等）
@@ -392,6 +392,7 @@
 
 ## 更新履歴
 
+- 2025-01-XX: 中優先度機能の実装完了（VisibilityAction, SynchronizeAction, AppearanceAction, EndOfRoadCondition, CollisionCondition, Clothoid, Nurbs）
 - 2025-11-23 11:06: Position関連（相対座標系）、Vehicle/Pedestrian詳細属性、Route要素の実装完了
 - 2025-11-23 10:47: 初版作成（OpenSCENARIO 1.2.0 XSDとの比較）
 

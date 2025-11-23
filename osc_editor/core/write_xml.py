@@ -30,7 +30,10 @@ from osc_editor.core.model import (
     FollowTrajectoryAction,
     Trajectory,
     Polyline,
+    Clothoid,
+    Nurbs,
     Vertex,
+    ControlPoint,
     TimeReference,
     ActivateControllerAction,
     SpeedAction,
@@ -38,6 +41,9 @@ from osc_editor.core.model import (
     LaneChangeAction,
     LaneOffsetAction,
     LaneOffsetActionDynamics,
+    VisibilityAction,
+    SynchronizeAction,
+    AppearanceAction,
     WorldPosition,
     LanePosition,
     RoutePosition,
@@ -66,6 +72,8 @@ from osc_editor.core.model import (
     TraveledDistanceCondition,
     TimeToCollisionCondition,
     ReachPositionCondition,
+    EndOfRoadCondition,
+    CollisionCondition,
     ParameterCondition,
     StoryboardElementStateCondition,
     GlobalAction,
@@ -539,11 +547,65 @@ def write_vertex(parent: ET.Element, vertex: Vertex):
     write_position(position_elem, vertex.position)
 
 
+def write_control_point(parent: ET.Element, control_point: ControlPoint):
+    """ControlPointをXMLに書き込み"""
+    elem = _create_element("ControlPoint", parent)
+    if control_point.time is not None:
+        elem.set("time", str(control_point.time))
+    if control_point.weight is not None:
+        elem.set("weight", str(control_point.weight))
+    
+    position_elem = _create_element("Position", elem)
+    write_position(position_elem, control_point.position)
+
+
 def write_polyline(parent: ET.Element, polyline: Polyline):
     """PolylineをXMLに書き込み"""
     elem = _create_element("Polyline", parent)
     for vertex in polyline.vertices:
         write_vertex(elem, vertex)
+
+
+def write_clothoid(parent: ET.Element, clothoid: Clothoid):
+    """ClothoidをXMLに書き込み"""
+    elem = _create_element("Clothoid", parent)
+    elem.set("curvature", str(clothoid.curvature))
+    elem.set("length", str(clothoid.length))
+    
+    if clothoid.curvature_prime is not None:
+        elem.set("curvaturePrime", str(clothoid.curvature_prime))
+    if clothoid.start_time is not None:
+        elem.set("startTime", str(clothoid.start_time))
+    if clothoid.stop_time is not None:
+        elem.set("stopTime", str(clothoid.stop_time))
+    
+    position_elem = _create_element("Position", elem)
+    write_position(position_elem, clothoid.position)
+
+
+def write_nurbs(parent: ET.Element, nurbs: Nurbs):
+    """NurbsをXMLに書き込み"""
+    elem = _create_element("Nurbs", parent)
+    elem.set("order", str(nurbs.order))
+    
+    for control_point in nurbs.control_points:
+        write_control_point(elem, control_point)
+    
+    for knot in nurbs.knots:
+        knot_elem = _create_element("Knot", elem)
+        knot_elem.set("value", str(knot["value"]))
+
+
+def write_shape(parent: ET.Element, shape):
+    """Shape要素を書き込み（Polyline, Clothoid, Nurbsのいずれか）"""
+    shape_elem = _create_element("Shape", parent)
+    
+    if isinstance(shape, Polyline):
+        write_polyline(shape_elem, shape)
+    elif isinstance(shape, Clothoid):
+        write_clothoid(shape_elem, shape)
+    elif isinstance(shape, Nurbs):
+        write_nurbs(shape_elem, shape)
 
 
 def write_trajectory(parent: ET.Element, trajectory: Trajectory):
@@ -555,9 +617,8 @@ def write_trajectory(parent: ET.Element, trajectory: Trajectory):
     if trajectory.parameter_declarations and trajectory.parameter_declarations.parameters:
         write_parameter_declarations(elem, trajectory.parameter_declarations)
     
-    if trajectory.shape and trajectory.shape.vertices:
-        shape_elem = _create_element("Shape", elem)
-        write_polyline(shape_elem, trajectory.shape)
+    if trajectory.shape:
+        write_shape(elem, trajectory.shape)
 
 
 def write_time_reference(parent: ET.Element, time_reference: TimeReference):
@@ -616,6 +677,79 @@ def write_activate_controller_action(parent: ET.Element, activate_controller: Ac
     elem.set("lateral", "true" if activate_controller.lateral else "false")
 
 
+def write_visibility_action(parent: ET.Element, visibility_action: VisibilityAction):
+    """VisibilityActionをXMLに書き込み"""
+    elem = _create_element("VisibilityAction", parent)
+    # Boolean型属性を文字列として出力（パラメータ参照の場合はそのまま）
+    if isinstance(visibility_action.graphics, bool):
+        elem.set("graphics", "true" if visibility_action.graphics else "false")
+    else:
+        elem.set("graphics", str(visibility_action.graphics))
+    
+    if isinstance(visibility_action.sensors, bool):
+        elem.set("sensors", "true" if visibility_action.sensors else "false")
+    else:
+        elem.set("sensors", str(visibility_action.sensors))
+    
+    if isinstance(visibility_action.traffic, bool):
+        elem.set("traffic", "true" if visibility_action.traffic else "false")
+    else:
+        elem.set("traffic", str(visibility_action.traffic))
+    
+    # SensorReferenceSet要素は現時点では省略
+
+
+def write_synchronize_action(parent: ET.Element, synchronize_action: SynchronizeAction):
+    """SynchronizeActionをXMLに書き込み"""
+    elem = _create_element("SynchronizeAction", parent)
+    elem.set("masterEntityRef", synchronize_action.master_entity_ref)
+    
+    if synchronize_action.target_tolerance_master is not None:
+        elem.set("targetToleranceMaster", str(synchronize_action.target_tolerance_master))
+    if synchronize_action.target_tolerance is not None:
+        elem.set("targetTolerance", str(synchronize_action.target_tolerance))
+    
+    # TargetPositionMaster要素（required）
+    target_pos_master_elem = _create_element("TargetPositionMaster", elem)
+    write_position(target_pos_master_elem, synchronize_action.target_position_master)
+    
+    # TargetPosition要素（required）
+    target_pos_elem = _create_element("TargetPosition", elem)
+    write_position(target_pos_elem, synchronize_action.target_position)
+    
+    # FinalSpeed要素（optional）
+    if synchronize_action.final_speed is not None:
+        final_speed_elem = _create_element("FinalSpeed", elem)
+        if synchronize_action.final_speed.get("type") == "AbsoluteSpeed":
+            abs_speed_elem = _create_element("AbsoluteSpeed", final_speed_elem)
+            abs_speed_elem.set("value", str(synchronize_action.final_speed.get("value", "")))
+        elif synchronize_action.final_speed.get("type") == "RelativeSpeedToMaster":
+            rel_speed_elem = _create_element("RelativeSpeedToMaster", final_speed_elem)
+            rel_speed_elem.set("speedTargetValueType", synchronize_action.final_speed.get("speedTargetValueType", "delta"))
+            rel_speed_elem.set("value", str(synchronize_action.final_speed.get("value", "")))
+
+
+def write_appearance_action(parent: ET.Element, appearance_action: AppearanceAction):
+    """AppearanceActionをXMLに書き込み"""
+    elem = _create_element("AppearanceAction", parent)
+    
+    # LightStateAction要素（optional）
+    if appearance_action.light_state_action is not None:
+        light_state_elem = _create_element("LightStateAction", elem)
+        if "transitionTime" in appearance_action.light_state_action:
+            light_state_elem.set("transitionTime", str(appearance_action.light_state_action["transitionTime"]))
+        # LightType, LightState要素は将来対応
+    
+    # AnimationAction要素（optional）
+    if appearance_action.animation_action is not None:
+        animation_elem = _create_element("AnimationAction", elem)
+        if "loop" in appearance_action.animation_action:
+            animation_elem.set("loop", "true" if appearance_action.animation_action["loop"] else "false")
+        if "animationDuration" in appearance_action.animation_action:
+            animation_elem.set("animationDuration", str(appearance_action.animation_action["animationDuration"]))
+        # AnimationType, AnimationState要素は将来対応
+
+
 def write_private_action(parent: ET.Element, private_action: PrivateAction):
     """PrivateActionをXMLに書き込み"""
     elem = _create_element("PrivateAction", parent)
@@ -640,6 +774,15 @@ def write_private_action(parent: ET.Element, private_action: PrivateAction):
     
     if private_action.activate_controller_action is not None:
         write_activate_controller_action(elem, private_action.activate_controller_action)
+    
+    if private_action.visibility_action is not None:
+        write_visibility_action(elem, private_action.visibility_action)
+    
+    if private_action.synchronize_action is not None:
+        write_synchronize_action(elem, private_action.synchronize_action)
+    
+    if private_action.appearance_action is not None:
+        write_appearance_action(elem, private_action.appearance_action)
 
 
 def write_parameter_action(parent: ET.Element, parameter_action: ParameterAction):
@@ -713,6 +856,25 @@ def write_traveled_distance_condition(parent: ET.Element, condition: TraveledDis
     elem.set("value", str(condition.value))
 
 
+def write_end_of_road_condition(parent: ET.Element, condition: EndOfRoadCondition):
+    """EndOfRoadConditionをXMLに書き込み"""
+    elem = _create_element("EndOfRoadCondition", parent)
+    elem.set("duration", str(condition.duration))
+
+
+def write_collision_condition(parent: ET.Element, condition: CollisionCondition):
+    """CollisionConditionをXMLに書き込み"""
+    elem = _create_element("CollisionCondition", parent)
+    
+    # EntityRef要素またはByType要素（choice）
+    if condition.entity_ref is not None:
+        entity_ref_elem = _create_element("EntityRef", elem)
+        entity_ref_elem.set("entityRef", condition.entity_ref)
+    elif condition.by_object_type is not None:
+        by_type_elem = _create_element("ByType", elem)
+        by_type_elem.set("type", condition.by_object_type.get("type", ""))
+
+
 def write_time_to_collision_condition(parent: ET.Element, condition: TimeToCollisionCondition):
     """TimeToCollisionConditionをXMLに書き込み"""
     elem = _create_element("TimeToCollisionCondition", parent)
@@ -770,7 +932,9 @@ def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
         condition.offroad_condition is not None or
         condition.traveled_distance_condition is not None or
         condition.time_to_collision_condition is not None or
-        condition.reach_position_condition is not None
+        condition.reach_position_condition is not None or
+        condition.end_of_road_condition is not None or
+        condition.collision_condition is not None
     )
     
     if has_entity_condition:
@@ -785,6 +949,10 @@ def write_by_entity_condition(parent: ET.Element, condition: ByEntityCondition):
             write_time_to_collision_condition(entity_condition_elem, condition.time_to_collision_condition)
         elif condition.reach_position_condition is not None:
             write_reach_position_condition(entity_condition_elem, condition.reach_position_condition)
+        elif condition.end_of_road_condition is not None:
+            write_end_of_road_condition(entity_condition_elem, condition.end_of_road_condition)
+        elif condition.collision_condition is not None:
+            write_collision_condition(entity_condition_elem, condition.collision_condition)
 
 
 def write_condition(parent: ET.Element, condition: Condition):

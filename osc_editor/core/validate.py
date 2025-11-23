@@ -268,6 +268,120 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                                         f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/AssignRouteAction/Route[@name='{assign_route.route.name}']"
                                                     )
                                                 )
+                                
+                                # VisibilityActionのバリデーション
+                                if action.private_action and action.private_action.visibility_action:
+                                    vis_action = action.private_action.visibility_action
+                                    # graphics, sensors, traffic属性は必須（既にモデルでrequired）
+                                
+                                # SynchronizeActionのバリデーション
+                                if action.private_action and action.private_action.synchronize_action:
+                                    sync_action = action.private_action.synchronize_action
+                                    # masterEntityRefがEntities内に存在するか確認
+                                    if scenario.entities:
+                                        entity_names = {obj.name for obj in scenario.entities.scenario_objects}
+                                        if sync_action.master_entity_ref not in entity_names:
+                                            errors.append(
+                                                ValidationError(
+                                                    f"Entity '{sync_action.master_entity_ref}' referenced in SynchronizeAction does not exist",
+                                                    f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/SynchronizeAction"
+                                                )
+                                            )
+                                
+                                # AppearanceActionのバリデーション
+                                if action.private_action and action.private_action.appearance_action:
+                                    app_action = action.private_action.appearance_action
+                                    # LightStateActionまたはAnimationActionが少なくとも1つ存在することを確認
+                                    if app_action.light_state_action is None and app_action.animation_action is None:
+                                        errors.append(
+                                            ValidationError(
+                                                f"AppearanceAction must have at least one of LightStateAction or AnimationAction",
+                                                f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/AppearanceAction"
+                                            )
+                                        )
+                                
+                                # TrajectoryのShapeバリデーション
+                                if action.private_action and action.private_action.routing_action:
+                                    if action.private_action.routing_action.follow_trajectory_action:
+                                        traj = action.private_action.routing_action.follow_trajectory_action.trajectory
+                                        if traj.shape is None:
+                                            errors.append(
+                                                ValidationError(
+                                                    f"Trajectory '{traj.name}' must have a Shape (Polyline, Clothoid, or Nurbs)",
+                                                    f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/FollowTrajectoryAction/Trajectory[@name='{traj.name}']"
+                                                )
+                                            )
+                                        else:
+                                            # Clothoidのバリデーション
+                                            from osc_editor.core.model import Clothoid
+                                            if isinstance(traj.shape, Clothoid):
+                                                if traj.shape.curvature is None or traj.shape.length is None:
+                                                    errors.append(
+                                                        ValidationError(
+                                                            f"Clothoid in Trajectory '{traj.name}' must have curvature and length attributes",
+                                                            f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/FollowTrajectoryAction/Trajectory[@name='{traj.name}']/Shape/Clothoid"
+                                                        )
+                                                    )
+                                            
+                                            # Nurbsのバリデーション
+                                            from osc_editor.core.model import Nurbs
+                                            if isinstance(traj.shape, Nurbs):
+                                                if traj.shape.order <= 0:
+                                                    errors.append(
+                                                        ValidationError(
+                                                            f"Nurbs in Trajectory '{traj.name}' must have a positive order",
+                                                            f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/FollowTrajectoryAction/Trajectory[@name='{traj.name}']/Shape/Nurbs"
+                                                        )
+                                                    )
+                                                if len(traj.shape.control_points) < 2:
+                                                    errors.append(
+                                                        ValidationError(
+                                                            f"Nurbs in Trajectory '{traj.name}' must have at least 2 ControlPoints",
+                                                            f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/FollowTrajectoryAction/Trajectory[@name='{traj.name}']/Shape/Nurbs"
+                                                        )
+                                                    )
+                                                if len(traj.shape.knots) < 2:
+                                                    errors.append(
+                                                        ValidationError(
+                                                            f"Nurbs in Trajectory '{traj.name}' must have at least 2 Knots",
+                                                            f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/FollowTrajectoryAction/Trajectory[@name='{traj.name}']/Shape/Nurbs"
+                                                        )
+                                                    )
+                                    
+                                    # Conditionのバリデーション（EndOfRoadCondition, CollisionCondition）
+                                    for cg in event.start_trigger.condition_groups if event.start_trigger else []:
+                                        for cond in cg.conditions:
+                                            if cond.by_entity_condition:
+                                                bec = cond.by_entity_condition
+                                                # EndOfRoadConditionのバリデーション
+                                                if bec.end_of_road_condition:
+                                                    if bec.end_of_road_condition.duration is None:
+                                                        errors.append(
+                                                            ValidationError(
+                                                                f"EndOfRoadCondition must have duration attribute",
+                                                                f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/StartTrigger/ConditionGroup/Condition[@name='{cond.name}']/ByEntityCondition/EntityCondition/EndOfRoadCondition"
+                                                            )
+                                                        )
+                                                
+                                                # CollisionConditionのバリデーション
+                                                if bec.collision_condition:
+                                                    cc = bec.collision_condition
+                                                    if cc.entity_ref is None and cc.by_object_type is None:
+                                                        errors.append(
+                                                            ValidationError(
+                                                                f"CollisionCondition must have either EntityRef or ByType element",
+                                                                f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/StartTrigger/ConditionGroup/Condition[@name='{cond.name}']/ByEntityCondition/EntityCondition/CollisionCondition"
+                                                            )
+                                                        )
+                                                    elif cc.entity_ref and scenario.entities:
+                                                        entity_names = {obj.name for obj in scenario.entities.scenario_objects}
+                                                        if cc.entity_ref not in entity_names:
+                                                            errors.append(
+                                                                ValidationError(
+                                                                    f"Entity '{cc.entity_ref}' referenced in CollisionCondition does not exist",
+                                                                    f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/StartTrigger/ConditionGroup/Condition[@name='{cond.name}']/ByEntityCondition/EntityCondition/CollisionCondition"
+                                                                )
+                                                            )
     
     return errors
 

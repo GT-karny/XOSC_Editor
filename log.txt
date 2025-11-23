@@ -3,16 +3,12 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_ss34_goc\scenario.xosc
-[2025-11-23 11:03:06]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_ss34_goc\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_nr26vupr\scenario.xosc
+[2025-11-23 11:22:51]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_nr26vupr\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 2611142408
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_ss34_goc/scenario.xosc (v1.0)
+[] [info] Generated seed 2482691016
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_nr26vupr/scenario.xosc (v1.0)
 [] [info] 0 variables
-[] [error] Unsupported geo reference attr: +no_defs
-[] [error] Unsupported object type: guide-post - interpret as NONE
-[] [error] Unsupported object type: guide-post - interpret as NONE
-[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/curve_r100.xodr
-[] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
-[] [error] Exception: Missing EntityCondition
+[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/curves_elevation.xodr
+[] [error] Exception: invalid stof argument

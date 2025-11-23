@@ -223,9 +223,38 @@ class Vertex:
 
 
 @dataclass
+class ControlPoint:
+    """ControlPoint（制御点、Nurbs用）"""
+    position: Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                    RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
+    time: Optional[Union[str, float]] = None  # time属性（オプション）
+    weight: Optional[Union[str, float]] = None  # weight属性（オプション）
+
+
+@dataclass
 class Polyline:
     """Polyline（ポリライン）"""
     vertices: List[Vertex] = field(default_factory=list)
+
+
+@dataclass
+class Clothoid:
+    """Clothoid（クロソイド曲線）"""
+    curvature: Union[str, float]  # required
+    length: Union[str, float]  # required
+    position: Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                   RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
+    curvature_prime: Optional[Union[str, float]] = None  # optional
+    start_time: Optional[Union[str, float]] = None  # optional
+    stop_time: Optional[Union[str, float]] = None  # optional
+
+
+@dataclass
+class Nurbs:
+    """Nurbs（NURBS曲線）"""
+    order: int  # required, UnsignedInt
+    control_points: List[ControlPoint] = field(default_factory=list)  # 2以上 required
+    knots: List[dict] = field(default_factory=list)  # 2以上 required, value属性を持つ
 
 
 @dataclass
@@ -233,7 +262,7 @@ class Trajectory:
     """Trajectory（軌跡）"""
     name: str
     closed: bool = False
-    shape: Optional[Polyline] = None  # Shape内のPolyline
+    shape: Optional[Union[Polyline, Clothoid, Nurbs]] = None  # Shape内のPolyline, Clothoid, Nurbs（choice）
     parameter_declarations: Optional[ParameterDeclarations] = None
 
 
@@ -266,6 +295,35 @@ class ActivateControllerAction:
 
 
 @dataclass
+class VisibilityAction:
+    """VisibilityAction（可視性アクション）"""
+    graphics: Union[str, bool]  # Boolean型, required
+    sensors: Union[str, bool]  # Boolean型, required
+    traffic: Union[str, bool]  # Boolean型, required
+    sensor_reference_set: Optional[dict] = None  # SensorReferenceSet要素（将来の拡張用）
+
+
+@dataclass
+class SynchronizeAction:
+    """SynchronizeAction（同期アクション）"""
+    master_entity_ref: str  # required
+    target_position_master: Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                                   RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
+    target_position: Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                           RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
+    target_tolerance_master: Optional[Union[str, float]] = None  # optional
+    target_tolerance: Optional[Union[str, float]] = None  # optional
+    final_speed: Optional[dict] = None  # FinalSpeed要素（AbsoluteSpeedまたはRelativeSpeedToMaster）
+
+
+@dataclass
+class AppearanceAction:
+    """AppearanceAction（外観アクション）"""
+    light_state_action: Optional[dict] = None  # LightStateAction要素（optional）
+    animation_action: Optional[dict] = None  # AnimationAction要素（optional）
+
+
+@dataclass
 class PrivateAction:
     """PrivateAction（エンティティ固有のアクション）"""
     teleport_action: Optional[TeleportAction] = None
@@ -274,6 +332,9 @@ class PrivateAction:
     lane_offset_action: Optional[LaneOffsetAction] = None
     routing_action: Optional[RoutingAction] = None
     activate_controller_action: Optional[ActivateControllerAction] = None
+    visibility_action: Optional[VisibilityAction] = None
+    synchronize_action: Optional[SynchronizeAction] = None
+    appearance_action: Optional[AppearanceAction] = None
 
 
 @dataclass
@@ -352,6 +413,19 @@ class ReachPositionCondition:
 
 
 @dataclass
+class EndOfRoadCondition:
+    """EndOfRoadCondition（道路終端条件）"""
+    duration: Union[str, float]  # required
+
+
+@dataclass
+class CollisionCondition:
+    """CollisionCondition（衝突条件）"""
+    entity_ref: Optional[str] = None  # EntityRef要素（choice）
+    by_object_type: Optional[dict] = None  # ByType要素（ByObjectTypeのtype属性）
+
+
+@dataclass
 class ParameterCondition:
     """ParameterCondition（パラメータ条件）"""
     parameter_ref: str
@@ -377,6 +451,8 @@ class ByEntityCondition:
     traveled_distance_condition: Optional[TraveledDistanceCondition] = None
     time_to_collision_condition: Optional[TimeToCollisionCondition] = None
     reach_position_condition: Optional[ReachPositionCondition] = None
+    end_of_road_condition: Optional[EndOfRoadCondition] = None
+    collision_condition: Optional[CollisionCondition] = None
 
 
 @dataclass
