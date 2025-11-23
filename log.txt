@@ -3,68 +3,17 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_i0pea3bw\scenario.xosc
-[2025-11-23 13:23:33]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_i0pea3bw\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_xffgom_i\scenario.xosc
+[2025-11-23 13:52:20]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_xffgom_i\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 4168596407
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_i0pea3bw/scenario.xosc (v1.3)
+[] [info] Generated seed 985554904
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_xffgom_i/scenario.xosc (v1.1)
 [] [info] 0 variables
-[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/tunnels.xodr
+[] [error] Unsupported geo reference attr: +no_defs
+[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/straight_500m.xodr
 [] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
-[] [info] Expr ${50/3.6} = 50/3.6 = 13.8888888889
-[] [info] Expr ${50/3.6} = 50/3.6 = 13.8888888889
-[] [info] Expr ${50/3.6} = 50/3.6 = 13.8888888889
-[] [info] Expr ${30/3.6} = 30/3.6 = 8.3333333333
-[] [info] Expr ${30/3.6} = 30/3.6 = 8.3333333333
-[] [info] 0 parameters
-[0.000] [info] Window created at 60,60 with size 800,400
-[0.000] [info] Generating a simplistic 3D model of the road network
-[0.000] [info] Created outline geometry for object FlexibleTunnel.
-[0.000] [info] Created outline geometry for object FlexibleTunnel.
-[0.000] [info] Created outline geometry for object FlexibleTunnel.
-[0.000] [info] Created outline geometry for object ShortTunnel.
-[0.000] [info] Created outline geometry for object ShortTunnel.
-[0.000] [info] Created outline geometry for object ShortTunnel.
-[0.000] [info] Created outline geometry for object FlexibleTunnel.
-[0.000] [info] Created outline geometry for object FlexibleTunnel.
-[0.000] [info] Created outline geometry for object FlexibleTunnel.
-[0.000] [info] Adjusted Car2 bounding box to model car_red.osgb - xyz: 1.46, 0.00, 0.77 lwh: 5.04, 2.04, 1.49
-[0.000] [info] Adjusted Car5 bounding box to model van_red.osgb - xyz: 1.64, 0.00, 1.11 lwh: 5.71, 1.90, 2.16
-[0.000] [info] Init Car1 TeleportAction initState -> startTransition -> runningState
-[0.000] [info] Starting teleport Action
-[0.000] [info] Car1 New position:
-[0.000] [info] Pos(10.00, -1.50, 0.33) Rot(0.00, 6.22, 0.00) roadId 1 laneId -1 s 10.00 offset 0.00 t -1.50
-[0.000] [info] Init Car1 LongitudinalAction initState -> startTransition -> runningState
-[0.000] [info] Init Car2 TeleportAction initState -> startTransition -> runningState
-[0.000] [info] Starting teleport Action
-[0.000] [info] Car2 New position:
-[0.000] [info] Pos(456.71, 221.51, 0.04) Rot(3.14, 6.28, 0.00) roadId 1 laneId 1 s 570.00 offset 0.00 t 1.50
-[0.000] [info] Init Car2 LongitudinalAction initState -> startTransition -> runningState
-[0.000] [info] Init Car3 TeleportAction initState -> startTransition -> runningState
-[0.000] [info] Starting teleport Action
-[0.000] [info] Car3 New position:
-[0.000] [info] Pos(223.35, 111.50, 11.86) Rot(3.14, 6.22, 0.00) roadId 1 laneId 1 s 280.00 offset 0.00 t 1.50
-[0.000] [info] Init Car3 LongitudinalAction initState -> startTransition -> runningState
-[0.000] [info] Init Car4 TeleportAction initState -> startTransition -> runningState
-[0.000] [info] Starting teleport Action
-[0.000] [info] Car4 New position:
-[0.000] [info] Pos(310.00, -51.50, 0.00) Rot(0.00, 0.00, 0.00) roadId 2 laneId -1 s 10.00 offset 0.00 t -1.50
-[0.000] [info] Init Car4 LongitudinalAction initState -> startTransition -> runningState
-[0.000] [info] Init Car5 TeleportAction initState -> startTransition -> runningState
-[0.000] [info] Starting teleport Action
-[0.000] [info] Car5 New position:
-[0.000] [info] Pos(417.18, 102.84, 0.00) Rot(5.14, 0.00, 0.00) roadId 2 laneId 1 s 280.00 offset 0.00 t 1.50
-[0.000] [info] Init Car5 LongitudinalAction initState -> startTransition -> runningState
-[0.000] [info] storyBoard initState -> startTransition -> runningState
-[0.000] [info] Init Car1 TeleportAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car1 LongitudinalAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car2 TeleportAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car2 LongitudinalAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car3 TeleportAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car3 LongitudinalAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car4 TeleportAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car4 LongitudinalAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car5 TeleportAction runningState -> endTransition -> completeState
-[0.000] [info] Init Car5 LongitudinalAction runningState -> endTransition -> completeState
-[27.153] [info] Closing
+[] [error] Missing EntityObject
+[] [warn] displacement attribute missing, setting default trailingReferencedEntity
+[] [error] Failed to find object Box
+[] [error] Exception: Failed to find object: Box

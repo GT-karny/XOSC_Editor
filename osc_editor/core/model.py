@@ -126,8 +126,18 @@ class Dynamics:
     """Dynamics（動作の動的特性）"""
     dynamics_dimension: DynamicsDimension = DynamicsDimension.TIME
     dynamics_shape: DynamicsShape = DynamicsShape.LINEAR
-    value: Optional[float] = None
+    value: Union[str, float, None] = None  # パラメータ式も対応
     constraint: Optional[str] = None  # 将来の拡張用
+
+
+@dataclass
+class DynamicConstraints:
+    """DynamicConstraints（動的制約）"""
+    max_acceleration: Optional[Union[str, float]] = None  # maxAcceleration属性
+    max_acceleration_rate: Optional[Union[str, float]] = None  # maxAccelerationRate属性
+    max_deceleration: Optional[Union[str, float]] = None  # maxDeceleration属性
+    max_deceleration_rate: Optional[Union[str, float]] = None  # maxDecelerationRate属性
+    max_speed: Optional[Union[str, float]] = None  # maxSpeed属性
 
 
 # ============================================================================
@@ -156,6 +166,13 @@ class AssignRouteAction:
     """AssignRouteAction（ルート割り当て）"""
     route_ref: Optional[CatalogReference] = None  # CatalogReference
     route: Optional[Route] = None  # Route要素
+
+
+@dataclass
+class AcquirePositionAction:
+    """AcquirePositionAction（位置取得アクション）"""
+    position: Optional[Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                            RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]] = None
 
 
 @dataclass
@@ -190,6 +207,35 @@ class SpeedAction:
 
 
 @dataclass
+class SpeedProfileEntry:
+    """SpeedProfileEntry（速度プロファイルエントリ）"""
+    speed: Union[str, float]  # required
+    time: Optional[Union[str, float]] = None  # optional
+
+
+@dataclass
+class SpeedProfileAction:
+    """SpeedProfileAction（速度プロファイルアクション）"""
+    following_mode: str = "follow"  # required: follow, position
+    entity_ref: Optional[str] = None  # optional
+    dynamic_constraints: Optional[DynamicConstraints] = None  # optional
+    entries: List[SpeedProfileEntry] = field(default_factory=list)  # required, maxOccurs="unbounded"
+
+
+@dataclass
+class LongitudinalDistanceAction:
+    """LongitudinalDistanceAction（縦方向距離アクション）"""
+    entity_ref: str  # required
+    continuous: Union[str, bool]  # required
+    freespace: Union[str, bool]  # required
+    distance: Optional[Union[str, float]] = None  # optional
+    time_gap: Optional[Union[str, float]] = None  # optional (timeGap)
+    displacement: Optional[str] = None  # optional (LongitudinalDisplacement: any, trailingReferencedEntity, leadingReferencedEntity)
+    coordinate_system: Optional[str] = None  # optional (CoordinateSystem: entity, lane, road, trajectory)
+    dynamic_constraints: Optional[DynamicConstraints] = None  # optional
+
+
+@dataclass
 class LaneChangeAction:
     """LaneChangeAction（レーン変更）"""
     target_lane: Optional[int] = None  # RelativeTargetLaneまたはAbsoluteTargetLaneのvalue
@@ -212,6 +258,18 @@ class LaneOffsetAction:
     target_offset: Union[str, float]  # AbsoluteTargetLaneOffsetのvalue
     dynamics: Optional[LaneOffsetActionDynamics] = None
     continuous: bool = True  # continuous属性
+
+
+@dataclass
+class LateralDistanceAction:
+    """LateralDistanceAction（横方向距離アクション）"""
+    entity_ref: str  # required
+    continuous: Union[str, bool]  # required
+    freespace: Union[str, bool]  # required
+    distance: Optional[Union[str, float]] = None  # optional
+    displacement: Optional[str] = None  # optional (LateralDisplacement: any, leftToReferencedEntity, rightToReferencedEntity)
+    coordinate_system: Optional[str] = None  # optional (CoordinateSystem: entity, lane, road, trajectory)
+    dynamic_constraints: Optional[DynamicConstraints] = None  # optional
 
 
 @dataclass
@@ -294,13 +352,48 @@ class RoutingAction:
     """RoutingAction（ルーティングアクション）"""
     assign_route_action: Optional[AssignRouteAction] = None
     follow_trajectory_action: Optional[FollowTrajectoryAction] = None
+    acquire_position_action: Optional[AcquirePositionAction] = None
+
+
+@dataclass
+class AssignControllerAction:
+    """AssignControllerAction（コントローラー割り当てアクション）"""
+    controller: Optional[Controller] = None  # Controller要素
+    catalog_reference: Optional[CatalogReference] = None  # CatalogReference要素
+    activate_lateral: Optional[Union[str, bool]] = None  # optional
+    activate_longitudinal: Optional[Union[str, bool]] = None  # optional
+    activate_animation: Optional[Union[str, bool]] = None  # optional
+    activate_lighting: Optional[Union[str, bool]] = None  # optional
+
+
+@dataclass
+class OverrideControllerValueAction:
+    """OverrideControllerValueAction（コントローラー値上書きアクション）"""
+    # 将来的な拡張として辞書型で保存
+    throttle: Optional[dict] = None  # OverrideThrottleAction
+    brake: Optional[dict] = None  # OverrideBrakeAction
+    clutch: Optional[dict] = None  # OverrideClutchAction
+    parking_brake: Optional[dict] = None  # OverrideParkingBrakeAction
+    steering_wheel: Optional[dict] = None  # OverrideSteeringWheelAction
+    gear: Optional[dict] = None  # OverrideGearAction
+
+
+@dataclass
+class ControllerAction:
+    """ControllerAction（コントローラーアクション）"""
+    assign_controller_action: Optional[AssignControllerAction] = None  # optional
+    override_controller_value_action: Optional[OverrideControllerValueAction] = None  # optional
+    activate_controller_action: Optional[ActivateControllerAction] = None  # optional
 
 
 @dataclass
 class ActivateControllerAction:
     """ActivateControllerAction（コントローラー有効化アクション）"""
-    longitudinal: bool = True
-    lateral: bool = True
+    controller_ref: Optional[str] = None  # optional
+    longitudinal: Optional[Union[str, bool]] = None  # optional (後方互換性のためデフォルトはNone)
+    lateral: Optional[Union[str, bool]] = None  # optional (後方互換性のためデフォルトはNone)
+    animation: Optional[Union[str, bool]] = None  # optional
+    lighting: Optional[Union[str, bool]] = None  # optional
 
 
 @dataclass
@@ -337,10 +430,14 @@ class PrivateAction:
     """PrivateAction（エンティティ固有のアクション）"""
     teleport_action: Optional[TeleportAction] = None
     speed_action: Optional[SpeedAction] = None
+    speed_profile_action: Optional[SpeedProfileAction] = None
+    longitudinal_distance_action: Optional[LongitudinalDistanceAction] = None
     lane_change_action: Optional[LaneChangeAction] = None
     lane_offset_action: Optional[LaneOffsetAction] = None
+    lateral_distance_action: Optional[LateralDistanceAction] = None
     routing_action: Optional[RoutingAction] = None
-    activate_controller_action: Optional[ActivateControllerAction] = None
+    activate_controller_action: Optional[ActivateControllerAction] = None  # deprecatedだが互換性のため残す
+    controller_action: Optional[ControllerAction] = None
     visibility_action: Optional[VisibilityAction] = None
     synchronize_action: Optional[SynchronizeAction] = None
     appearance_action: Optional[AppearanceAction] = None

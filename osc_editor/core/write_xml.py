@@ -28,6 +28,7 @@ from osc_editor.core.model import (
     PrivateAction,
     TeleportAction,
     AssignRouteAction,
+    AcquirePositionAction,
     RoutingAction,
     FollowTrajectoryAction,
     Trajectory,
@@ -39,7 +40,16 @@ from osc_editor.core.model import (
     ControlPoint,
     TimeReference,
     ActivateControllerAction,
+    AssignControllerAction,
+    OverrideControllerValueAction,
+    ControllerAction,
+    Controller,
     SpeedAction,
+    SpeedProfileEntry,
+    SpeedProfileAction,
+    LongitudinalDistanceAction,
+    LateralDistanceAction,
+    DynamicConstraints,
     RelativeTargetSpeed,
     LaneChangeAction,
     LaneOffsetAction,
@@ -521,6 +531,9 @@ def write_dynamics(parent: ET.Element, dynamics: Dynamics, tag_name: str = "Dyna
     # XSDではvalueは必須属性
     if dynamics.value is not None:
         elem.set("value", str(dynamics.value))
+    else:
+        # valueがNoneの場合はデフォルト値0.0を使用（本来はパース時にNoneにならないようにする）
+        elem.set("value", "0.0")
 
 
 def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
@@ -554,6 +567,85 @@ def write_relative_target_speed(parent: ET.Element, relative_target_speed: Relat
     elem.set("speedTargetValueType", relative_target_speed.speed_target_value_type)
     # continuousは常に書き出す（デフォルト値でも）
     elem.set("continuous", "true" if relative_target_speed.continuous else "false")
+
+
+def write_dynamic_constraints(parent: ET.Element, dynamic_constraints: DynamicConstraints):
+    """DynamicConstraintsをXMLに書き込み"""
+    elem = _create_element("DynamicConstraints", parent)
+    
+    if dynamic_constraints.max_acceleration is not None:
+        elem.set("maxAcceleration", str(dynamic_constraints.max_acceleration))
+    if dynamic_constraints.max_acceleration_rate is not None:
+        elem.set("maxAccelerationRate", str(dynamic_constraints.max_acceleration_rate))
+    if dynamic_constraints.max_deceleration is not None:
+        elem.set("maxDeceleration", str(dynamic_constraints.max_deceleration))
+    if dynamic_constraints.max_deceleration_rate is not None:
+        elem.set("maxDecelerationRate", str(dynamic_constraints.max_deceleration_rate))
+    if dynamic_constraints.max_speed is not None:
+        elem.set("maxSpeed", str(dynamic_constraints.max_speed))
+
+
+def write_speed_profile_entry(parent: ET.Element, entry: SpeedProfileEntry):
+    """SpeedProfileEntryをXMLに書き込み"""
+    elem = _create_element("SpeedProfileEntry", parent)
+    elem.set("speed", str(entry.speed))
+    if entry.time is not None:
+        elem.set("time", str(entry.time))
+
+
+def write_speed_profile_action(parent: ET.Element, speed_profile: SpeedProfileAction):
+    """SpeedProfileActionをXMLに書き込み"""
+    elem = _create_element("SpeedProfileAction", parent)
+    elem.set("followingMode", speed_profile.following_mode)
+    
+    if speed_profile.entity_ref is not None:
+        elem.set("entityRef", speed_profile.entity_ref)
+    
+    # DynamicConstraints要素（optional）
+    if speed_profile.dynamic_constraints is not None:
+        write_dynamic_constraints(elem, speed_profile.dynamic_constraints)
+    
+    # SpeedProfileEntry要素（required, maxOccurs="unbounded"）
+    for entry in speed_profile.entries:
+        write_speed_profile_entry(elem, entry)
+
+
+def write_longitudinal_distance_action(parent: ET.Element, longitudinal_distance: LongitudinalDistanceAction):
+    """LongitudinalDistanceActionをXMLに書き込み"""
+    elem = _create_element("LongitudinalDistanceAction", parent)
+    elem.set("entityRef", longitudinal_distance.entity_ref)
+    
+    # continuous属性（required）
+    if isinstance(longitudinal_distance.continuous, bool):
+        elem.set("continuous", "true" if longitudinal_distance.continuous else "false")
+    else:
+        elem.set("continuous", str(longitudinal_distance.continuous))
+    
+    # freespace属性（required）
+    if isinstance(longitudinal_distance.freespace, bool):
+        elem.set("freespace", "true" if longitudinal_distance.freespace else "false")
+    else:
+        elem.set("freespace", str(longitudinal_distance.freespace))
+    
+    # distance属性（optional）
+    if longitudinal_distance.distance is not None:
+        elem.set("distance", str(longitudinal_distance.distance))
+    
+    # timeGap属性（optional）
+    if longitudinal_distance.time_gap is not None:
+        elem.set("timeGap", str(longitudinal_distance.time_gap))
+    
+    # displacement属性（optional）
+    if longitudinal_distance.displacement is not None:
+        elem.set("displacement", longitudinal_distance.displacement)
+    
+    # coordinateSystem属性（optional）
+    if longitudinal_distance.coordinate_system is not None:
+        elem.set("coordinateSystem", longitudinal_distance.coordinate_system)
+    
+    # DynamicConstraints要素（optional）
+    if longitudinal_distance.dynamic_constraints is not None:
+        write_dynamic_constraints(elem, longitudinal_distance.dynamic_constraints)
 
 
 def write_speed_action(parent: ET.Element, speed_action: SpeedAction):
@@ -602,6 +694,40 @@ def write_lane_change_action(parent: ET.Element, lane_change_action: LaneChangeA
     # LaneChangeActionDynamics
     if lane_change_action.dynamics is not None:
         write_dynamics(elem, lane_change_action.dynamics, "LaneChangeActionDynamics")
+
+
+def write_lateral_distance_action(parent: ET.Element, lateral_distance: LateralDistanceAction):
+    """LateralDistanceActionをXMLに書き込み"""
+    elem = _create_element("LateralDistanceAction", parent)
+    elem.set("entityRef", lateral_distance.entity_ref)
+    
+    # continuous属性（required）
+    if isinstance(lateral_distance.continuous, bool):
+        elem.set("continuous", "true" if lateral_distance.continuous else "false")
+    else:
+        elem.set("continuous", str(lateral_distance.continuous))
+    
+    # freespace属性（required）
+    if isinstance(lateral_distance.freespace, bool):
+        elem.set("freespace", "true" if lateral_distance.freespace else "false")
+    else:
+        elem.set("freespace", str(lateral_distance.freespace))
+    
+    # distance属性（optional）
+    if lateral_distance.distance is not None:
+        elem.set("distance", str(lateral_distance.distance))
+    
+    # displacement属性（optional）
+    if lateral_distance.displacement is not None:
+        elem.set("displacement", lateral_distance.displacement)
+    
+    # coordinateSystem属性（optional）
+    if lateral_distance.coordinate_system is not None:
+        elem.set("coordinateSystem", lateral_distance.coordinate_system)
+    
+    # DynamicConstraints要素（optional）
+    if lateral_distance.dynamic_constraints is not None:
+        write_dynamic_constraints(elem, lateral_distance.dynamic_constraints)
 
 
 def write_lane_offset_action_dynamics(parent: ET.Element, dynamics: LaneOffsetActionDynamics):
@@ -800,6 +926,15 @@ def write_assign_route_action(parent: ET.Element, assign_route: AssignRouteActio
         write_route(elem, assign_route.route)
 
 
+def write_acquire_position_action(parent: ET.Element, acquire_position: AcquirePositionAction):
+    """AcquirePositionActionをXMLに書き込み"""
+    elem = _create_element("AcquirePositionAction", parent)
+    
+    if acquire_position.position is not None:
+        position_elem = _create_element("Position", elem)
+        write_position(position_elem, acquire_position.position)
+
+
 def write_routing_action(parent: ET.Element, routing_action: RoutingAction):
     """RoutingActionをXMLに書き込み"""
     elem = _create_element("RoutingAction", parent)
@@ -808,13 +943,130 @@ def write_routing_action(parent: ET.Element, routing_action: RoutingAction):
         write_assign_route_action(elem, routing_action.assign_route_action)
     elif routing_action.follow_trajectory_action is not None:
         write_follow_trajectory_action(elem, routing_action.follow_trajectory_action)
+    elif routing_action.acquire_position_action is not None:
+        write_acquire_position_action(elem, routing_action.acquire_position_action)
+
+
+def write_assign_controller_action(parent: ET.Element, assign_controller: AssignControllerAction):
+    """AssignControllerActionをXMLに書き込み"""
+    elem = _create_element("AssignControllerAction", parent)
+    
+    # ControllerまたはCatalogReferenceのchoice
+    if assign_controller.controller is not None:
+        write_controller(elem, assign_controller.controller)
+    elif assign_controller.catalog_reference is not None:
+        write_catalog_reference(elem, assign_controller.catalog_reference)
+    
+    # 属性（optional）
+    if assign_controller.activate_lateral is not None:
+        if isinstance(assign_controller.activate_lateral, bool):
+            elem.set("activateLateral", "true" if assign_controller.activate_lateral else "false")
+        else:
+            elem.set("activateLateral", str(assign_controller.activate_lateral))
+    
+    if assign_controller.activate_longitudinal is not None:
+        if isinstance(assign_controller.activate_longitudinal, bool):
+            elem.set("activateLongitudinal", "true" if assign_controller.activate_longitudinal else "false")
+        else:
+            elem.set("activateLongitudinal", str(assign_controller.activate_longitudinal))
+    
+    if assign_controller.activate_animation is not None:
+        if isinstance(assign_controller.activate_animation, bool):
+            elem.set("activateAnimation", "true" if assign_controller.activate_animation else "false")
+        else:
+            elem.set("activateAnimation", str(assign_controller.activate_animation))
+    
+    if assign_controller.activate_lighting is not None:
+        if isinstance(assign_controller.activate_lighting, bool):
+            elem.set("activateLighting", "true" if assign_controller.activate_lighting else "false")
+        else:
+            elem.set("activateLighting", str(assign_controller.activate_lighting))
+
+
+def write_override_controller_value_action(parent: ET.Element, override_controller: OverrideControllerValueAction):
+    """OverrideControllerValueActionをXMLに書き込み（基本的な構造のみ）"""
+    elem = _create_element("OverrideControllerValueAction", parent)
+    
+    # 将来的な拡張として辞書型で保存された値を書き込み
+    if override_controller.throttle is not None:
+        throttle_elem = _create_element("Throttle", elem)
+        if "active" in override_controller.throttle:
+            throttle_elem.set("active", "true" if override_controller.throttle["active"] else "false")
+        if "value" in override_controller.throttle:
+            throttle_elem.set("value", str(override_controller.throttle["value"]))
+    
+    if override_controller.brake is not None:
+        brake_elem = _create_element("Brake", elem)
+        if "active" in override_controller.brake:
+            brake_elem.set("active", "true" if override_controller.brake["active"] else "false")
+    
+    if override_controller.clutch is not None:
+        clutch_elem = _create_element("Clutch", elem)
+        if "active" in override_controller.clutch:
+            clutch_elem.set("active", "true" if override_controller.clutch["active"] else "false")
+        if "value" in override_controller.clutch:
+            clutch_elem.set("value", str(override_controller.clutch["value"]))
+    
+    if override_controller.parking_brake is not None:
+        parking_brake_elem = _create_element("ParkingBrake", elem)
+        if "active" in override_controller.parking_brake:
+            parking_brake_elem.set("active", "true" if override_controller.parking_brake["active"] else "false")
+    
+    if override_controller.steering_wheel is not None:
+        steering_wheel_elem = _create_element("SteeringWheel", elem)
+        if "active" in override_controller.steering_wheel:
+            steering_wheel_elem.set("active", "true" if override_controller.steering_wheel["active"] else "false")
+        if "value" in override_controller.steering_wheel:
+            steering_wheel_elem.set("value", str(override_controller.steering_wheel["value"]))
+    
+    if override_controller.gear is not None:
+        gear_elem = _create_element("Gear", elem)
+        if "active" in override_controller.gear:
+            gear_elem.set("active", "true" if override_controller.gear["active"] else "false")
+
+
+def write_controller_action(parent: ET.Element, controller_action: ControllerAction):
+    """ControllerActionをXMLに書き込み"""
+    elem = _create_element("ControllerAction", parent)
+    
+    if controller_action.assign_controller_action is not None:
+        write_assign_controller_action(elem, controller_action.assign_controller_action)
+    elif controller_action.override_controller_value_action is not None:
+        write_override_controller_value_action(elem, controller_action.override_controller_value_action)
+    elif controller_action.activate_controller_action is not None:
+        write_activate_controller_action(elem, controller_action.activate_controller_action)
 
 
 def write_activate_controller_action(parent: ET.Element, activate_controller: ActivateControllerAction):
     """ActivateControllerActionをXMLに書き込み"""
     elem = _create_element("ActivateControllerAction", parent)
-    elem.set("longitudinal", "true" if activate_controller.longitudinal else "false")
-    elem.set("lateral", "true" if activate_controller.lateral else "false")
+    
+    if activate_controller.controller_ref is not None:
+        elem.set("controllerRef", activate_controller.controller_ref)
+    
+    if activate_controller.longitudinal is not None:
+        if isinstance(activate_controller.longitudinal, bool):
+            elem.set("longitudinal", "true" if activate_controller.longitudinal else "false")
+        else:
+            elem.set("longitudinal", str(activate_controller.longitudinal))
+    
+    if activate_controller.lateral is not None:
+        if isinstance(activate_controller.lateral, bool):
+            elem.set("lateral", "true" if activate_controller.lateral else "false")
+        else:
+            elem.set("lateral", str(activate_controller.lateral))
+    
+    if activate_controller.animation is not None:
+        if isinstance(activate_controller.animation, bool):
+            elem.set("animation", "true" if activate_controller.animation else "false")
+        else:
+            elem.set("animation", str(activate_controller.animation))
+    
+    if activate_controller.lighting is not None:
+        if isinstance(activate_controller.lighting, bool):
+            elem.set("lighting", "true" if activate_controller.lighting else "false")
+        else:
+            elem.set("lighting", str(activate_controller.lighting))
 
 
 def write_visibility_action(parent: ET.Element, visibility_action: VisibilityAction):
@@ -897,23 +1149,38 @@ def write_private_action(parent: ET.Element, private_action: PrivateAction):
     if private_action.teleport_action is not None:
         write_teleport_action(elem, private_action.teleport_action)
     
+    # LongitudinalActionのchoice要素
     if private_action.speed_action is not None:
         long_elem = _create_element("LongitudinalAction", elem)
         write_speed_action(long_elem, private_action.speed_action)
+    elif private_action.speed_profile_action is not None:
+        long_elem = _create_element("LongitudinalAction", elem)
+        write_speed_profile_action(long_elem, private_action.speed_profile_action)
+    elif private_action.longitudinal_distance_action is not None:
+        long_elem = _create_element("LongitudinalAction", elem)
+        write_longitudinal_distance_action(long_elem, private_action.longitudinal_distance_action)
     
+    # LateralActionのchoice要素
     if private_action.lane_change_action is not None:
         lat_elem = _create_element("LateralAction", elem)
         write_lane_change_action(lat_elem, private_action.lane_change_action)
-    
-    if private_action.lane_offset_action is not None:
+    elif private_action.lane_offset_action is not None:
         lat_elem = _create_element("LateralAction", elem)
         write_lane_offset_action(lat_elem, private_action.lane_offset_action)
+    elif private_action.lateral_distance_action is not None:
+        lat_elem = _create_element("LateralAction", elem)
+        write_lateral_distance_action(lat_elem, private_action.lateral_distance_action)
     
     if private_action.routing_action is not None:
         write_routing_action(elem, private_action.routing_action)
     
+    # ActivateControllerAction（deprecatedだが互換性のため残す）
     if private_action.activate_controller_action is not None:
         write_activate_controller_action(elem, private_action.activate_controller_action)
+    
+    # ControllerAction
+    if private_action.controller_action is not None:
+        write_controller_action(elem, private_action.controller_action)
     
     if private_action.visibility_action is not None:
         write_visibility_action(elem, private_action.visibility_action)

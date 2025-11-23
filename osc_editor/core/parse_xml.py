@@ -28,6 +28,7 @@ from osc_editor.core.model import (
     PrivateAction,
     TeleportAction,
     AssignRouteAction,
+    AcquirePositionAction,
     RoutingAction,
     FollowTrajectoryAction,
     Trajectory,
@@ -39,7 +40,16 @@ from osc_editor.core.model import (
     ControlPoint,
     TimeReference,
     ActivateControllerAction,
+    AssignControllerAction,
+    OverrideControllerValueAction,
+    ControllerAction,
+    Controller,
     SpeedAction,
+    SpeedProfileEntry,
+    SpeedProfileAction,
+    LongitudinalDistanceAction,
+    LateralDistanceAction,
+    DynamicConstraints,
     RelativeTargetSpeed,
     LaneChangeAction,
     LaneOffsetAction,
@@ -581,15 +591,9 @@ def parse_transition_dynamics(element: ET.Element) -> Optional[Dynamics]:
     dim_str = _get_attr(element, "dynamicsDimension", "time")
     shape_str = _get_attr(element, "dynamicsShape", "linear")
     
-    # value属性の取得（必須属性だが、存在しない場合はNoneとする）
-    value_attr = element.get("value")
-    if value_attr is None:
-        value = None
-    else:
-        try:
-            value = float(value_attr)
-        except (ValueError, TypeError):
-            value = None
+    # value属性の取得（必須属性、パラメータ式も対応）
+    # _get_attr_floatはパラメータ式（$で始まる、または${...}を含む）の場合は文字列として返す
+    value = _get_attr_float(element, "value", None)
     
     try:
         dim = DynamicsDimension(dim_str)
@@ -753,6 +757,91 @@ def parse_speed_action(element: ET.Element) -> Optional[SpeedAction]:
     )
 
 
+def parse_dynamic_constraints(element: ET.Element) -> Optional[DynamicConstraints]:
+    """DynamicConstraintsをパース"""
+    if element is None:
+        return None
+    
+    return DynamicConstraints(
+        max_acceleration=_get_attr_float(element, "maxAcceleration", None),
+        max_acceleration_rate=_get_attr_float(element, "maxAccelerationRate", None),
+        max_deceleration=_get_attr_float(element, "maxDeceleration", None),
+        max_deceleration_rate=_get_attr_float(element, "maxDecelerationRate", None),
+        max_speed=_get_attr_float(element, "maxSpeed", None),
+    )
+
+
+def parse_speed_profile_entry(element: ET.Element) -> Optional[SpeedProfileEntry]:
+    """SpeedProfileEntryをパース"""
+    if element is None:
+        return None
+    
+    speed = _get_attr_float(element, "speed", 0.0)
+    time = _get_attr_float(element, "time", None)
+    
+    return SpeedProfileEntry(speed=speed, time=time)
+
+
+def parse_speed_profile_action(element: ET.Element) -> Optional[SpeedProfileAction]:
+    """SpeedProfileActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    following_mode = _get_attr(element, "followingMode", "follow")
+    entity_ref = _get_attr(element, "entityRef", None)
+    
+    # DynamicConstraints要素（optional）
+    dynamic_constraints_elem = element.find(f"./{ns}DynamicConstraints")
+    dynamic_constraints = parse_dynamic_constraints(dynamic_constraints_elem) if dynamic_constraints_elem is not None else None
+    
+    # SpeedProfileEntry要素（required, maxOccurs="unbounded"）
+    entry_elems = element.findall(f"./{ns}SpeedProfileEntry")
+    entries = []
+    for entry_elem in entry_elems:
+        entry = parse_speed_profile_entry(entry_elem)
+        if entry is not None:
+            entries.append(entry)
+    
+    if not entries:
+        return None  # SpeedProfileEntryは必須
+    
+    return SpeedProfileAction(
+        following_mode=following_mode,
+        entity_ref=entity_ref if entity_ref else None,
+        dynamic_constraints=dynamic_constraints,
+        entries=entries,
+    )
+
+
+def parse_longitudinal_distance_action(element: ET.Element) -> Optional[LongitudinalDistanceAction]:
+    """LongitudinalDistanceActionをパース"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    continuous = _get_attr_bool(element, "continuous", True)
+    freespace = _get_attr_bool(element, "freespace", True)
+    
+    if not entity_ref:
+        return None
+    
+    ns = _detect_namespace(element)
+    dynamic_constraints_elem = element.find(f"./{ns}DynamicConstraints")
+    dynamic_constraints = parse_dynamic_constraints(dynamic_constraints_elem) if dynamic_constraints_elem is not None else None
+    
+    return LongitudinalDistanceAction(
+        entity_ref=entity_ref,
+        continuous=continuous,
+        freespace=freespace,
+        distance=_get_attr_float(element, "distance", None),
+        time_gap=_get_attr_float(element, "timeGap", None),
+        displacement=_get_attr(element, "displacement", None),
+        coordinate_system=_get_attr(element, "coordinateSystem", None),
+        dynamic_constraints=dynamic_constraints,
+    )
+
+
 def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
     """LaneChangeActionをパース（XSD準拠：RelativeTargetLaneまたはAbsoluteTargetLane）"""
     if element is None:
@@ -804,6 +893,33 @@ def parse_lane_change_action(element: ET.Element) -> Optional[LaneChangeAction]:
         target_entity_ref=target_entity_ref,
         dynamics=dynamics,
         target_lane_offset=target_lane_offset,
+    )
+
+
+def parse_lateral_distance_action(element: ET.Element) -> Optional[LateralDistanceAction]:
+    """LateralDistanceActionをパース"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    continuous = _get_attr_bool(element, "continuous", True)
+    freespace = _get_attr_bool(element, "freespace", True)
+    
+    if not entity_ref:
+        return None
+    
+    ns = _detect_namespace(element)
+    dynamic_constraints_elem = element.find(f"./{ns}DynamicConstraints")
+    dynamic_constraints = parse_dynamic_constraints(dynamic_constraints_elem) if dynamic_constraints_elem is not None else None
+    
+    return LateralDistanceAction(
+        entity_ref=entity_ref,
+        continuous=continuous,
+        freespace=freespace,
+        distance=_get_attr_float(element, "distance", None),
+        displacement=_get_attr(element, "displacement", None),
+        coordinate_system=_get_attr(element, "coordinateSystem", None),
+        dynamic_constraints=dynamic_constraints,
     )
 
 
@@ -1191,6 +1307,23 @@ def parse_assign_route_action(element: ET.Element) -> Optional[AssignRouteAction
     return AssignRouteAction(route_ref=route_ref, route=route)
 
 
+def parse_acquire_position_action(element: ET.Element) -> Optional[AcquirePositionAction]:
+    """AcquirePositionActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    position_elem = element.find(f"./{ns}Position")
+    if position_elem is None:
+        return None
+    
+    position = parse_position(position_elem)
+    if position is None:
+        return None
+    
+    return AcquirePositionAction(position=position)
+
+
 def parse_routing_action(element: ET.Element) -> Optional[RoutingAction]:
     """RoutingActionをパース"""
     if element is None:
@@ -1199,16 +1332,119 @@ def parse_routing_action(element: ET.Element) -> Optional[RoutingAction]:
     ns = _detect_namespace(element)
     assign_route_elem = element.find(f"./{ns}AssignRouteAction")
     follow_trajectory_elem = element.find(f"./{ns}FollowTrajectoryAction")
+    acquire_position_elem = element.find(f"./{ns}AcquirePositionAction")
     
     assign_route_action = parse_assign_route_action(assign_route_elem) if assign_route_elem is not None else None
     follow_trajectory_action = parse_follow_trajectory_action(follow_trajectory_elem) if follow_trajectory_elem is not None else None
+    acquire_position_action = parse_acquire_position_action(acquire_position_elem) if acquire_position_elem is not None else None
     
-    if assign_route_action is None and follow_trajectory_action is None:
+    if assign_route_action is None and follow_trajectory_action is None and acquire_position_action is None:
         return None
     
     return RoutingAction(
         assign_route_action=assign_route_action,
         follow_trajectory_action=follow_trajectory_action,
+        acquire_position_action=acquire_position_action,
+    )
+
+
+def parse_assign_controller_action(element: ET.Element) -> Optional[AssignControllerAction]:
+    """AssignControllerActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    controller_elem = element.find(f"./{ns}Controller")
+    catalog_ref_elem = element.find(f"./{ns}CatalogReference")
+    
+    controller = parse_controller(controller_elem) if controller_elem is not None else None
+    catalog_reference = parse_catalog_reference(catalog_ref_elem) if catalog_ref_elem is not None else None
+    
+    if controller is None and catalog_reference is None:
+        return None
+    
+    return AssignControllerAction(
+        controller=controller,
+        catalog_reference=catalog_reference,
+        activate_lateral=_get_attr_bool(element, "activateLateral", None),
+        activate_longitudinal=_get_attr_bool(element, "activateLongitudinal", None),
+        activate_animation=_get_attr_bool(element, "activateAnimation", None),
+        activate_lighting=_get_attr_bool(element, "activateLighting", None),
+    )
+
+
+def parse_override_controller_value_action(element: ET.Element) -> Optional[OverrideControllerValueAction]:
+    """OverrideControllerValueActionをパース（基本的な構造のみ）"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    # 将来的な拡張として辞書型で保存
+    throttle_elem = element.find(f"./{ns}Throttle")
+    brake_elem = element.find(f"./{ns}Brake")
+    clutch_elem = element.find(f"./{ns}Clutch")
+    parking_brake_elem = element.find(f"./{ns}ParkingBrake")
+    steering_wheel_elem = element.find(f"./{ns}SteeringWheel")
+    gear_elem = element.find(f"./{ns}Gear")
+    
+    throttle = None
+    if throttle_elem is not None:
+        throttle = {"active": _get_attr_bool(throttle_elem, "active", True), "value": _get_attr_float(throttle_elem, "value", 0.0)}
+    
+    brake = None
+    if brake_elem is not None:
+        brake = {"active": _get_attr_bool(brake_elem, "active", True)}
+    
+    clutch = None
+    if clutch_elem is not None:
+        clutch = {"active": _get_attr_bool(clutch_elem, "active", True), "value": _get_attr_float(clutch_elem, "value", 0.0)}
+    
+    parking_brake = None
+    if parking_brake_elem is not None:
+        parking_brake = {"active": _get_attr_bool(parking_brake_elem, "active", True)}
+    
+    steering_wheel = None
+    if steering_wheel_elem is not None:
+        steering_wheel = {"active": _get_attr_bool(steering_wheel_elem, "active", True), "value": _get_attr_float(steering_wheel_elem, "value", 0.0)}
+    
+    gear = None
+    if gear_elem is not None:
+        gear = {"active": _get_attr_bool(gear_elem, "active", True)}
+    
+    if throttle is None and brake is None and clutch is None and parking_brake is None and steering_wheel is None and gear is None:
+        return None
+    
+    return OverrideControllerValueAction(
+        throttle=throttle,
+        brake=brake,
+        clutch=clutch,
+        parking_brake=parking_brake,
+        steering_wheel=steering_wheel,
+        gear=gear,
+    )
+
+
+def parse_controller_action(element: ET.Element) -> Optional[ControllerAction]:
+    """ControllerActionをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    assign_controller_elem = element.find(f"./{ns}AssignControllerAction")
+    override_controller_value_elem = element.find(f"./{ns}OverrideControllerValueAction")
+    activate_controller_elem = element.find(f"./{ns}ActivateControllerAction")
+    
+    assign_controller_action = parse_assign_controller_action(assign_controller_elem) if assign_controller_elem is not None else None
+    override_controller_value_action = parse_override_controller_value_action(override_controller_value_elem) if override_controller_value_elem is not None else None
+    activate_controller_action = parse_activate_controller_action(activate_controller_elem) if activate_controller_elem is not None else None
+    
+    if assign_controller_action is None and override_controller_value_action is None and activate_controller_action is None:
+        return None
+    
+    return ControllerAction(
+        assign_controller_action=assign_controller_action,
+        override_controller_value_action=override_controller_value_action,
+        activate_controller_action=activate_controller_action,
     )
 
 
@@ -1217,10 +1453,18 @@ def parse_activate_controller_action(element: ET.Element) -> Optional[ActivateCo
     if element is None:
         return None
     
-    longitudinal = _get_attr_bool(element, "longitudinal", True)
-    lateral = _get_attr_bool(element, "lateral", True)
-    
-    return ActivateControllerAction(longitudinal=longitudinal, lateral=lateral)
+    controller_ref = _get_attr(element, "controllerRef", None)
+    longitudinal = _get_attr_bool(element, "longitudinal", None)
+    lateral = _get_attr_bool(element, "lateral", None)
+    animation = _get_attr_bool(element, "animation", None)
+    lighting = _get_attr_bool(element, "lighting", None)
+    return ActivateControllerAction(
+        controller_ref=controller_ref if controller_ref else None,
+        longitudinal=longitudinal,
+        lateral=lateral,
+        animation=animation,
+        lighting=lighting,
+    )
 
 
 def parse_visibility_action(element: ET.Element) -> Optional[VisibilityAction]:
@@ -1348,37 +1592,65 @@ def parse_private_action(element: ET.Element) -> Optional[PrivateAction]:
         return None
     ns = _detect_namespace(element)
     teleport_elem = element.find(f"./{ns}TeleportAction")
-    speed_elem = element.find(f"./{ns}LongitudinalAction/{ns}SpeedAction")
-    lane_change_elem = element.find(f"./{ns}LateralAction/{ns}LaneChangeAction")
-    lane_offset_elem = element.find(f"./{ns}LateralAction/{ns}LaneOffsetAction")
+    
+    # LongitudinalActionのchoice要素
+    longitudinal_action_elem = element.find(f"./{ns}LongitudinalAction")
+    speed_elem = None
+    speed_profile_elem = None
+    longitudinal_distance_elem = None
+    if longitudinal_action_elem is not None:
+        speed_elem = longitudinal_action_elem.find(f"./{ns}SpeedAction")
+        speed_profile_elem = longitudinal_action_elem.find(f"./{ns}SpeedProfileAction")
+        longitudinal_distance_elem = longitudinal_action_elem.find(f"./{ns}LongitudinalDistanceAction")
+    
+    # LateralActionのchoice要素
+    lateral_action_elem = element.find(f"./{ns}LateralAction")
+    lane_change_elem = None
+    lane_offset_elem = None
+    lateral_distance_elem = None
+    if lateral_action_elem is not None:
+        lane_change_elem = lateral_action_elem.find(f"./{ns}LaneChangeAction")
+        lane_offset_elem = lateral_action_elem.find(f"./{ns}LaneOffsetAction")
+        lateral_distance_elem = lateral_action_elem.find(f"./{ns}LateralDistanceAction")
+    
     routing_elem = element.find(f"./{ns}RoutingAction")
     activate_controller_elem = element.find(f"./{ns}ActivateControllerAction")
+    controller_action_elem = element.find(f"./{ns}ControllerAction")
     visibility_elem = element.find(f"./{ns}VisibilityAction")
     synchronize_elem = element.find(f"./{ns}SynchronizeAction")
     appearance_elem = element.find(f"./{ns}AppearanceAction")
     
     teleport_action = parse_teleport_action(teleport_elem) if teleport_elem is not None else None
     speed_action = parse_speed_action(speed_elem) if speed_elem is not None else None
+    speed_profile_action = parse_speed_profile_action(speed_profile_elem) if speed_profile_elem is not None else None
+    longitudinal_distance_action = parse_longitudinal_distance_action(longitudinal_distance_elem) if longitudinal_distance_elem is not None else None
     lane_change_action = parse_lane_change_action(lane_change_elem) if lane_change_elem is not None else None
     lane_offset_action = parse_lane_offset_action(lane_offset_elem) if lane_offset_elem is not None else None
+    lateral_distance_action = parse_lateral_distance_action(lateral_distance_elem) if lateral_distance_elem is not None else None
     routing_action = parse_routing_action(routing_elem) if routing_elem is not None else None
     activate_controller_action = parse_activate_controller_action(activate_controller_elem) if activate_controller_elem is not None else None
+    controller_action = parse_controller_action(controller_action_elem) if controller_action_elem is not None else None
     visibility_action = parse_visibility_action(visibility_elem) if visibility_elem is not None else None
     synchronize_action = parse_synchronize_action(synchronize_elem) if synchronize_elem is not None else None
     appearance_action = parse_appearance_action(appearance_elem) if appearance_elem is not None else None
     
-    if (teleport_action is None and speed_action is None and lane_change_action is None and 
-        lane_offset_action is None and routing_action is None and activate_controller_action is None and
+    if (teleport_action is None and speed_action is None and speed_profile_action is None and 
+        longitudinal_distance_action is None and lane_change_action is None and 
+        lane_offset_action is None and lateral_distance_action is None and
+        routing_action is None and activate_controller_action is None and controller_action is None and
         visibility_action is None and synchronize_action is None and appearance_action is None):
         return None
     
     return PrivateAction(
         teleport_action=teleport_action,
         speed_action=speed_action,
+        speed_profile_action=speed_profile_action,
+        longitudinal_distance_action=longitudinal_distance_action,
         lane_change_action=lane_change_action,
         lane_offset_action=lane_offset_action,
         routing_action=routing_action,
         activate_controller_action=activate_controller_action,
+        controller_action=controller_action,
         visibility_action=visibility_action,
         synchronize_action=synchronize_action,
         appearance_action=appearance_action,
