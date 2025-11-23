@@ -787,7 +787,7 @@ class CollisionCondition:
 class ParameterCondition:
     """ParameterCondition（パラメータ条件）"""
     parameter_ref: str
-    value: Union[str, float]  # パラメータ参照を含む可能性があるため
+    value: str  # String型（XSD準拠）
     rule: str = "greaterThan"  # greaterThan, lessThan, equalTo
 
 

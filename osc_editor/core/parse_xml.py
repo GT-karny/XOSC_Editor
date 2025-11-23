@@ -2548,9 +2548,10 @@ def parse_parameter_condition(element: ET.Element) -> Optional[ParameterConditio
     if element is None:
         return None
     parameter_ref = _get_attr(element, "parameterRef", "")
-    value = _get_attr_float(element, "value", 0.0)
+    # value属性はString型（XSD準拠）なので、_get_attrを使用
+    value = _get_attr(element, "value", "")
     rule = _get_attr(element, "rule", "greaterThan")
-    if not parameter_ref:
+    if not parameter_ref or not value:
         return None
     return ParameterCondition(
         parameter_ref=parameter_ref,
@@ -2819,61 +2820,52 @@ def parse_by_entity_condition(element: ET.Element) -> Optional[ByEntityCondition
     
     entity_condition_elem = element.find(f"./{ns}EntityCondition")
     if entity_condition_elem is not None:
+        # XSDの定義順序に合わせて検索（choice要素なので、1つしか存在しない）
+        # 各Conditionタイプを独立してfind()で検索
+        end_of_road_elem = entity_condition_elem.find(f"./{ns}EndOfRoadCondition")
+        collision_elem = entity_condition_elem.find(f"./{ns}CollisionCondition")
+        offroad_elem = entity_condition_elem.find(f"./{ns}OffroadCondition")
         time_headway_elem = entity_condition_elem.find(f"./{ns}TimeHeadwayCondition")
-        if time_headway_elem is not None:
+        time_to_collision_elem = entity_condition_elem.find(f"./{ns}TimeToCollisionCondition")
+        acceleration_elem = entity_condition_elem.find(f"./{ns}AccelerationCondition")
+        stand_still_elem = entity_condition_elem.find(f"./{ns}StandStillCondition")
+        speed_elem = entity_condition_elem.find(f"./{ns}SpeedCondition")
+        relative_speed_elem = entity_condition_elem.find(f"./{ns}RelativeSpeedCondition")
+        traveled_elem = entity_condition_elem.find(f"./{ns}TraveledDistanceCondition")
+        reach_elem = entity_condition_elem.find(f"./{ns}ReachPositionCondition")
+        distance_elem = entity_condition_elem.find(f"./{ns}DistanceCondition")
+        relative_distance_elem = entity_condition_elem.find(f"./{ns}RelativeDistanceCondition")
+        relative_clearance_elem = entity_condition_elem.find(f"./{ns}RelativeClearanceCondition")
+        
+        # XSDの順序に従って、最初に見つかったものを設定
+        if end_of_road_elem is not None:
+            end_of_road_condition = parse_end_of_road_condition(end_of_road_elem)
+        elif collision_elem is not None:
+            collision_condition = parse_collision_condition(collision_elem)
+        elif offroad_elem is not None:
+            offroad_condition = parse_offroad_condition(offroad_elem)
+        elif time_headway_elem is not None:
             entity_condition = parse_time_headway_condition(time_headway_elem)
-        else:
-            offroad_elem = entity_condition_elem.find(f"./{ns}OffroadCondition")
-            if offroad_elem is not None:
-                offroad_condition = parse_offroad_condition(offroad_elem)
-            else:
-                traveled_elem = entity_condition_elem.find(f"./{ns}TraveledDistanceCondition")
-                if traveled_elem is not None:
-                    traveled_distance_condition = parse_traveled_distance_condition(traveled_elem)
-                else:
-                    ttc_elem = entity_condition_elem.find(f"./{ns}TimeToCollisionCondition")
-                    if ttc_elem is not None:
-                        time_to_collision_condition = parse_time_to_collision_condition(ttc_elem)
-                    else:
-                        reach_elem = entity_condition_elem.find(f"./{ns}ReachPositionCondition")
-                        if reach_elem is not None:
-                            reach_position_condition = parse_reach_position_condition(reach_elem)
-                        else:
-                            end_of_road_elem = entity_condition_elem.find(f"./{ns}EndOfRoadCondition")
-                            if end_of_road_elem is not None:
-                                end_of_road_condition = parse_end_of_road_condition(end_of_road_elem)
-                            else:
-                                collision_elem = entity_condition_elem.find(f"./{ns}CollisionCondition")
-                                if collision_elem is not None:
-                                    collision_condition = parse_collision_condition(collision_elem)
-                                else:
-                                    acceleration_elem = entity_condition_elem.find(f"./{ns}AccelerationCondition")
-                                    if acceleration_elem is not None:
-                                        acceleration_condition = parse_acceleration_condition(acceleration_elem)
-                                    else:
-                                        stand_still_elem = entity_condition_elem.find(f"./{ns}StandStillCondition")
-                                        if stand_still_elem is not None:
-                                            stand_still_condition = parse_stand_still_condition(stand_still_elem)
-                                        else:
-                                            speed_elem = entity_condition_elem.find(f"./{ns}SpeedCondition")
-                                            if speed_elem is not None:
-                                                speed_condition = parse_speed_condition(speed_elem)
-                                            else:
-                                                relative_speed_elem = entity_condition_elem.find(f"./{ns}RelativeSpeedCondition")
-                                                if relative_speed_elem is not None:
-                                                    relative_speed_condition = parse_relative_speed_condition(relative_speed_elem)
-                                                else:
-                                                    distance_elem = entity_condition_elem.find(f"./{ns}DistanceCondition")
-                                                    if distance_elem is not None:
-                                                        distance_condition = parse_distance_condition(distance_elem)
-                                                    else:
-                                                        relative_distance_elem = entity_condition_elem.find(f"./{ns}RelativeDistanceCondition")
-                                                        if relative_distance_elem is not None:
-                                                            relative_distance_condition = parse_relative_distance_condition(relative_distance_elem)
-                                                        else:
-                                                            relative_clearance_elem = entity_condition_elem.find(f"./{ns}RelativeClearanceCondition")
-                                                            if relative_clearance_elem is not None:
-                                                                relative_clearance_condition = parse_relative_clearance_condition(relative_clearance_elem)
+        elif time_to_collision_elem is not None:
+            time_to_collision_condition = parse_time_to_collision_condition(time_to_collision_elem)
+        elif acceleration_elem is not None:
+            acceleration_condition = parse_acceleration_condition(acceleration_elem)
+        elif stand_still_elem is not None:
+            stand_still_condition = parse_stand_still_condition(stand_still_elem)
+        elif speed_elem is not None:
+            speed_condition = parse_speed_condition(speed_elem)
+        elif relative_speed_elem is not None:
+            relative_speed_condition = parse_relative_speed_condition(relative_speed_elem)
+        elif traveled_elem is not None:
+            traveled_distance_condition = parse_traveled_distance_condition(traveled_elem)
+        elif reach_elem is not None:
+            reach_position_condition = parse_reach_position_condition(reach_elem)
+        elif distance_elem is not None:
+            distance_condition = parse_distance_condition(distance_elem)
+        elif relative_distance_elem is not None:
+            relative_distance_condition = parse_relative_distance_condition(relative_distance_elem)
+        elif relative_clearance_elem is not None:
+            relative_clearance_condition = parse_relative_clearance_condition(relative_clearance_elem)
     
     if (not triggering_entities and entity_condition is None and offroad_condition is None and
         traveled_distance_condition is None and time_to_collision_condition is None and

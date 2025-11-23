@@ -1,6 +1,6 @@
 """ストーリーボード階層表示ツリー"""
 
-from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QTreeWidgetItemIterator
 from PySide6.QtCore import Signal, Qt
 from typing import Optional
 from osc_editor.core.model import (
@@ -16,6 +16,9 @@ from osc_editor.core.model import (
     PrivateAction,
     Entities,
     ScenarioObject,
+    StartTrigger,
+    ConditionGroup,
+    Condition,
 )
 
 
@@ -32,8 +35,39 @@ class ScenarioTreeWidget(QTreeWidget):
         self.itemSelectionChanged.connect(self._on_selection_changed)
         self._scenario: Optional[ScenarioDefinition] = None
     
+    def _save_expanded_state(self) -> dict:
+        """ツリーの展開状態を保存"""
+        expanded_items = {}
+        iterator = QTreeWidgetItemIterator(self)
+        while iterator.value():
+            item = iterator.value()
+            if item.childCount() > 0:
+                node = item.data(0, Qt.ItemDataRole.UserRole)
+                if node is not None:
+                    # ノードオブジェクトをキーとして使用（idで識別）
+                    node_id = id(node)
+                    expanded_items[node_id] = item.isExpanded()
+            iterator += 1
+        return expanded_items
+    
+    def _restore_expanded_state(self, expanded_items: dict):
+        """ツリーの展開状態を復元"""
+        iterator = QTreeWidgetItemIterator(self)
+        while iterator.value():
+            item = iterator.value()
+            if item.childCount() > 0:
+                node = item.data(0, Qt.ItemDataRole.UserRole)
+                if node is not None:
+                    node_id = id(node)
+                    if node_id in expanded_items:
+                        item.setExpanded(expanded_items[node_id])
+            iterator += 1
+    
     def set_scenario(self, scenario: Optional[ScenarioDefinition]):
         """シナリオを設定してツリーを更新"""
+        # 展開状態を保存
+        expanded_state = self._save_expanded_state()
+        
         self._scenario = scenario
         self.clear()
         
@@ -89,6 +123,22 @@ class ScenarioTreeWidget(QTreeWidget):
                                 event_item = QTreeWidgetItem(maneuver_item, [f"Event: {event.name}"])
                                 event_item.setData(0, Qt.ItemDataRole.UserRole, event)
                                 
+                                # StartTrigger
+                                if event.start_trigger:
+                                    start_trigger_item = QTreeWidgetItem(event_item, ["StartTrigger"])
+                                    start_trigger_item.setData(0, Qt.ItemDataRole.UserRole, event.start_trigger)
+                                    
+                                    # ConditionGroups
+                                    for i, cg in enumerate(event.start_trigger.condition_groups):
+                                        cg_item = QTreeWidgetItem(start_trigger_item, [f"ConditionGroup {i+1}"])
+                                        cg_item.setData(0, Qt.ItemDataRole.UserRole, cg)
+                                        
+                                        # Conditions
+                                        for j, cond in enumerate(cg.conditions):
+                                            cond_name = cond.name if cond.name else f"Condition {j+1}"
+                                            cond_item = QTreeWidgetItem(cg_item, [cond_name])
+                                            cond_item.setData(0, Qt.ItemDataRole.UserRole, cond)
+                                
                                 # Actions
                                 for action in event.actions:
                                     action_item = QTreeWidgetItem(event_item, [f"Action: {action.name}"])
@@ -96,8 +146,42 @@ class ScenarioTreeWidget(QTreeWidget):
                                     if action.private_action is not None:
                                         private_action_item = QTreeWidgetItem(action_item, ["PrivateAction"])
                                         private_action_item.setData(0, Qt.ItemDataRole.UserRole, action.private_action)
+                    
+                    # ActのStartTriggerとStopTrigger
+                    if act.start_trigger:
+                        act_start_trigger_item = QTreeWidgetItem(act_item, ["StartTrigger"])
+                        act_start_trigger_item.setData(0, Qt.ItemDataRole.UserRole, act.start_trigger)
+                        
+                        # ConditionGroups
+                        for i, cg in enumerate(act.start_trigger.condition_groups):
+                            cg_item = QTreeWidgetItem(act_start_trigger_item, [f"ConditionGroup {i+1}"])
+                            cg_item.setData(0, Qt.ItemDataRole.UserRole, cg)
+                            
+                            # Conditions
+                            for j, cond in enumerate(cg.conditions):
+                                cond_name = cond.name if cond.name else f"Condition {j+1}"
+                                cond_item = QTreeWidgetItem(cg_item, [cond_name])
+                                cond_item.setData(0, Qt.ItemDataRole.UserRole, cond)
+                    
+                    if act.stop_trigger:
+                        act_stop_trigger_item = QTreeWidgetItem(act_item, ["StopTrigger"])
+                        act_stop_trigger_item.setData(0, Qt.ItemDataRole.UserRole, act.stop_trigger)
+                        
+                        # ConditionGroups
+                        for i, cg in enumerate(act.stop_trigger.condition_groups):
+                            cg_item = QTreeWidgetItem(act_stop_trigger_item, [f"ConditionGroup {i+1}"])
+                            cg_item.setData(0, Qt.ItemDataRole.UserRole, cg)
+                            
+                            # Conditions
+                            for j, cond in enumerate(cg.conditions):
+                                cond_name = cond.name if cond.name else f"Condition {j+1}"
+                                cond_item = QTreeWidgetItem(cg_item, [cond_name])
+                                cond_item.setData(0, Qt.ItemDataRole.UserRole, cond)
             
             storyboard_item.setExpanded(True)
+        
+        # 展開状態を復元
+        self._restore_expanded_state(expanded_state)
     
     def _on_selection_changed(self):
         """選択変更時のハンドラ"""
