@@ -41,6 +41,11 @@ from osc_editor.core.model import (
     WorldPosition,
     LanePosition,
     RoutePosition,
+    RelativeWorldPosition,
+    RelativeLanePosition,
+    RelativeRoadPosition,
+    RelativeObjectPosition,
+    RoadPosition,
     Dynamics,
     DynamicsShape,
     StartTrigger,
@@ -49,6 +54,14 @@ from osc_editor.core.model import (
     SimulationTimeCondition,
     ByEntityCondition,
     TimeHeadwayCondition,
+    BoundingBox,
+    Center,
+    Dimensions,
+    Performance,
+    Axles,
+    Axle,
+    Route,
+    Waypoint,
     OffroadCondition,
     TraveledDistanceCondition,
     TimeToCollisionCondition,
@@ -211,10 +224,32 @@ def write_route_position(parent: ET.Element, route_position: RoutePosition):
     """RoutePositionをXMLに書き込み"""
     elem = _create_element("RoutePosition", parent)
     
+    # RouteRef
+    route_ref_elem = _create_element("RouteRef", elem)
     if route_position.route_ref:
-        route_ref_elem = _create_element("RouteRef", elem)
         write_catalog_reference(route_ref_elem, route_position.route_ref)
+    elif route_position.route:
+        write_route(route_ref_elem, route_position.route)
     
+    # Orientation
+    if route_position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in route_position.orientation:
+            orientation_elem.set("type", route_position.orientation["type"])
+        if "h" in route_position.orientation:
+            h_val = route_position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in route_position.orientation:
+            p_val = route_position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in route_position.orientation:
+            r_val = route_position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+    
+    # InRoutePosition
     if route_position.in_route_position:
         in_route_elem = _create_element("InRoutePosition", elem)
         from_lane_elem = _create_element("FromLaneCoordinates", in_route_elem)
@@ -222,6 +257,163 @@ def write_route_position(parent: ET.Element, route_position: RoutePosition):
             from_lane_elem.set("pathS", str(route_position.in_route_position["pathS"]))
         if "laneId" in route_position.in_route_position:
             from_lane_elem.set("laneId", str(route_position.in_route_position["laneId"]))
+
+
+def write_relative_world_position(parent: ET.Element, position: RelativeWorldPosition):
+    """RelativeWorldPositionをXMLに書き込み"""
+    elem = _create_element("RelativeWorldPosition", parent)
+    elem.set("entityRef", position.entity_ref)
+    elem.set("dx", str(position.dx))
+    elem.set("dy", str(position.dy))
+    if isinstance(position.dz, str) or position.dz != 0.0:
+        elem.set("dz", str(position.dz))
+    
+    if position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in position.orientation:
+            orientation_elem.set("type", position.orientation["type"])
+        if "h" in position.orientation:
+            h_val = position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in position.orientation:
+            p_val = position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in position.orientation:
+            r_val = position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+
+
+def write_relative_lane_position(parent: ET.Element, position: RelativeLanePosition):
+    """RelativeLanePositionをXMLに書き込み"""
+    elem = _create_element("RelativeLanePosition", parent)
+    elem.set("entityRef", position.entity_ref)
+    elem.set("dLane", str(position.d_lane))
+    if position.ds is not None:
+        elem.set("ds", str(position.ds))
+    if position.offset is not None:
+        elem.set("offset", str(position.offset))
+    if position.ds_lane is not None:
+        elem.set("dsLane", str(position.ds_lane))
+    
+    if position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in position.orientation:
+            orientation_elem.set("type", position.orientation["type"])
+        if "h" in position.orientation:
+            h_val = position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in position.orientation:
+            p_val = position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in position.orientation:
+            r_val = position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+
+
+def write_relative_road_position(parent: ET.Element, position: RelativeRoadPosition):
+    """RelativeRoadPositionをXMLに書き込み"""
+    elem = _create_element("RelativeRoadPosition", parent)
+    elem.set("entityRef", position.entity_ref)
+    elem.set("ds", str(position.ds))
+    elem.set("dt", str(position.dt))
+    
+    if position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in position.orientation:
+            orientation_elem.set("type", position.orientation["type"])
+        if "h" in position.orientation:
+            h_val = position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in position.orientation:
+            p_val = position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in position.orientation:
+            r_val = position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+
+
+def write_relative_object_position(parent: ET.Element, position: RelativeObjectPosition):
+    """RelativeObjectPositionをXMLに書き込み"""
+    elem = _create_element("RelativeObjectPosition", parent)
+    elem.set("entityRef", position.entity_ref)
+    elem.set("dx", str(position.dx))
+    elem.set("dy", str(position.dy))
+    if position.dz is not None and (isinstance(position.dz, str) or position.dz != 0.0):
+        elem.set("dz", str(position.dz))
+    
+    if position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in position.orientation:
+            orientation_elem.set("type", position.orientation["type"])
+        if "h" in position.orientation:
+            h_val = position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in position.orientation:
+            p_val = position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in position.orientation:
+            r_val = position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+
+
+def write_road_position(parent: ET.Element, position: RoadPosition):
+    """RoadPositionをXMLに書き込み"""
+    elem = _create_element("RoadPosition", parent)
+    elem.set("roadId", position.road_id)
+    elem.set("s", str(position.s))
+    elem.set("t", str(position.t))
+    
+    if position.orientation:
+        orientation_elem = _create_element("Orientation", elem)
+        if "type" in position.orientation:
+            orientation_elem.set("type", position.orientation["type"])
+        if "h" in position.orientation:
+            h_val = position.orientation["h"]
+            if isinstance(h_val, str) or h_val != 0.0:
+                orientation_elem.set("h", str(h_val))
+        if "p" in position.orientation:
+            p_val = position.orientation["p"]
+            if isinstance(p_val, str) or p_val != 0.0:
+                orientation_elem.set("p", str(p_val))
+        if "r" in position.orientation:
+            r_val = position.orientation["r"]
+            if isinstance(r_val, str) or r_val != 0.0:
+                orientation_elem.set("r", str(r_val))
+
+
+def write_position(parent: ET.Element, position):
+    """Position要素をXMLに書き込み（全タイプに対応）"""
+    if position is None:
+        return
+    
+    if isinstance(position, WorldPosition):
+        write_world_position(parent, position)
+    elif isinstance(position, LanePosition):
+        write_lane_position(parent, position)
+    elif isinstance(position, RoutePosition):
+        write_route_position(parent, position)
+    elif isinstance(position, RelativeWorldPosition):
+        write_relative_world_position(parent, position)
+    elif isinstance(position, RelativeLanePosition):
+        write_relative_lane_position(parent, position)
+    elif isinstance(position, RelativeRoadPosition):
+        write_relative_road_position(parent, position)
+    elif isinstance(position, RelativeObjectPosition):
+        write_relative_object_position(parent, position)
+    elif isinstance(position, RoadPosition):
+        write_road_position(parent, position)
 
 
 def write_dynamics(parent: ET.Element, dynamics: Dynamics, tag_name: str = "Dynamics"):
@@ -246,6 +438,16 @@ def write_teleport_action(parent: ET.Element, teleport_action: TeleportAction):
         write_lane_position(position_elem, teleport_action.lane_position)
     elif teleport_action.route_position is not None:
         write_route_position(position_elem, teleport_action.route_position)
+    elif teleport_action.relative_world_position is not None:
+        write_relative_world_position(position_elem, teleport_action.relative_world_position)
+    elif teleport_action.relative_lane_position is not None:
+        write_relative_lane_position(position_elem, teleport_action.relative_lane_position)
+    elif teleport_action.relative_road_position is not None:
+        write_relative_road_position(position_elem, teleport_action.relative_road_position)
+    elif teleport_action.relative_object_position is not None:
+        write_relative_object_position(position_elem, teleport_action.relative_object_position)
+    elif teleport_action.road_position is not None:
+        write_road_position(position_elem, teleport_action.road_position)
 
 
 def write_relative_target_speed(parent: ET.Element, relative_target_speed: RelativeTargetSpeed):
@@ -334,10 +536,7 @@ def write_vertex(parent: ET.Element, vertex: Vertex):
         elem.set("time", str(vertex.time))
     
     position_elem = _create_element("Position", elem)
-    if isinstance(vertex.position, WorldPosition):
-        write_world_position(position_elem, vertex.position)
-    elif isinstance(vertex.position, LanePosition):
-        write_lane_position(position_elem, vertex.position)
+    write_position(position_elem, vertex.position)
 
 
 def write_polyline(parent: ET.Element, polyline: Polyline):
@@ -536,10 +735,7 @@ def write_reach_position_condition(parent: ET.Element, condition: ReachPositionC
     
     if condition.position:
         position_elem = _create_element("Position", elem)
-        if isinstance(condition.position, WorldPosition):
-            write_world_position(position_elem, condition.position)
-        elif isinstance(condition.position, LanePosition):
-            write_lane_position(position_elem, condition.position)
+        write_position(position_elem, condition.position)
 
 
 def write_parameter_condition(parent: ET.Element, condition: ParameterCondition):
@@ -753,11 +949,90 @@ def write_storyboard(parent: ET.Element, storyboard: Storyboard):
         write_start_trigger(elem, storyboard.stop_trigger, tag_name="StopTrigger")
 
 
+def write_center(parent: ET.Element, center: Center):
+    """CenterをXMLに書き込み"""
+    elem = _create_element("Center", parent)
+    elem.set("x", str(center.x))
+    elem.set("y", str(center.y))
+    elem.set("z", str(center.z))
+
+
+def write_dimensions(parent: ET.Element, dimensions: Dimensions):
+    """DimensionsをXMLに書き込み"""
+    elem = _create_element("Dimensions", parent)
+    elem.set("height", str(dimensions.height))
+    elem.set("length", str(dimensions.length))
+    elem.set("width", str(dimensions.width))
+
+
+def write_bounding_box(parent: ET.Element, bounding_box: BoundingBox):
+    """BoundingBoxをXMLに書き込み"""
+    elem = _create_element("BoundingBox", parent)
+    write_center(elem, bounding_box.center)
+    write_dimensions(elem, bounding_box.dimensions)
+
+
+def write_performance(parent: ET.Element, performance: Performance):
+    """PerformanceをXMLに書き込み"""
+    elem = _create_element("Performance", parent)
+    elem.set("maxAcceleration", str(performance.max_acceleration))
+    elem.set("maxDeceleration", str(performance.max_deceleration))
+    elem.set("maxSpeed", str(performance.max_speed))
+    if performance.max_acceleration_rate is not None:
+        elem.set("maxAccelerationRate", str(performance.max_acceleration_rate))
+    if performance.max_deceleration_rate is not None:
+        elem.set("maxDecelerationRate", str(performance.max_deceleration_rate))
+
+
+def write_axle(parent: ET.Element, axle: Axle):
+    """AxleをXMLに書き込み"""
+    elem = _create_element("Axle", parent)
+    elem.set("maxSteering", str(axle.max_steering))
+    elem.set("positionX", str(axle.position_x))
+    elem.set("positionZ", str(axle.position_z))
+    elem.set("trackWidth", str(axle.track_width))
+    elem.set("wheelDiameter", str(axle.wheel_diameter))
+
+
+def write_axles(parent: ET.Element, axles: Axles):
+    """AxlesをXMLに書き込み"""
+    elem = _create_element("Axles", parent)
+    front_axle_elem = _create_element("FrontAxle", elem)
+    write_axle(front_axle_elem, axles.front_axle)
+    rear_axle_elem = _create_element("RearAxle", elem)
+    write_axle(rear_axle_elem, axles.rear_axle)
+    for additional_axle in axles.additional_axles:
+        additional_axle_elem = _create_element("AdditionalAxle", elem)
+        write_axle(additional_axle_elem, additional_axle)
+
+
 def write_vehicle(parent: ET.Element, vehicle: Vehicle):
     """VehicleをXMLに書き込み"""
     elem = _create_element("Vehicle", parent)
     elem.set("name", vehicle.name)
     elem.set("vehicleCategory", vehicle.vehicle_category)
+    if vehicle.role:
+        elem.set("role", vehicle.role)
+    if vehicle.mass is not None:
+        elem.set("mass", str(vehicle.mass))
+    if vehicle.model3d:
+        elem.set("model3d", vehicle.model3d)
+    
+    if vehicle.parameter_declarations:
+        write_parameter_declarations(elem, vehicle.parameter_declarations)
+    
+    if vehicle.bounding_box:
+        write_bounding_box(elem, vehicle.bounding_box)
+    
+    if vehicle.performance:
+        write_performance(elem, vehicle.performance)
+    
+    if vehicle.axles:
+        write_axles(elem, vehicle.axles)
+    
+    # Propertiesは必須要素（XSDでは必須だが、空でもOK）
+    if vehicle.properties is not None:
+        write_properties(elem, vehicle.properties)
 
 
 def write_catalog_reference(parent: ET.Element, catalog_ref: CatalogReference):
@@ -799,13 +1074,24 @@ def write_pedestrian(parent: ET.Element, pedestrian: Pedestrian):
     """PedestrianをXMLに書き込み"""
     elem = _create_element("Pedestrian", parent)
     elem.set("name", pedestrian.name)
-    if pedestrian.mass is not None:
-        elem.set("mass", str(pedestrian.mass))
-    if pedestrian.model:
-        elem.set("model", pedestrian.model)
+    elem.set("mass", str(pedestrian.mass))  # massは必須
     elem.set("pedestrianCategory", pedestrian.pedestrian_category)
+    if pedestrian.model:
+        elem.set("model", pedestrian.model)  # deprecatedだが保持
     if pedestrian.model3d:
         elem.set("model3d", pedestrian.model3d)
+    if pedestrian.role:
+        elem.set("role", pedestrian.role)
+    
+    if pedestrian.parameter_declarations:
+        write_parameter_declarations(elem, pedestrian.parameter_declarations)
+    
+    if pedestrian.bounding_box:
+        write_bounding_box(elem, pedestrian.bounding_box)
+    
+    # Propertiesは必須要素（XSDでは必須だが、空でもOK）
+    if pedestrian.properties is not None:
+        write_properties(elem, pedestrian.properties)
 
 
 def write_scenario_object(parent: ET.Element, scenario_object: ScenarioObject):

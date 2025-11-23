@@ -13,14 +13,15 @@
 | カテゴリ | 対応済み | 一部対応 | 未対応 | 合計 | 対応率 |
 |---------|---------|---------|--------|------|--------|
 | 基本構造要素 | 12 | 2 | 3 | 17 | 82% |
-| Position関連 | 3 | 0 | 7 | 10 | 30% |
+| Position関連 | 8 | 1 | 4 | 13 | 62% |
 | Action関連 | 8 | 3 | 25 | 36 | 31% |
 | Condition関連 | 7 | 2 | 12 | 21 | 43% |
-| Entity関連 | 6 | 2 | 5 | 13 | 62% |
+| Entity関連 | 12 | 1 | 3 | 16 | 81% |
 | Trajectory関連 | 4 | 0 | 5 | 9 | 44% |
 | Dynamics関連 | 2 | 0 | 1 | 3 | 67% |
+| Route関連 | 2 | 0 | 1 | 3 | 67% |
 | その他 | 2 | 1 | 15 | 18 | 17% |
-| **合計** | **44** | **10** | **73** | **127** | **43%** |
+| **合計** | **57** | **10** | **66** | **133** | **50%** |
 
 ## 1. 基本構造要素
 
@@ -53,15 +54,15 @@
 |--------|---------|------|
 | WorldPosition | ✅ | 完全対応（x, y, z, h, p, r） |
 | LanePosition | ✅ | 完全対応（roadId, laneId, s, offset, Orientation） |
-| RoutePosition | ⚠️ | RouteRef内のCatalogReferenceとInRoutePosition内のFromLaneCoordinatesのみ対応 |
-| RelativeWorldPosition | ❌ | 未対応 |
-| RelativeObjectPosition | ❌ | 未対応 |
-| RoadPosition | ❌ | 未対応 |
-| RelativeRoadPosition | ❌ | 未対応 |
-| RelativeLanePosition | ❌ | 未対応 |
+| RoutePosition | ✅ | RouteRef内のCatalogReference/Route要素、InRoutePosition内のFromLaneCoordinates、Orientationに対応 |
+| RelativeWorldPosition | ✅ | 完全対応（entityRef, dx, dy, dz, Orientation） |
+| RelativeObjectPosition | ✅ | 完全対応（entityRef, dx, dy, dz, Orientation） |
+| RoadPosition | ✅ | 完全対応（roadId, s, t, Orientation） |
+| RelativeRoadPosition | ✅ | 完全対応（entityRef, ds, dt, Orientation） |
+| RelativeLanePosition | ✅ | 完全対応（entityRef, dLane, ds, offset, dsLane, Orientation） |
 | GeoPosition | ❌ | 未対応 |
 | TrajectoryPosition | ❌ | 未対応 |
-| Orientation | ⚠️ | LanePosition内で部分的に処理（type, h, p, r） |
+| Orientation | ✅ | 全Positionタイプで対応（type, h, p, r） |
 | InRoutePosition | ⚠️ | FromLaneCoordinatesのみ対応。FromCurrentEntity, FromRoadCoordinatesは未対応 |
 | PositionOfCurrentEntity | ❌ | 未対応 |
 | PositionInRoadCoordinates | ❌ | 未対応 |
@@ -73,11 +74,11 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| TeleportAction | ✅ | WorldPosition, LanePosition, RoutePositionに対応 |
+| TeleportAction | ✅ | WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition, RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPositionに対応 |
 | SpeedAction | ✅ | SpeedActionDynamics, AbsoluteTargetSpeed, RelativeTargetSpeedに対応 |
 | LaneChangeAction | ✅ | LaneChangeActionDynamics, RelativeTargetLane, AbsoluteTargetLaneに対応 |
 | LaneOffsetAction | ✅ | LaneOffsetActionDynamics, AbsoluteTargetLaneOffsetに対応 |
-| AssignRouteAction | ✅ | CatalogReferenceに対応 |
+| AssignRouteAction | ✅ | CatalogReferenceとRoute要素に対応 |
 | FollowTrajectoryAction | ⚠️ | Trajectory, TimeReference, TrajectoryFollowingModeに対応。TrajectoryRefは未対応 |
 | RoutingAction | ✅ | AssignRouteAction, FollowTrajectoryActionに対応 |
 | ActivateControllerAction | ✅ | longitudinal, lateral属性に対応 |
@@ -157,7 +158,7 @@
 | OffroadCondition | ✅ | duration属性に対応 |
 | TraveledDistanceCondition | ✅ | value属性に対応 |
 | TimeToCollisionCondition | ✅ | value, freespace, coordinateSystem, relativeDistanceType, rule, target_entity_refに対応 |
-| ReachPositionCondition | ✅ | tolerance, positionに対応（deprecatedだが実装済み） |
+| ReachPositionCondition | ✅ | tolerance, position（全Positionタイプ）に対応（deprecatedだが実装済み） |
 | EndOfRoadCondition | ❌ | 未対応 |
 | CollisionCondition | ❌ | 未対応 |
 | AccelerationCondition | ❌ | 未対応 |
@@ -183,21 +184,21 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| Vehicle | ⚠️ | name, vehicleCategory属性のみ対応 |
-| BoundingBox | ❌ | 未対応 |
-| Center | ❌ | BoundingBox内のCenter未対応 |
-| Dimensions | ❌ | BoundingBox内のDimensions未対応 |
-| Performance | ❌ | 未対応 |
-| Axles | ❌ | 未対応 |
-| Axle | ❌ | 未対応 |
+| Vehicle | ✅ | name, vehicleCategory, role, mass, model3d属性、ParameterDeclarations, BoundingBox, Performance, Axles, Propertiesに対応 |
+| BoundingBox | ✅ | Center, Dimensionsに対応 |
+| Center | ✅ | x, y, z属性に対応 |
+| Dimensions | ✅ | height, length, width属性に対応 |
+| Performance | ✅ | maxAcceleration, maxDeceleration, maxSpeed, maxAccelerationRate, maxDecelerationRate属性に対応 |
+| Axles | ✅ | FrontAxle, RearAxle, AdditionalAxleに対応 |
+| Axle | ✅ | maxSteering, positionX, positionZ, trackWidth, wheelDiameter属性に対応 |
 | Properties | ✅ | Propertyのリストに対応 |
 
 ### 5.2 Pedestrian
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| Pedestrian | ⚠️ | name, mass, model, pedestrianCategory, model3d属性のみ対応 |
-| BoundingBox | ❌ | Pedestrian内のBoundingBox未対応 |
+| Pedestrian | ✅ | name, mass（必須）, pedestrianCategory, model（deprecated）, model3d, role属性、ParameterDeclarations, BoundingBox, Propertiesに対応 |
+| BoundingBox | ✅ | Pedestrian内のBoundingBoxに対応（Center, Dimensions） |
 | Properties | ✅ | Propertyのリストに対応 |
 
 ### 5.3 MiscObject
@@ -236,7 +237,7 @@
 | TrajectoryRef | ❌ | FollowTrajectoryAction内のTrajectoryRef未対応 |
 | Shape | ⚠️ | Polylineのみ対応 |
 | Polyline | ✅ | Vertexのリストに対応 |
-| Vertex | ✅ | Position, time属性に対応 |
+| Vertex | ✅ | 全Positionタイプ（WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition, RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition）とtime属性に対応 |
 | Clothoid | ❌ | 未対応 |
 | Nurbs | ❌ | 未対応 |
 | ControlPoint | ❌ | Nurbs内のControlPoint未対応 |
@@ -258,9 +259,9 @@
 
 | 要素名 | 対応状況 | 備考 |
 |--------|---------|------|
-| Route | ❌ | 未対応 |
-| Waypoint | ❌ | Route内のWaypoint未対応 |
-| RouteRef | ⚠️ | CatalogReferenceのみ対応。Route要素は未対応 |
+| Route | ✅ | name, closed属性、ParameterDeclarations, Waypoint（2つ以上）に対応 |
+| Waypoint | ✅ | routeStrategy属性、Position（全Positionタイプ）に対応 |
+| RouteRef | ✅ | CatalogReferenceとRoute要素の両方に対応 |
 | RouteCatalogLocation | ✅ | Directory/pathに対応 |
 
 ## 9. Environment関連
@@ -373,10 +374,10 @@
 
 現在の実装は基本的なシナリオ編集には対応していますが、以下の領域の実装が不足しています：
 
-1. **高優先度**
-   - Position関連の相対座標系（RelativeWorldPosition, RelativeLanePosition等）
-   - Vehicle/Pedestrianの詳細属性（BoundingBox, Performance, Axles等）
-   - Route要素の完全対応
+1. **高優先度** ✅ 実装済み
+   - ~~Position関連の相対座標系（RelativeWorldPosition, RelativeLanePosition等）~~ ✅
+   - ~~Vehicle/Pedestrianの詳細属性（BoundingBox, Performance, Axles等）~~ ✅
+   - ~~Route要素の完全対応~~ ✅
 
 2. **中優先度**
    - 高度なAction（VisibilityAction, SynchronizeAction, AppearanceAction等）
@@ -391,5 +392,6 @@
 
 ## 更新履歴
 
+- 2025-01-XX: Position関連（相対座標系）、Vehicle/Pedestrian詳細属性、Route要素の実装完了
 - 2025-11-23 10:47: 初版作成（OpenSCENARIO 1.2.0 XSDとの比較）
 

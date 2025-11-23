@@ -63,7 +63,58 @@ class LanePosition:
 class RoutePosition:
     """RoutePosition（ルート座標）"""
     route_ref: Optional[CatalogReference] = None  # RouteRef内のCatalogReference
+    route: Optional[Route] = None  # RouteRef内のRoute要素
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
     in_route_position: Optional[dict] = None  # InRoutePosition（FromLaneCoordinates等）
+
+
+@dataclass
+class RelativeWorldPosition:
+    """RelativeWorldPosition（相対ワールド座標）"""
+    entity_ref: str
+    dx: Union[str, float]
+    dy: Union[str, float]
+    dz: Union[str, float] = 0.0
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
+
+
+@dataclass
+class RelativeLanePosition:
+    """RelativeLanePosition（相対レーン座標）"""
+    entity_ref: str
+    d_lane: Union[str, int]  # dLane属性（Int型）
+    ds: Optional[Union[str, float]] = None
+    offset: Optional[Union[str, float]] = None
+    ds_lane: Optional[Union[str, float]] = None
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
+
+
+@dataclass
+class RelativeRoadPosition:
+    """RelativeRoadPosition（相対道路座標）"""
+    entity_ref: str
+    ds: Union[str, float]
+    dt: Union[str, float]
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
+
+
+@dataclass
+class RelativeObjectPosition:
+    """RelativeObjectPosition（相対オブジェクト座標）"""
+    entity_ref: str
+    dx: Union[str, float]
+    dy: Union[str, float]
+    dz: Optional[Union[str, float]] = None
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
+
+
+@dataclass
+class RoadPosition:
+    """RoadPosition（道路座標）"""
+    road_id: str
+    s: Union[str, float]
+    t: Union[str, float]
+    orientation: Optional[dict] = None  # Orientation要素（type, h, p, r）
 
 
 # ============================================================================
@@ -84,9 +135,27 @@ class Dynamics:
 # ============================================================================
 
 @dataclass
+class Waypoint:
+    """Waypoint（ウェイポイント）"""
+    position: Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition, 
+                    RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
+    route_strategy: str  # fastest, leastIntersections, random, shortest
+
+
+@dataclass
+class Route:
+    """Route（ルート）"""
+    name: str
+    closed: bool
+    waypoints: List[Waypoint] = field(default_factory=list)
+    parameter_declarations: Optional[ParameterDeclarations] = None
+
+
+@dataclass
 class AssignRouteAction:
     """AssignRouteAction（ルート割り当て）"""
-    route_ref: CatalogReference  # CatalogReference
+    route_ref: Optional[CatalogReference] = None  # CatalogReference
+    route: Optional[Route] = None  # Route要素
 
 
 @dataclass
@@ -95,6 +164,11 @@ class TeleportAction:
     position: Optional[WorldPosition] = None
     lane_position: Optional[LanePosition] = None
     route_position: Optional[RoutePosition] = None
+    relative_world_position: Optional[RelativeWorldPosition] = None
+    relative_lane_position: Optional[RelativeLanePosition] = None
+    relative_road_position: Optional[RelativeRoadPosition] = None
+    relative_object_position: Optional[RelativeObjectPosition] = None
+    road_position: Optional[RoadPosition] = None
 
 
 @dataclass
@@ -143,7 +217,8 @@ class LaneOffsetAction:
 @dataclass
 class Vertex:
     """Vertex（頂点）"""
-    position: Union[WorldPosition, LanePosition]  # Position内のWorldPositionまたはLanePosition
+    position: Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                    RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]
     time: Optional[Union[str, float]] = None  # time属性（オプション）
 
 
@@ -272,7 +347,8 @@ class TimeToCollisionCondition:
 class ReachPositionCondition:
     """ReachPositionCondition（位置到達条件）"""
     tolerance: Union[str, float] = 0.0
-    position: Optional[Union[WorldPosition, LanePosition]] = None  # Position内のWorldPositionまたはLanePosition
+    position: Optional[Union[WorldPosition, LanePosition, RoutePosition, RelativeWorldPosition,
+                             RelativeLanePosition, RelativeRoadPosition, RelativeObjectPosition, RoadPosition]] = None
 
 
 @dataclass
@@ -400,11 +476,69 @@ class Storyboard:
 # ============================================================================
 
 @dataclass
+class Center:
+    """Center（中心点）"""
+    x: Union[str, float]
+    y: Union[str, float]
+    z: Union[str, float]
+
+
+@dataclass
+class Dimensions:
+    """Dimensions（寸法）"""
+    height: Union[str, float]
+    length: Union[str, float]
+    width: Union[str, float]
+
+
+@dataclass
+class BoundingBox:
+    """BoundingBox（境界ボックス）"""
+    center: Center
+    dimensions: Dimensions
+
+
+@dataclass
+class Performance:
+    """Performance（性能）"""
+    max_acceleration: Union[str, float]
+    max_deceleration: Union[str, float]
+    max_speed: Union[str, float]
+    max_acceleration_rate: Optional[Union[str, float]] = None
+    max_deceleration_rate: Optional[Union[str, float]] = None
+
+
+@dataclass
+class Axle:
+    """Axle（車軸）"""
+    max_steering: Union[str, float]
+    position_x: Union[str, float]
+    position_z: Union[str, float]
+    track_width: Union[str, float]
+    wheel_diameter: Union[str, float]
+
+
+@dataclass
+class Axles:
+    """Axles（車軸集合）"""
+    front_axle: Axle
+    rear_axle: Axle
+    additional_axles: List[Axle] = field(default_factory=list)
+
+
+@dataclass
 class Vehicle:
     """Vehicle（車両）"""
     name: str
     vehicle_category: str = "car"  # car, van, truck, trailer, semitrailer, bus, motorbike, bicycle, train, tram
-    # 将来の拡張: 物理パラメータなど
+    role: Optional[str] = None
+    mass: Optional[Union[str, float]] = None
+    model3d: Optional[str] = None
+    parameter_declarations: Optional[ParameterDeclarations] = None
+    bounding_box: Optional[BoundingBox] = None
+    performance: Optional[Performance] = None
+    axles: Optional[Axles] = None
+    properties: Optional[Properties] = None
 
 
 @dataclass
@@ -418,10 +552,14 @@ class CatalogReference:
 class Pedestrian:
     """Pedestrian（歩行者）"""
     name: str
-    mass: Optional[float] = None
-    model: Optional[str] = None
+    mass: Union[str, float]  # XSDでは必須
     pedestrian_category: str = "pedestrian"
+    model: Optional[str] = None  # deprecated
     model3d: Optional[str] = None
+    role: Optional[str] = None
+    parameter_declarations: Optional[ParameterDeclarations] = None
+    bounding_box: Optional[BoundingBox] = None
+    properties: Optional[Properties] = None
 
 
 @dataclass

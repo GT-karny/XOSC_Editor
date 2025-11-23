@@ -192,6 +192,83 @@ def validate_scenario(scenario: ScenarioDefinition) -> List[ValidationError]:
                                 )
                             )
     
+    # Vehicle/Pedestrianの詳細属性の検証
+    if scenario.entities:
+        for obj in scenario.entities.scenario_objects:
+            if obj.vehicle:
+                # Vehicleの必須要素チェック（XSDではBoundingBox, Performance, Axles, Propertiesが必須）
+                if obj.vehicle.bounding_box is None:
+                    errors.append(
+                        ValidationError(
+                            f"Vehicle '{obj.vehicle.name}' must have BoundingBox",
+                            f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Vehicle[@name='{obj.vehicle.name}']"
+                        )
+                    )
+                if obj.vehicle.performance is None:
+                    errors.append(
+                        ValidationError(
+                            f"Vehicle '{obj.vehicle.name}' must have Performance",
+                            f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Vehicle[@name='{obj.vehicle.name}']"
+                        )
+                    )
+                if obj.vehicle.axles is None:
+                    errors.append(
+                        ValidationError(
+                            f"Vehicle '{obj.vehicle.name}' must have Axles",
+                            f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Vehicle[@name='{obj.vehicle.name}']"
+                        )
+                    )
+                # Propertiesは必須要素だが、空のリストでもOK（XSDではminOccurs="0"だが、要素自体は必須）
+                # 実際のXMLでは空の<Properties/>でも有効
+                # ここでは、propertiesがNoneの場合のみエラーとする（空のリストはOK）
+                # ただし、XSDではProperties要素自体は必須なので、Noneの場合はエラー
+                if obj.vehicle.properties is None:
+                    errors.append(
+                        ValidationError(
+                            f"Vehicle '{obj.vehicle.name}' must have Properties element",
+                            f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Vehicle[@name='{obj.vehicle.name}']"
+                        )
+                    )
+            
+            if obj.pedestrian:
+                # Pedestrianの必須要素チェック（XSDではBoundingBox, Propertiesが必須）
+                if obj.pedestrian.bounding_box is None:
+                    errors.append(
+                        ValidationError(
+                            f"Pedestrian '{obj.pedestrian.name}' must have BoundingBox",
+                            f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Pedestrian[@name='{obj.pedestrian.name}']"
+                        )
+                    )
+                # Propertiesは必須要素だが、空のリストでもOK
+                if obj.pedestrian.properties is None:
+                    errors.append(
+                        ValidationError(
+                            f"Pedestrian '{obj.pedestrian.name}' must have Properties element",
+                            f"OpenSCENARIO/Entities/ScenarioObject[@name='{obj.name}']/Pedestrian[@name='{obj.pedestrian.name}']"
+                        )
+                    )
+    
+    # Route要素の検証
+    if scenario.storyboard:
+        for story in scenario.storyboard.stories:
+            for act in story.acts:
+                for mg in act.maneuver_groups:
+                    for maneuver in mg.maneuvers:
+                        for event in maneuver.events:
+                            for action in event.actions:
+                                if action.private_action and action.private_action.routing_action:
+                                    if action.private_action.routing_action.assign_route_action:
+                                        assign_route = action.private_action.routing_action.assign_route_action
+                                        if assign_route.route:
+                                            # RouteのWaypointは2つ以上必要
+                                            if len(assign_route.route.waypoints) < 2:
+                                                errors.append(
+                                                    ValidationError(
+                                                        f"Route '{assign_route.route.name}' must have at least 2 Waypoints",
+                                                        f"OpenSCENARIO/Storyboard/Story[@name='{story.name}']/Act[@name='{act.name}']/ManeuverGroup[@name='{mg.name}']/Maneuver[@name='{maneuver.name}']/Event[@name='{event.name}']/Action[@name='{action.name}']/PrivateAction/RoutingAction/AssignRouteAction/Route[@name='{assign_route.route.name}']"
+                                                    )
+                                                )
+    
     return errors
 
 

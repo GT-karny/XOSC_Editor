@@ -3,16 +3,16 @@ esmini GIT TAG: v2.55.0
 esmini GIT BRANCH: tags/v2.55.0^0
 esmini BUILD VERSION: 5791
 [] [info] Loaded config file: E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\config.yml (E:\Repository\XOSC_Editor\thirdparty\esmini-demo_Windows\esmini-demo\bin\..\config.yml)
-[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor__xv6ts1m\scenario.xosc
-[2025-11-23 10:23:16]
-[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor__xv6ts1m\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
+[] [info] Loaded C:\Users\Owner\AppData\Local\Temp\xosc_editor_ss34_goc\scenario.xosc
+[2025-11-23 11:03:06]
+[] [info] Player options: --osc C:\Users\Owner\AppData\Local\Temp\xosc_editor_ss34_goc\scenario.xosc --camera_mode orbit --info_text 1 --logfile_path log.txt --log_level info --text_scale 1.0 --traj_filter 0.1 
 [] [info] No fixed timestep specified - running in realtime speed
-[] [info] Generated seed 1655977504
-[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor__xv6ts1m/scenario.xosc (v1.1)
+[] [info] Generated seed 2611142408
+[] [info] Loading C:/Users/Owner/AppData/Local/Temp/xosc_editor_ss34_goc/scenario.xosc (v1.0)
 [] [info] 0 variables
 [] [error] Unsupported geo reference attr: +no_defs
-[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/straight_500m.xodr
+[] [error] Unsupported object type: guide-post - interpret as NONE
+[] [error] Unsupported object type: guide-post - interpret as NONE
+[] [info] Loaded OpenDRIVE: E:/Repository/XOSC_Editor/thirdparty/esmini-demo_Windows/esmini-demo/resources/xodr/curve_r100.xodr
 [] [info] Expr ${250/3.6} = 250/3.6 = 69.4444444444
-[] [error] Missing EntityObject
-[] [error] Failed to find object Box
-[] [error] Exception: Failed to find object: Box
+[] [error] Exception: Missing EntityCondition

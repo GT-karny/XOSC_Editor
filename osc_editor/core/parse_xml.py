@@ -41,6 +41,11 @@ from osc_editor.core.model import (
     WorldPosition,
     LanePosition,
     RoutePosition,
+    RelativeWorldPosition,
+    RelativeLanePosition,
+    RelativeRoadPosition,
+    RelativeObjectPosition,
+    RoadPosition,
     Dynamics,
     DynamicsDimension,
     DynamicsShape,
@@ -63,6 +68,14 @@ from osc_editor.core.model import (
     Properties,
     Property,
     Rule,
+    BoundingBox,
+    Center,
+    Dimensions,
+    Performance,
+    Axles,
+    Axle,
+    Route,
+    Waypoint,
 )
 
 
@@ -280,8 +293,26 @@ def parse_route_position(element: ET.Element) -> Optional[RoutePosition]:
         return None
     
     ns = _detect_namespace(element)
-    route_ref_elem = element.find(f"./{ns}RouteRef/{ns}CatalogReference")
-    route_ref = parse_catalog_reference(route_ref_elem) if route_ref_elem is not None else None
+    route_ref_elem = element.find(f"./{ns}RouteRef")
+    route_ref = None
+    route = None
+    if route_ref_elem is not None:
+        catalog_ref_elem = route_ref_elem.find(f"./{ns}CatalogReference")
+        if catalog_ref_elem is not None:
+            route_ref = parse_catalog_reference(catalog_ref_elem)
+        route_elem = route_ref_elem.find(f"./{ns}Route")
+        if route_elem is not None:
+            route = parse_route(route_elem)
+    
+    orientation_elem = element.find(f"./{ns}Orientation")
+    orientation = None
+    if orientation_elem is not None:
+        orientation = {
+            "type": _get_attr(orientation_elem, "type", "absolute"),
+            "h": _get_attr_float(orientation_elem, "h", 0.0),
+            "p": _get_attr_float(orientation_elem, "p", 0.0),
+            "r": _get_attr_float(orientation_elem, "r", 0.0),
+        }
     
     in_route_position_elem = element.find(f"./{ns}InRoutePosition")
     in_route_position = None
@@ -293,10 +324,187 @@ def parse_route_position(element: ET.Element) -> Optional[RoutePosition]:
                 "laneId": _get_attr(from_lane_elem, "laneId", ""),
             }
     
-    if route_ref is None and in_route_position is None:
+    if route_ref is None and route is None and in_route_position is None:
         return None
     
-    return RoutePosition(route_ref=route_ref, in_route_position=in_route_position)
+    return RoutePosition(route_ref=route_ref, route=route, orientation=orientation, in_route_position=in_route_position)
+
+
+def parse_relative_world_position(element: ET.Element) -> Optional[RelativeWorldPosition]:
+    """RelativeWorldPositionをパース"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    if not entity_ref:
+        return None
+    
+    dx = _get_attr_float(element, "dx", 0.0)
+    dy = _get_attr_float(element, "dy", 0.0)
+    dz = _get_attr_float(element, "dz", 0.0)
+    
+    ns = _detect_namespace(element)
+    orientation_elem = element.find(f"./{ns}Orientation")
+    orientation = None
+    if orientation_elem is not None:
+        orientation = {
+            "type": _get_attr(orientation_elem, "type", "absolute"),
+            "h": _get_attr_float(orientation_elem, "h", 0.0),
+            "p": _get_attr_float(orientation_elem, "p", 0.0),
+            "r": _get_attr_float(orientation_elem, "r", 0.0),
+        }
+    
+    return RelativeWorldPosition(
+        entity_ref=entity_ref,
+        dx=dx,
+        dy=dy,
+        dz=dz,
+        orientation=orientation,
+    )
+
+
+def parse_relative_lane_position(element: ET.Element) -> Optional[RelativeLanePosition]:
+    """RelativeLanePositionをパース"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    d_lane_attr = element.get("dLane")
+    if not entity_ref or d_lane_attr is None:
+        return None
+    
+    # dLaneはInt型
+    try:
+        d_lane = int(d_lane_attr)
+    except (ValueError, TypeError):
+        d_lane = d_lane_attr  # パラメータ参照の場合は文字列として保持
+    
+    ds = _get_attr_float(element, "ds", None)
+    if isinstance(ds, str):
+        ds = None
+    
+    offset = _get_attr_float(element, "offset", None)
+    if isinstance(offset, str):
+        offset = None
+    
+    ds_lane = _get_attr_float(element, "dsLane", None)
+    if isinstance(ds_lane, str):
+        ds_lane = None
+    
+    ns = _detect_namespace(element)
+    orientation_elem = element.find(f"./{ns}Orientation")
+    orientation = None
+    if orientation_elem is not None:
+        orientation = {
+            "type": _get_attr(orientation_elem, "type", "absolute"),
+            "h": _get_attr_float(orientation_elem, "h", 0.0),
+            "p": _get_attr_float(orientation_elem, "p", 0.0),
+            "r": _get_attr_float(orientation_elem, "r", 0.0),
+        }
+    
+    return RelativeLanePosition(
+        entity_ref=entity_ref,
+        d_lane=d_lane,
+        ds=ds,
+        offset=offset,
+        ds_lane=ds_lane,
+        orientation=orientation,
+    )
+
+
+def parse_relative_road_position(element: ET.Element) -> Optional[RelativeRoadPosition]:
+    """RelativeRoadPositionをパース"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    if not entity_ref:
+        return None
+    
+    ds = _get_attr_float(element, "ds", 0.0)
+    dt = _get_attr_float(element, "dt", 0.0)
+    
+    ns = _detect_namespace(element)
+    orientation_elem = element.find(f"./{ns}Orientation")
+    orientation = None
+    if orientation_elem is not None:
+        orientation = {
+            "type": _get_attr(orientation_elem, "type", "absolute"),
+            "h": _get_attr_float(orientation_elem, "h", 0.0),
+            "p": _get_attr_float(orientation_elem, "p", 0.0),
+            "r": _get_attr_float(orientation_elem, "r", 0.0),
+        }
+    
+    return RelativeRoadPosition(
+        entity_ref=entity_ref,
+        ds=ds,
+        dt=dt,
+        orientation=orientation,
+    )
+
+
+def parse_relative_object_position(element: ET.Element) -> Optional[RelativeObjectPosition]:
+    """RelativeObjectPositionをパース"""
+    if element is None:
+        return None
+    
+    entity_ref = _get_attr(element, "entityRef", "")
+    if not entity_ref:
+        return None
+    
+    dx = _get_attr_float(element, "dx", 0.0)
+    dy = _get_attr_float(element, "dy", 0.0)
+    dz = _get_attr_float(element, "dz", 0.0)
+    
+    ns = _detect_namespace(element)
+    orientation_elem = element.find(f"./{ns}Orientation")
+    orientation = None
+    if orientation_elem is not None:
+        orientation = {
+            "type": _get_attr(orientation_elem, "type", "absolute"),
+            "h": _get_attr_float(orientation_elem, "h", 0.0),
+            "p": _get_attr_float(orientation_elem, "p", 0.0),
+            "r": _get_attr_float(orientation_elem, "r", 0.0),
+        }
+    
+    return RelativeObjectPosition(
+        entity_ref=entity_ref,
+        dx=dx,
+        dy=dy,
+        dz=dz,
+        orientation=orientation,
+    )
+
+
+def parse_road_position(element: ET.Element) -> Optional[RoadPosition]:
+    """RoadPositionをパース"""
+    if element is None:
+        return None
+    
+    road_id = _get_attr(element, "roadId", "")
+    if not road_id:
+        return None
+    
+    s = _get_attr_float(element, "s", 0.0)
+    t = _get_attr_float(element, "t", 0.0)
+    
+    ns = _detect_namespace(element)
+    orientation_elem = element.find(f"./{ns}Orientation")
+    orientation = None
+    if orientation_elem is not None:
+        orientation = {
+            "type": _get_attr(orientation_elem, "type", "absolute"),
+            "h": _get_attr_float(orientation_elem, "h", 0.0),
+            "p": _get_attr_float(orientation_elem, "p", 0.0),
+            "r": _get_attr_float(orientation_elem, "r", 0.0),
+        }
+    
+    return RoadPosition(
+        road_id=road_id,
+        s=s,
+        t=t,
+        orientation=orientation,
+    )
 
 
 def parse_transition_dynamics(element: ET.Element) -> Optional[Dynamics]:
@@ -334,6 +542,49 @@ def parse_transition_dynamics(element: ET.Element) -> Optional[Dynamics]:
     )
 
 
+def parse_position(element: ET.Element):
+    """Position要素をパース（全タイプに対応）"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    
+    # 各Positionタイプを順にチェック
+    world_pos_elem = element.find(f"./{ns}WorldPosition")
+    if world_pos_elem is not None:
+        return parse_world_position(world_pos_elem)
+    
+    relative_world_pos_elem = element.find(f"./{ns}RelativeWorldPosition")
+    if relative_world_pos_elem is not None:
+        return parse_relative_world_position(relative_world_pos_elem)
+    
+    relative_object_pos_elem = element.find(f"./{ns}RelativeObjectPosition")
+    if relative_object_pos_elem is not None:
+        return parse_relative_object_position(relative_object_pos_elem)
+    
+    road_pos_elem = element.find(f"./{ns}RoadPosition")
+    if road_pos_elem is not None:
+        return parse_road_position(road_pos_elem)
+    
+    relative_road_pos_elem = element.find(f"./{ns}RelativeRoadPosition")
+    if relative_road_pos_elem is not None:
+        return parse_relative_road_position(relative_road_pos_elem)
+    
+    lane_pos_elem = element.find(f"./{ns}LanePosition")
+    if lane_pos_elem is not None:
+        return parse_lane_position(lane_pos_elem)
+    
+    relative_lane_pos_elem = element.find(f"./{ns}RelativeLanePosition")
+    if relative_lane_pos_elem is not None:
+        return parse_relative_lane_position(relative_lane_pos_elem)
+    
+    route_pos_elem = element.find(f"./{ns}RoutePosition")
+    if route_pos_elem is not None:
+        return parse_route_position(route_pos_elem)
+    
+    return None
+
+
 def parse_teleport_action(element: ET.Element) -> Optional[TeleportAction]:
     """TeleportActionをパース"""
     if element is None:
@@ -343,25 +594,29 @@ def parse_teleport_action(element: ET.Element) -> Optional[TeleportAction]:
     if position_container is None:
         return None
     
-    position_elem = position_container.find(f"./{ns}WorldPosition")
-    lane_position_elem = position_container.find(f"./{ns}LanePosition")
-    route_position_elem = position_container.find(f"./{ns}RoutePosition")
-    
-    position = None
-    lane_position = None
-    route_position = None
-    
-    if position_elem is not None:
-        position = parse_world_position(position_elem)
-    if lane_position_elem is not None:
-        lane_position = parse_lane_position(lane_position_elem)
-    if route_position_elem is not None:
-        route_position = parse_route_position(route_position_elem)
-    
-    if position is None and lane_position is None and route_position is None:
+    position = parse_position(position_container)
+    if position is None:
         return None
     
-    return TeleportAction(position=position, lane_position=lane_position, route_position=route_position)
+    # Positionタイプに応じてTeleportActionの属性を設定
+    if isinstance(position, WorldPosition):
+        return TeleportAction(position=position)
+    elif isinstance(position, LanePosition):
+        return TeleportAction(lane_position=position)
+    elif isinstance(position, RoutePosition):
+        return TeleportAction(route_position=position)
+    elif isinstance(position, RelativeWorldPosition):
+        return TeleportAction(relative_world_position=position)
+    elif isinstance(position, RelativeLanePosition):
+        return TeleportAction(relative_lane_position=position)
+    elif isinstance(position, RelativeRoadPosition):
+        return TeleportAction(relative_road_position=position)
+    elif isinstance(position, RelativeObjectPosition):
+        return TeleportAction(relative_object_position=position)
+    elif isinstance(position, RoadPosition):
+        return TeleportAction(road_position=position)
+    
+    return None
 
 
 def parse_relative_target_speed(element: ET.Element) -> Optional[RelativeTargetSpeed]:
@@ -543,15 +798,7 @@ def parse_vertex(element: ET.Element) -> Optional[Vertex]:
     if position_elem is None:
         return None
     
-    world_pos_elem = position_elem.find(f"./{ns}WorldPosition")
-    lane_pos_elem = position_elem.find(f"./{ns}LanePosition")
-    
-    position = None
-    if world_pos_elem is not None:
-        position = parse_world_position(world_pos_elem)
-    elif lane_pos_elem is not None:
-        position = parse_lane_position(lane_pos_elem)
-    
+    position = parse_position(position_elem)
     if position is None:
         return None
     
@@ -653,6 +900,57 @@ def parse_follow_trajectory_action(element: ET.Element) -> Optional[FollowTrajec
     )
 
 
+def parse_waypoint(element: ET.Element) -> Optional[Waypoint]:
+    """Waypointをパース"""
+    if element is None:
+        return None
+    
+    route_strategy = _get_attr(element, "routeStrategy", "fastest")
+    
+    ns = _detect_namespace(element)
+    position_elem = element.find(f"./{ns}Position")
+    if position_elem is None:
+        return None
+    
+    position = parse_position(position_elem)
+    if position is None:
+        return None
+    
+    return Waypoint(position=position, route_strategy=route_strategy)
+
+
+def parse_route(element: ET.Element) -> Optional[Route]:
+    """Routeをパース"""
+    if element is None:
+        return None
+    
+    name = _get_attr(element, "name", "")
+    if not name:
+        return None
+    
+    closed = _get_attr_bool(element, "closed", False)
+    
+    ns = _detect_namespace(element)
+    param_decls_elem = element.find(f"./{ns}ParameterDeclarations")
+    param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
+    
+    waypoints = []
+    for waypoint_elem in element.findall(f"./{ns}Waypoint"):
+        waypoint = parse_waypoint(waypoint_elem)
+        if waypoint is not None:
+            waypoints.append(waypoint)
+    
+    if len(waypoints) < 2:
+        return None  # XSDではWaypointは2つ以上必要
+    
+    return Route(
+        name=name,
+        closed=closed,
+        waypoints=waypoints,
+        parameter_declarations=param_decls,
+    )
+
+
 def parse_assign_route_action(element: ET.Element) -> Optional[AssignRouteAction]:
     """AssignRouteActionをパース"""
     if element is None:
@@ -662,10 +960,13 @@ def parse_assign_route_action(element: ET.Element) -> Optional[AssignRouteAction
     catalog_ref_elem = element.find(f"./{ns}CatalogReference")
     route_ref = parse_catalog_reference(catalog_ref_elem) if catalog_ref_elem is not None else None
     
-    if route_ref is None:
+    route_elem = element.find(f"./{ns}Route")
+    route = parse_route(route_elem) if route_elem is not None else None
+    
+    if route_ref is None and route is None:
         return None
     
-    return AssignRouteAction(route_ref=route_ref)
+    return AssignRouteAction(route_ref=route_ref, route=route)
 
 
 def parse_routing_action(element: ET.Element) -> Optional[RoutingAction]:
@@ -899,14 +1200,7 @@ def parse_reach_position_condition(element: ET.Element) -> Optional[ReachPositio
     
     ns = _detect_namespace(element)
     position_container = element.find(f"./{ns}Position")
-    position = None
-    if position_container is not None:
-        world_pos_elem = position_container.find(f"./{ns}WorldPosition")
-        lane_pos_elem = position_container.find(f"./{ns}LanePosition")
-        if world_pos_elem is not None:
-            position = parse_world_position(world_pos_elem)
-        elif lane_pos_elem is not None:
-            position = parse_lane_position(lane_pos_elem)
+    position = parse_position(position_container) if position_container is not None else None
     
     return ReachPositionCondition(tolerance=tolerance, position=position)
 
@@ -1224,11 +1518,145 @@ def parse_storyboard(element: ET.Element) -> Storyboard:
     )
 
 
+def parse_center(element: ET.Element) -> Optional[Center]:
+    """Centerをパース"""
+    if element is None:
+        return None
+    return Center(
+        x=_get_attr_float(element, "x", 0.0),
+        y=_get_attr_float(element, "y", 0.0),
+        z=_get_attr_float(element, "z", 0.0),
+    )
+
+
+def parse_dimensions(element: ET.Element) -> Optional[Dimensions]:
+    """Dimensionsをパース"""
+    if element is None:
+        return None
+    return Dimensions(
+        height=_get_attr_float(element, "height", 0.0),
+        length=_get_attr_float(element, "length", 0.0),
+        width=_get_attr_float(element, "width", 0.0),
+    )
+
+
+def parse_bounding_box(element: ET.Element) -> Optional[BoundingBox]:
+    """BoundingBoxをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    center_elem = element.find(f"./{ns}Center")
+    dimensions_elem = element.find(f"./{ns}Dimensions")
+    
+    center = parse_center(center_elem) if center_elem is not None else None
+    dimensions = parse_dimensions(dimensions_elem) if dimensions_elem is not None else None
+    
+    if center is None or dimensions is None:
+        return None
+    
+    return BoundingBox(center=center, dimensions=dimensions)
+
+
+def parse_performance(element: ET.Element) -> Optional[Performance]:
+    """Performanceをパース"""
+    if element is None:
+        return None
+    return Performance(
+        max_acceleration=_get_attr_float(element, "maxAcceleration", 0.0),
+        max_deceleration=_get_attr_float(element, "maxDeceleration", 0.0),
+        max_speed=_get_attr_float(element, "maxSpeed", 0.0),
+        max_acceleration_rate=_get_attr_float(element, "maxAccelerationRate", None),
+        max_deceleration_rate=_get_attr_float(element, "maxDecelerationRate", None),
+    )
+
+
+def parse_axle(element: ET.Element) -> Optional[Axle]:
+    """Axleをパース"""
+    if element is None:
+        return None
+    return Axle(
+        max_steering=_get_attr_float(element, "maxSteering", 0.0),
+        position_x=_get_attr_float(element, "positionX", 0.0),
+        position_z=_get_attr_float(element, "positionZ", 0.0),
+        track_width=_get_attr_float(element, "trackWidth", 0.0),
+        wheel_diameter=_get_attr_float(element, "wheelDiameter", 0.0),
+    )
+
+
+def parse_axles(element: ET.Element) -> Optional[Axles]:
+    """Axlesをパース"""
+    if element is None:
+        return None
+    
+    ns = _detect_namespace(element)
+    front_axle_elem = element.find(f"./{ns}FrontAxle")
+    rear_axle_elem = element.find(f"./{ns}RearAxle")
+    
+    front_axle = parse_axle(front_axle_elem) if front_axle_elem is not None else None
+    rear_axle = parse_axle(rear_axle_elem) if rear_axle_elem is not None else None
+    
+    if front_axle is None or rear_axle is None:
+        return None
+    
+    additional_axles = []
+    for additional_elem in element.findall(f"./{ns}AdditionalAxle"):
+        axle = parse_axle(additional_elem)
+        if axle is not None:
+            additional_axles.append(axle)
+    
+    return Axles(
+        front_axle=front_axle,
+        rear_axle=rear_axle,
+        additional_axles=additional_axles,
+    )
+
+
 def parse_vehicle(element: ET.Element) -> Vehicle:
     """Vehicleをパース"""
+    if element is None:
+        return Vehicle(name="", vehicle_category="car")
+    
     name = element.get("name", "")
     category = element.get("vehicleCategory", "car")
-    return Vehicle(name=name, vehicle_category=category)
+    role = element.get("role")
+    mass_attr = element.get("mass")
+    mass = None
+    if mass_attr is not None:
+        try:
+            mass = float(mass_attr)
+        except (ValueError, TypeError):
+            mass = mass_attr  # パラメータ参照の場合は文字列として保持
+    model3d = element.get("model3d")
+    
+    ns = _detect_namespace(element)
+    param_decls_elem = element.find(f"./{ns}ParameterDeclarations")
+    param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
+    
+    bounding_box_elem = element.find(f"./{ns}BoundingBox")
+    bounding_box = parse_bounding_box(bounding_box_elem) if bounding_box_elem is not None else None
+    
+    performance_elem = element.find(f"./{ns}Performance")
+    performance = parse_performance(performance_elem) if performance_elem is not None else None
+    
+    axles_elem = element.find(f"./{ns}Axles")
+    axles = parse_axles(axles_elem) if axles_elem is not None else None
+    
+    properties_elem = element.find(f"./{ns}Properties")
+    properties = parse_properties(properties_elem) if properties_elem is not None else None
+    
+    return Vehicle(
+        name=name,
+        vehicle_category=category,
+        role=role,
+        mass=mass,
+        model3d=model3d,
+        parameter_declarations=param_decls,
+        bounding_box=bounding_box,
+        performance=performance,
+        axles=axles,
+        properties=properties,
+    )
 
 
 def parse_catalog_reference(element: ET.Element) -> Optional[CatalogReference]:
@@ -1247,22 +1675,42 @@ def parse_pedestrian(element: ET.Element) -> Optional[Pedestrian]:
     if element is None:
         return None
     name = _get_attr(element, "name", "")
-    mass = _get_attr_float(element, "mass", None)
-    if isinstance(mass, str):
-        mass = None
-    model = _get_attr(element, "model", None)
-    pedestrian_category = _get_attr(element, "pedestrianCategory", "pedestrian")
-    model3d = _get_attr(element, "model3d", None)
-    
     if not name:
         return None
     
+    mass_attr = element.get("mass")
+    if mass_attr is None:
+        return None  # massは必須属性
+    try:
+        mass = float(mass_attr)
+    except (ValueError, TypeError):
+        mass = mass_attr  # パラメータ参照の場合は文字列として保持
+    
+    model = _get_attr(element, "model", None)
+    pedestrian_category = _get_attr(element, "pedestrianCategory", "pedestrian")
+    model3d = _get_attr(element, "model3d", None)
+    role = _get_attr(element, "role", None)
+    
+    ns = _detect_namespace(element)
+    param_decls_elem = element.find(f"./{ns}ParameterDeclarations")
+    param_decls = parse_parameter_declarations(param_decls_elem) if param_decls_elem is not None else None
+    
+    bounding_box_elem = element.find(f"./{ns}BoundingBox")
+    bounding_box = parse_bounding_box(bounding_box_elem) if bounding_box_elem is not None else None
+    
+    properties_elem = element.find(f"./{ns}Properties")
+    properties = parse_properties(properties_elem) if properties_elem is not None else None
+    
     return Pedestrian(
         name=name,
-        mass=mass if isinstance(mass, float) else None,
+        mass=mass,
         model=model,
         pedestrian_category=pedestrian_category,
-        model3d=model3d
+        model3d=model3d,
+        role=role,
+        parameter_declarations=param_decls,
+        bounding_box=bounding_box,
+        properties=properties,
     )
 
 
@@ -1279,9 +1727,8 @@ def parse_properties(element: ET.Element) -> Optional[Properties]:
         if name:
             properties_list.append(Property(name=name, value=value))
     
-    if not properties_list:
-        return None
-    
+    # Properties要素が存在する場合は、空のリストでもPropertiesオブジェクトを返す
+    # （XSDではProperties要素は必須だが、中身は空でもOK）
     return Properties(properties=properties_list)
 
 
